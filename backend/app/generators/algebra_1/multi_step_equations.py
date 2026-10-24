@@ -176,3 +176,4 @@ class MultiStepEquationsGenerator(BaseGenerator):
             difficulty=ProblemDifficulty.SPICY,
             standards=self.standards,
         )
+

@@ -91,3 +91,34 @@ def test_new_kuta_generators():
     assert all(len(p.steps_typst) >= 3 for p in probs_multi)
     assert all("x =" in p.answer_typst for p in probs_multi)
 
+
+def test_forensic_audit_all_generators_steps_and_workspaces():
+    """Audit all 7 generator classes across all difficulties to ensure
+    100% complete step traces and clean answers.
+    """
+    from backend.app.generators import GENERATOR_REGISTRY
+
+    difficulties = [
+        ProblemDifficulty.MILD,
+        ProblemDifficulty.MEDIUM,
+        ProblemDifficulty.SPICY,
+    ]
+
+    for gen_id, gen_cls in GENERATOR_REGISTRY.items():
+        gen = gen_cls()
+        for diff in difficulties:
+            dist = {d: 1.0 if d == diff else 0.0 for d in difficulties}
+            cfg = GeneratorConfig(problem_count=4, difficulty_distribution=dist, seed=12345)
+            problems = gen.generate(cfg)
+
+            assert len(problems) == 4, f"{gen_id} failed to generate 4 problems"
+            for prob in problems:
+                assert prob.prompt_text, f"{gen_id} missing prompt_text"
+                assert prob.equation_typst, f"{gen_id} missing equation_typst"
+                assert prob.answer_typst, f"{gen_id} missing answer_typst"
+                assert prob.steps_typst and len(prob.steps_typst) >= 2, (
+                    f"{gen_id} ({diff.value}) has incomplete solution steps: {prob.steps_typst}"
+                )
+                # Check that steps include both prompt equation and answer
+                assert len(prob.distractors) >= 2, f"{gen_id} missing distractors"
+

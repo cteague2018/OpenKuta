@@ -86,8 +86,18 @@ class TypstCompiler:
         medium_problems = [p for p in problems if p.difficulty == "medium"]
         spicy_problems = [p for p in problems if p.difficulty == "spicy"]
 
-        rows_per_page = max(1, (len(problems) + columns - 1) // columns)
-        box_height_pt = max(90, min(240, int(600 / max(1, rows_per_page))))
+        # Calculate dynamic workspace height with extra clearance for multi-step problems
+        has_multistep = any(
+            "multi" in (p.prompt_text or "").lower() or len(p.steps_typst) >= 4
+            for p in problems
+        )
+        total_rows = max(1, (len(problems) + columns - 1) // columns)
+        # For multi-step, budget generous 2-3 rows per page so students have room to show work
+        if has_multistep or total_rows <= 3:
+            effective_rows = min(total_rows, 3)
+            box_height_pt = max(150, min(270, int(580 / max(1, effective_rows))))
+        else:
+            box_height_pt = max(110, min(240, int(580 / max(1, total_rows))))
 
         context = {
             "title": title,

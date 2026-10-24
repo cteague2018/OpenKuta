@@ -199,6 +199,29 @@ export default function OpenKutaApp() {
   const [worksheetProblems, setWorksheetProblems] = useState<Problem[]>(DEFAULT_SAMPLE_PROBLEMS);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
+  // Dynamic Workspace Box Sizing based on Multi-Step complexity and page clearance
+  const isMultiStep = useMemo(() => {
+    return worksheetProblems.some(
+      (p) =>
+        (p.prompt_text || "").toLowerCase().includes("multi-step") ||
+        (p.steps_typst && p.steps_typst.length >= 4)
+    );
+  }, [worksheetProblems]);
+
+  const workspaceBoxClasses = useMemo(() => {
+    const count = worksheetProblems.length;
+    if (showAnswerKey) {
+      return "min-h-[240px]";
+    }
+    if (count <= 4) {
+      return isMultiStep ? "min-h-[280px]" : "min-h-[240px]";
+    }
+    if (count <= 6) {
+      return isMultiStep ? "min-h-[220px]" : "min-h-[195px]";
+    }
+    return isMultiStep ? "min-h-[190px]" : "min-h-[160px]";
+  }, [worksheetProblems.length, isMultiStep, showAnswerKey]);
+
   // Classroom Management State
   const [classesList, setClassesList] = useState<ClassroomSummary[]>(() =>
     DEFAULT_CLASSROOMS.map(({ id, name, subject, period, teacher_name, student_count }) => ({
@@ -1072,7 +1095,7 @@ export default function OpenKutaApp() {
                     {worksheetProblems.map((prob, idx) => (
                       <div
                         key={`${prob.id}_${idx}`}
-                        className="border border-slate-300 rounded p-3 min-h-[140px] flex flex-col justify-between bg-white relative"
+                        className={`border border-slate-300 rounded p-3.5 ${workspaceBoxClasses} flex flex-col justify-between bg-white relative transition-all duration-150`}
                       >
                         <div>
                           <div className="flex justify-between text-xs text-slate-600 mb-2">
