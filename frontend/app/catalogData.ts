@@ -36,7 +36,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
         name: "Equations",
         topics: [
           { id: "algebra_1.two_step", name: "Two-Step Equations", generator_id: "algebra_1.two_step", available: true },
-          { id: "algebra_1.multi_step", name: "Multi-Step Equations", generator_id: "algebra_1.two_step", available: true },
+          { id: "algebra_1.multi_step", name: "Multi-Step Equations", generator_id: "algebra_1.multi_step", available: true },
           { id: "algebra_1.proportions", name: "Solving Proportions", generator_id: "algebra_1.two_step", available: true },
           { id: "algebra_1.abs_value_eq", name: "Absolute Value Equations", generator_id: "algebra_1.two_step", available: false },
         ],

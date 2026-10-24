@@ -83,3 +83,11 @@ def test_new_kuta_generators():
     assert len(probs_pyth) == 3
     assert all("=" in p.equation_typst for p in probs_pyth)
 
+    # Multi-Step Equations
+    from backend.app.generators.algebra_1.multi_step_equations import MultiStepEquationsGenerator
+    g_multi = MultiStepEquationsGenerator()
+    probs_multi = g_multi.generate(cfg)
+    assert len(probs_multi) == 3
+    assert all(len(p.steps_typst) >= 3 for p in probs_multi)
+    assert all("x =" in p.answer_typst for p in probs_multi)
+

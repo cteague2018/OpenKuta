@@ -118,6 +118,32 @@ function KaTeXInline({ math, className = "" }: { math: string; className?: strin
   }
 }
 
+function StepTextWithMath({ text }: { text: string }) {
+  if (!text) return null;
+  const trimmed = text.trim();
+  // If the whole string is an equation like "$ 2x + 4 = 10 $"
+  if (trimmed.startsWith("$") && trimmed.endsWith("$") && (trimmed.match(/\$/g) || []).length === 2) {
+    return <KaTeXInline math={trimmed} className="font-medium" />;
+  }
+
+  // Split by '$' for mixed prose and equations
+  const parts = trimmed.split("$");
+  if (parts.length === 1) {
+    return <span>{trimmed}</span>;
+  }
+
+  return (
+    <span>
+      {parts.map((p, idx) => {
+        if (idx % 2 === 1) {
+          return <KaTeXInline key={idx} math={p} className="font-semibold mx-1 text-amber-950" />;
+        }
+        return <span key={idx}>{p}</span>;
+      })}
+    </span>
+  );
+}
+
 export default function OpenKutaApp() {
   const [activeTab, setActiveTab] = useState<"studio" | "classroom" | "grader">("studio");
   const [selectedCourseKey, setSelectedCourseKey] = useState<string>("algebra_1");
@@ -1063,11 +1089,28 @@ export default function OpenKutaApp() {
 
                         {/* Answer Key Overlay */}
                         {showAnswerKey ? (
-                          <div className="bg-amber-50 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-2">
-                            <div className="font-bold flex items-center gap-1.5 text-sm">
+                          <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-2">
+                            <div className="font-bold flex items-center gap-1.5 text-sm pb-1 border-b border-amber-200/60">
                               <span className="text-amber-800 text-xs font-semibold">Ans:</span>
                               <KaTeXInline math={prob.answer_typst} />
                             </div>
+                            {prob.steps_typst && prob.steps_typst.length > 0 && (
+                              <div className="mt-1.5 space-y-1 text-[11px] text-amber-900">
+                                <div className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
+                                  Solution Steps:
+                                </div>
+                                {prob.steps_typst.map((st, sIdx) => (
+                                  <div key={sIdx} className="flex items-start gap-1 leading-snug">
+                                    <span className="text-amber-600 font-mono text-[10px] font-semibold mt-0.5">
+                                      {sIdx + 1}.
+                                    </span>
+                                    <div>
+                                      <StepTextWithMath text={st} />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded">

@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Type
 from backend.app.core.base import BaseGenerator
 from backend.app.generators.algebra_1.quadratics import QuadraticEquationsGenerator
 from backend.app.generators.algebra_1.two_step_equations import TwoStepEquationsGenerator
+from backend.app.generators.algebra_1.multi_step_equations import MultiStepEquationsGenerator
 from backend.app.generators.algebra_1.linear_equations import LinearEquationsGenerator
 from backend.app.generators.algebra_1.systems import SystemsOfEquationsGenerator
 from backend.app.generators.algebra_1.polynomials import PolynomialFactoringGenerator
@@ -12,6 +13,7 @@ from backend.app.generators.geometry.pythagorean import PythagoreanTheoremGenera
 GENERATOR_REGISTRY: Dict[str, Type[BaseGenerator]] = {
     QuadraticEquationsGenerator.generator_id: QuadraticEquationsGenerator,
     TwoStepEquationsGenerator.generator_id: TwoStepEquationsGenerator,
+    MultiStepEquationsGenerator.generator_id: MultiStepEquationsGenerator,
     LinearEquationsGenerator.generator_id: LinearEquationsGenerator,
     SystemsOfEquationsGenerator.generator_id: SystemsOfEquationsGenerator,
     PolynomialFactoringGenerator.generator_id: PolynomialFactoringGenerator,
@@ -35,7 +37,7 @@ KUTA_COURSE_CATALOG: Dict[str, Dict[str, Any]] = {
                 "name": "Equations",
                 "topics": [
                     {"id": "algebra_1.two_step", "name": "Two-Step Equations", "generator_id": "algebra_1.two_step", "available": True},
-                    {"id": "algebra_1.multi_step", "name": "Multi-Step Equations", "generator_id": "algebra_1.two_step", "available": True},
+                    {"id": "algebra_1.multi_step", "name": "Multi-Step Equations", "generator_id": "algebra_1.multi_step", "available": True},
                     {"id": "algebra_1.proportions", "name": "Solving Proportions", "generator_id": "algebra_1.two_step", "available": True},
                     {"id": "algebra_1.abs_value_eq", "name": "Absolute Value Equations", "generator_id": "algebra_1.two_step", "available": False},
                 ]
