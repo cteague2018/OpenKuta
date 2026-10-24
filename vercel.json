@@ -5,3 +5,4 @@
   "installCommand": "cd frontend && npm install",
   "outputDirectory": "frontend/.next"
 }
+
