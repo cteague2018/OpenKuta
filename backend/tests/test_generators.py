@@ -1,4 +1,4 @@
-import sympy as sp
+import sympy as sp  # type: ignore
 from backend.app.core.base import GeneratorConfig, ProblemDifficulty
 from backend.app.generators.algebra_1.quadratics import (
     QuadraticEquationsGenerator,

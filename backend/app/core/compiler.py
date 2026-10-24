@@ -9,7 +9,7 @@ import cv2
 import jinja2
 import qrcode
 import qrcode.constants as qr_constants
-import typst
+import typst  # type: ignore
 
 from backend.app.core.base import BaseProblem
 
