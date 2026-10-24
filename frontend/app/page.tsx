@@ -85,17 +85,36 @@ interface GradebookEntry {
   submitted_at?: string;
 }
 
-function KaTeXInline({ math }: { math: string }) {
+function typstToLatex(raw: string): string {
+  if (!raw) return "";
+  let s = raw.trim();
+  // Strip leading and trailing $
+  s = s.replace(/^\$+\s*/, "").replace(/\s*\$+$/, "").trim();
+  // Clean up prefix labels like "Result:" or "Solve for x:"
+  s = s.replace(/^(Result|Solve for [^:]+):\s*/i, "").trim();
+  // Strip any remaining internal $ delimiters
+  s = s.replace(/\$/g, "");
+  // Typst to LaTeX conversions
+  s = s.replace(/plus\.minus/g, "\\pm ");
+  s = s.replace(/sqrt\(([^)]+)\)/g, "\\sqrt{$1}");
+  s = s.replace(/\bquad\b/g, "\\quad ");
+  s = s.replace(/(\d+)\s*\/\s*(\d+)/g, "\\frac{$1}{$2}");
+  // Replace standalone asterisks with space
+  s = s.replace(/\s*\*\s*/g, " ");
+  return s;
+}
+
+function KaTeXInline({ math, className = "" }: { math: string; className?: string }) {
   if (!math) return null;
-  const cleanMath = math.replace(/^\$/, "").replace(/\$$/, "").trim();
+  const latex = typstToLatex(math);
   try {
-    const html = katex.renderToString(cleanMath, {
+    const html = katex.renderToString(latex, {
       throwOnError: false,
       displayMode: false,
     });
-    return <span dangerouslySetInnerHTML={{ __html: html }} />;
+    return <span className={className} dangerouslySetInnerHTML={{ __html: html }} />;
   } catch {
-    return <span>{math}</span>;
+    return <span className={className}>{latex}</span>;
   }
 }
 
@@ -1044,15 +1063,11 @@ export default function OpenKutaApp() {
 
                         {/* Answer Key Overlay */}
                         {showAnswerKey ? (
-                          <div className="bg-amber-50 border border-amber-200 rounded p-1.5 text-xs text-amber-900 mt-2 font-mono">
-                            <div className="font-bold">
-                              Ans: <KaTeXInline math={prob.answer_typst} />
+                          <div className="bg-amber-50 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-2">
+                            <div className="font-bold flex items-center gap-1.5 text-sm">
+                              <span className="text-amber-800 text-xs font-semibold">Ans:</span>
+                              <KaTeXInline math={prob.answer_typst} />
                             </div>
-                            {prob.steps_typst && prob.steps_typst.length > 0 && (
-                              <div className="text-[10px] text-amber-700 mt-1">
-                                {prob.steps_typst[prob.steps_typst.length - 1]}
-                              </div>
-                            )}
                           </div>
                         ) : (
                           <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded">
