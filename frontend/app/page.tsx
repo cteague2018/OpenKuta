@@ -767,9 +767,19 @@ export default function OpenKutaApp() {
               <select
                 value={selectedCourseKey}
                 onChange={(e) => {
-                  setSelectedCourseKey(e.target.value);
-                  const newCourse = coursesCatalog[e.target.value];
-                  if (newCourse) setWorksheetTitle(newCourse.title);
+                  const newKey = e.target.value;
+                  setSelectedCourseKey(newKey);
+                  const newCourse = coursesCatalog[newKey];
+                  if (newCourse) {
+                    setWorksheetTitle(newCourse.title);
+                    setExpandedCategories((prev) => {
+                      const updated = { ...prev };
+                      newCourse.categories?.forEach((cat) => {
+                        updated[cat.name] = true;
+                      });
+                      return updated;
+                    });
+                  }
                 }}
                 className="bg-slate-800/80 text-white font-semibold text-xs rounded px-2.5 py-1 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
               >
