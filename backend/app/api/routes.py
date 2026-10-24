@@ -6,14 +6,18 @@ import pathlib
 import uuid
 import zipfile
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
-from fastapi.responses import JSONResponse, Response, StreamingResponse
+from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from backend.app.core.base import GeneratorConfig, ProblemDifficulty
 from backend.app.core.compiler import TypstCompiler
 from backend.app.export.qti_builder import QTIBuilder
-from backend.app.generators import GENERATOR_REGISTRY, KUTA_COURSE_CATALOG, get_generator
+from backend.app.generators import (
+    GENERATOR_REGISTRY,
+    KUTA_COURSE_CATALOG,
+    get_generator,
+)
 from backend.app.grading.aligner import WorksheetAligner
 from backend.app.grading.extractor import ProblemWorkspaceExtractor
 from backend.app.grading.verifier import CASStepVerifier
@@ -67,7 +71,9 @@ class StepVerifyRequest(BaseModel):
 
 @router.get("/catalog")
 def get_catalog():
-    """Return comprehensive 7-product Kuta course catalog with categories and topics."""
+    """Return comprehensive 7-product Kuta course catalog with categories
+    and topics.
+    """
     return KUTA_COURSE_CATALOG
 
 
@@ -88,7 +94,9 @@ def list_generators():
 @router.get("/standards")
 def get_standards():
     """Return hierarchical CCSS-M and TEKS curriculum standards."""
-    standards_path = pathlib.Path(__file__).parent.parent / "export" / "standards.json"
+    standards_path = (
+        pathlib.Path(__file__).parent.parent / "export" / "standards.json"
+    )
     if not standards_path.exists():
         raise HTTPException(status_code=404, detail="Standards file not found")
     return json.loads(standards_path.read_text(encoding="utf-8"))
@@ -123,7 +131,9 @@ def preview_problems(req: GeneratePDFRequest):
 
 @router.post("/worksheet/pdf")
 def generate_pdf(req: GeneratePDFRequest):
-    """Generate and stream a student printable PDF worksheet with corner ArUco markers and QR code."""
+    """Generate and stream a student printable PDF worksheet with corner
+    ArUco markers and QR code.
+    """
     active_seed = req.seed if req.seed is not None else 42
     problems = []
 
@@ -179,16 +189,19 @@ def generate_pdf(req: GeneratePDFRequest):
         student_period=req.student_period,
     )
 
+    disposition = f'inline; filename="{worksheet_id}_Form_{req.form_id}.pdf"'
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'inline; filename="{worksheet_id}_Form_{req.form_id}.pdf"'},
+        headers={"Content-Disposition": disposition},
     )
 
 
 @router.post("/worksheet/multi-form")
 def generate_multi_form(req: MultiFormRequest):
-    """Generate Forms A-D worksheets + companion Master Grading Matrix ZIP bundle."""
+    """Generate Forms A-D worksheets + companion Master Grading Matrix
+    ZIP bundle.
+    """
     worksheet_id = f"MF-{req.base_seed % 10000:04d}"
 
     forms_problems: Dict[str, List] = {}
@@ -206,8 +219,12 @@ def generate_multi_form(req: MultiFormRequest):
                 t_diff = t.get("difficulty", "medium")
                 diff_dist = {
                     ProblemDifficulty.MILD: 1.0 if t_diff == "mild" else 0.0,
-                    ProblemDifficulty.MEDIUM: 1.0 if t_diff == "medium" else 0.0,
-                    ProblemDifficulty.SPICY: 1.0 if t_diff == "spicy" else 0.0,
+                    ProblemDifficulty.MEDIUM: (
+                        1.0 if t_diff == "medium" else 0.0
+                    ),
+                    ProblemDifficulty.SPICY: (
+                        1.0 if t_diff == "spicy" else 0.0
+                    ),
                 }
                 cfg = GeneratorConfig(
                     problem_count=t_count,
@@ -247,26 +264,34 @@ def generate_multi_form(req: MultiFormRequest):
     with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(f"{worksheet_id}_Master_Grading_Matrix.pdf", matrix_pdf)
         for form_id, pdf_data in forms_pdfs.items():
-            zf.writestr(f"{worksheet_id}_Worksheet_Form_{form_id}.pdf", pdf_data)
+            fname = f"{worksheet_id}_Worksheet_Form_{form_id}.pdf"
+            zf.writestr(fname, pdf_data)
 
+    bundle_filename = f"{worksheet_id}_MultiForm_Bundle.zip"
+    disposition = f'attachment; filename="{bundle_filename}"'
     return Response(
         content=zip_buf.getvalue(),
         media_type="application/zip",
-        headers={"Content-Disposition": f'attachment; filename="{worksheet_id}_MultiForm_Bundle.zip"'},
+        headers={"Content-Disposition": disposition},
     )
 
 
 @router.post("/grade/upload")
 async def grade_upload(file: UploadFile = File(...)):
-    """Receive student scan image, apply ArUco perspective deskewing, crop workspaces, decode student QR, and run verification."""
+    """Receive student scan image, apply ArUco perspective deskewing,
+    crop workspaces, decode student QR, and run verification.
+    """
     image_bytes = await file.read()
     try:
         align_result = aligner.process(image_bytes)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Image processing failed: {str(e)}")
+        msg = f"Image processing failed: {str(e)}"
+        raise HTTPException(status_code=400, detail=msg)
 
     problem_count = align_result.metadata.get("problem_count", 6)
-    crops = extractor.extract_workspaces(align_result.warped_image, problem_count=problem_count)
+    crops = extractor.extract_workspaces(
+        align_result.warped_image, problem_count=problem_count
+    )
 
     # Check for student identification in QR metadata
     from backend.app.classroom.store import ClassroomStore
@@ -340,8 +365,9 @@ def export_qti(req: QTIExportRequest):
         problems=problems,
     )
 
+    disposition = 'attachment; filename="canvas_quiz_qti21.zip"'
     return Response(
         content=zip_bytes,
         media_type="application/zip",
-        headers={"Content-Disposition": 'attachment; filename="canvas_quiz_qti21.zip"'},
+        headers={"Content-Disposition": disposition},
     )
