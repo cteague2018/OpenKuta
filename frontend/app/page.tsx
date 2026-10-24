@@ -98,6 +98,10 @@ function typstToLatex(raw: string): string {
   s = s.replace(/plus\.minus/g, "\\pm ");
   s = s.replace(/sqrt\(([^)]+)\)/g, "\\sqrt{$1}");
   s = s.replace(/\bquad\b/g, "\\quad ");
+  s = s.replace(/cases\(([^,]+),\s*([^)]+)\)/g, "\\begin{cases} $1 \\\\ $2 \\end{cases}");
+  s = s.replace(/==>/g, "\\implies ");
+  s = s.replace(/\s*dot\s*/g, " \\cdot ");
+  s = s.replace(/\s*times\s*/g, " \\times ");
   s = s.replace(/(\d+)\s*\/\s*(\d+)/g, "\\frac{$1}{$2}");
   // Replace standalone asterisks with space
   s = s.replace(/\s*\*\s*/g, " ");

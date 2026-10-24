@@ -104,7 +104,7 @@ class TwoStepEquationsGenerator(BaseGenerator):
             steps = [
                 f"$ {eq_typst} $",
                 f"Isolate the fraction by {'subtracting' if b > 0 else 'adding'} {abs(b)}: $ x/{a} = {c - b} $",
-                f"Multiply both sides by {a}: $ x = {c - b} dot {a} $",
+                f"Multiply both sides by {a}: $ x = ({c - b}) dot {a} = {(c - b) * a} $",
                 f"Result: $ {ans_typst} $"
             ]
         else:
