@@ -1,0 +1,86 @@
+{
+  "curricula": {
+    "CCSS-M": {
+      "title": "Common Core State Standards for Mathematics",
+      "domains": {
+        "HSA-REI": {
+          "title": "Reasoning with Equations and Inequalities",
+          "clusters": {
+            "HSA.REI.B": {
+              "title": "Solve equations and inequalities in one variable",
+              "standards": {
+                "CCSS.MATH.CONTENT.HSA.REI.B.3": {
+                  "description": "Solve linear equations and inequalities in one variable, including equations with coefficients represented by letters.",
+                  "generator_ids": ["algebra_1.two_step"]
+                },
+                "CCSS.MATH.CONTENT.HSA.REI.B.4": {
+                  "description": "Solve quadratic equations in one variable.",
+                  "generator_ids": ["algebra_1.quadratics"]
+                },
+                "CCSS.MATH.CONTENT.HSA.REI.B.4.B": {
+                  "description": "Solve quadratic equations by inspection, taking square roots, completing the square, the quadratic formula and factoring, as appropriate to the initial form of the equation.",
+                  "generator_ids": ["algebra_1.quadratics"]
+                }
+              }
+            }
+          }
+        },
+        "HSA-SSE": {
+          "title": "Seeing Structure in Expressions",
+          "clusters": {
+            "HSA.SSE.B": {
+              "title": "Write expressions in equivalent forms to solve problems",
+              "standards": {
+                "CCSS.MATH.CONTENT.HSA.SSE.B.3.A": {
+                  "description": "Factor a quadratic expression to reveal the zeros of the function it defines.",
+                  "generator_ids": ["algebra_1.quadratics"]
+                }
+              }
+            }
+          }
+        },
+        "7-EE": {
+          "title": "Grade 7: Expressions and Equations",
+          "clusters": {
+            "7.EE.B": {
+              "title": "Solve real-life and mathematical problems using numerical and algebraic expressions and equations",
+              "standards": {
+                "CCSS.MATH.CONTENT.7.EE.B.4": {
+                  "description": "Use variables to represent quantities in a real-world or mathematical problem, and construct simple equations and inequalities to solve problems by reasoning about the quantities.",
+                  "generator_ids": ["algebra_1.two_step"]
+                },
+                "CCSS.MATH.CONTENT.7.EE.B.4.A": {
+                  "description": "Solve word problems leading to equations of the form px + q = r and p(x + q) = r.",
+                  "generator_ids": ["algebra_1.two_step"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "TEKS": {
+      "title": "Texas Essential Knowledge and Skills",
+      "domains": {
+        "Algebra-1": {
+          "title": "Algebra I",
+          "standards": {
+            "TEKS.MATH.A1.8.A": {
+              "description": "Solve quadratic equations having real solutions by factoring, taking square roots, completing the square, and applying the quadratic formula.",
+              "generator_ids": ["algebra_1.quadratics"]
+            },
+            "TEKS.MATH.7.11.A": {
+              "description": "Model and solve one-variable, two-step equations and inequalities.",
+              "generator_ids": ["algebra_1.two_step"]
+            },
+            "TEKS.MATH.8.8.C": {
+              "description": "Model and solve one-variable equations with variables on both sides of the equal sign.",
+              "generator_ids": ["algebra_1.two_step"]
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

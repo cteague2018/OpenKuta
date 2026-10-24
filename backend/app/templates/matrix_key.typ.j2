@@ -1,0 +1,51 @@
+#set page(
+  paper: "us-letter",
+  margin: (top: 0.5in, bottom: 0.5in, left: 0.5in, right: 0.5in),
+)
+
+#set text(font: "Liberation Sans", size: 9pt)
+
+#align(center)[
+  #text(size: 14pt, weight: "bold")[Master Grading Matrix: {{ title }}] \
+  #v(2pt)
+  #text(size: 9pt, fill: luma(90))[Worksheet ID: {{ worksheet_id }} | Scrambled Form Solutions (A–D)]
+]
+
+#v(8pt)
+
+#table(
+  columns: (32pt, 1fr, 1fr, 1fr, 1fr),
+  stroke: 0.5pt + luma(180),
+  fill: (col, row) => if row == 0 { rgb(241, 245, 249) } else if calc.even(row) { rgb(248, 250, 252) } else { white },
+  inset: 6pt,
+  align: (col, row) => if col == 0 { center + horizon } else { left + horizon },
+
+  // Header Row
+  [*Item*],
+  [*Form A*],
+  [*Form B*],
+  [*Form C*],
+  [*Form D*],
+
+  // Data Rows
+  {% for row in rows %}
+  [*{{ row.index }}*],
+  [
+    #text(weight: "bold", size: 9.5pt)[{{ row.A.answer }}] \
+    #text(size: 7.5pt, fill: luma(100))[{{ row.A.equation }}]
+  ],
+  [
+    #text(weight: "bold", size: 9.5pt)[{{ row.B.answer }}] \
+    #text(size: 7.5pt, fill: luma(100))[{{ row.B.equation }}]
+  ],
+  [
+    #text(weight: "bold", size: 9.5pt)[{{ row.C.answer }}] \
+    #text(size: 7.5pt, fill: luma(100))[{{ row.C.equation }}]
+  ],
+  [
+    #text(weight: "bold", size: 9.5pt)[{{ row.D.answer }}] \
+    #text(size: 7.5pt, fill: luma(100))[{{ row.D.equation }}]
+  ],
+  {% endfor %}
+)
+

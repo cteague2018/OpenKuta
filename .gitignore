@@ -1,0 +1,44 @@
+# Node / Next.js
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+out/
+build/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*/__pycache__/
+*/*/__pycache__/
+*/*/*/__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+ENV/
+env/
+
+# Vercel
+.vercel
+
+# Environment & Local Secrets
+.env
+.env*.local
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+
+# Testing & Compilation Temp Output
+*.pdf
+aruco_*.png
+qr_*.png
+temp_*.png

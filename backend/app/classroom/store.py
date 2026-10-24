@@ -1,0 +1,123 @@
+from __future__ import annotations
+
+import json
+import pathlib
+import uuid
+from typing import Dict, List, Optional
+from backend.app.classroom.models import Classroom, Student, StudentSubmission
+
+
+STORAGE_DIR = pathlib.Path(__file__).parent.parent / "data"
+CLASSROOM_FILE = STORAGE_DIR / "classrooms.json"
+SUBMISSIONS_FILE = STORAGE_DIR / "submissions.json"
+
+
+class ClassroomStore:
+    """Manages persistence of classrooms, rosters, and individual student submissions."""
+
+    def __init__(self) -> None:
+        STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+        self.classrooms: Dict[str, Classroom] = {}
+        self.submissions: Dict[str, StudentSubmission] = {}
+        self._load()
+
+    def _load(self) -> None:
+        if CLASSROOM_FILE.exists():
+            try:
+                data = json.loads(CLASSROOM_FILE.read_text(encoding="utf-8"))
+                for cid, cdata in data.items():
+                    self.classrooms[cid] = Classroom.model_validate(cdata)
+            except Exception:
+                self._seed_default_classes()
+        else:
+            self._seed_default_classes()
+
+        if SUBMISSIONS_FILE.exists():
+            try:
+                data = json.loads(SUBMISSIONS_FILE.read_text(encoding="utf-8"))
+                for sid, sdata in data.items():
+                    self.submissions[sid] = StudentSubmission.model_validate(sdata)
+            except Exception:
+                pass
+
+    def _save(self) -> None:
+        CLASSROOM_FILE.write_text(
+            json.dumps({k: v.model_dump() for k, v in self.classrooms.items()}, indent=2),
+            encoding="utf-8",
+        )
+        SUBMISSIONS_FILE.write_text(
+            json.dumps({k: v.model_dump() for k, v in self.submissions.items()}, indent=2),
+            encoding="utf-8",
+        )
+
+    def _seed_default_classes(self) -> None:
+        """Seed a default Algebra 1 Period 2 class with sample students."""
+        sample_students = [
+            Student(id="stu_101", student_id="S10481", first_name="Maya", last_name="Lin", email="maya.lin@school.edu", period="2"),
+            Student(id="stu_102", student_id="S10482", first_name="Lucas", last_name="Vance", email="lucas.vance@school.edu", period="2"),
+            Student(id="stu_103", student_id="S10483", first_name="Chloe", last_name="Zhao", email="chloe.zhao@school.edu", period="2"),
+            Student(id="stu_104", student_id="S10484", first_name="Ethan", last_name="Davis", email="ethan.davis@school.edu", period="2"),
+            Student(id="stu_105", student_id="S10485", first_name="Sophia", last_name="Martinez", email="sophia.m@school.edu", period="2"),
+        ]
+        default_class = Classroom(
+            id="class_alg1_p2",
+            name="Algebra 1 (Period 2)",
+            subject="Algebra 1",
+            period="2",
+            teacher_name="Mr. Anderson",
+            students=sample_students,
+        )
+        self.classrooms[default_class.id] = default_class
+        self._save()
+
+    def list_classes(self) -> List[Classroom]:
+        return list(self.classrooms.values())
+
+    def get_class(self, class_id: str) -> Optional[Classroom]:
+        return self.classrooms.get(class_id)
+
+    def create_class(self, name: str, subject: str, period: str, teacher_name: str = "Teacher") -> Classroom:
+        cid = f"class_{uuid.uuid4().hex[:8]}"
+        classroom = Classroom(
+            id=cid,
+            name=name,
+            subject=subject,
+            period=period,
+            teacher_name=teacher_name,
+            students=[],
+        )
+        self.classrooms[cid] = classroom
+        self._save()
+        return classroom
+
+    def add_students_to_class(self, class_id: str, new_students: List[Student]) -> Classroom:
+        classroom = self.get_class(class_id)
+        if not classroom:
+            raise ValueError(f"Classroom '{class_id}' not found")
+
+        # Avoid duplicates based on student_id
+        existing_ids = {s.student_id for s in classroom.students}
+        for s in new_students:
+            if s.student_id not in existing_ids:
+                classroom.students.append(s)
+                existing_ids.add(s.student_id)
+
+        self._save()
+        return classroom
+
+    def record_submission(self, submission: StudentSubmission) -> None:
+        self.submissions[submission.submission_id] = submission
+        self._save()
+
+    def get_class_submissions(self, class_id: str) -> List[StudentSubmission]:
+        return [s for s in self.submissions.values() if s.class_id == class_id]
+
+    def find_student(self, class_id: str, student_id: str) -> Optional[Student]:
+        classroom = self.get_class(class_id)
+        if not classroom:
+            return None
+        for s in classroom.students:
+            if s.student_id.lower() == student_id.lower():
+                return s
+        return None
+

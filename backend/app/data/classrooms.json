@@ -1,0 +1,122 @@
+{
+  "class_alg1_p2": {
+    "id": "class_alg1_p2",
+    "name": "Algebra 1 (Period 2)",
+    "subject": "Algebra 1",
+    "period": "2",
+    "teacher_name": "Mr. Anderson",
+    "students": [
+      {
+        "id": "stu_101",
+        "student_id": "S10481",
+        "first_name": "Maya",
+        "last_name": "Lin",
+        "email": "maya.lin@school.edu",
+        "period": "2"
+      },
+      {
+        "id": "stu_102",
+        "student_id": "S10482",
+        "first_name": "Lucas",
+        "last_name": "Vance",
+        "email": "lucas.vance@school.edu",
+        "period": "2"
+      },
+      {
+        "id": "stu_103",
+        "student_id": "S10483",
+        "first_name": "Chloe",
+        "last_name": "Zhao",
+        "email": "chloe.zhao@school.edu",
+        "period": "2"
+      },
+      {
+        "id": "stu_104",
+        "student_id": "S10484",
+        "first_name": "Ethan",
+        "last_name": "Davis",
+        "email": "ethan.davis@school.edu",
+        "period": "2"
+      },
+      {
+        "id": "stu_105",
+        "student_id": "S10485",
+        "first_name": "Sophia",
+        "last_name": "Martinez",
+        "email": "sophia.m@school.edu",
+        "period": "2"
+      }
+    ],
+    "created_at": "2026-10-24T15:03:19.663749"
+  },
+  "class_0389a0df": {
+    "id": "class_0389a0df",
+    "name": "Geometry Period 4",
+    "subject": "Geometry",
+    "period": "4",
+    "teacher_name": "Teacher",
+    "students": [
+      {
+        "id": "stu_5fcdaf5e",
+        "student_id": "STU_1",
+        "first_name": "Leo",
+        "last_name": "Tolstoy",
+        "email": null,
+        "period": "1"
+      },
+      {
+        "id": "stu_3c4c2266",
+        "student_id": "STU_2",
+        "first_name": "Mark",
+        "last_name": "Twain",
+        "email": null,
+        "period": "1"
+      }
+    ],
+    "created_at": "2026-10-24T15:03:19.664892"
+  },
+  "class_174595c6": {
+    "id": "class_174595c6",
+    "name": "Precalc Period 1",
+    "subject": "Precalculus",
+    "period": "1",
+    "teacher_name": "Teacher",
+    "students": [],
+    "created_at": "2026-10-24T15:03:53.381951"
+  },
+  "class_221de4fc": {
+    "id": "class_221de4fc",
+    "name": "Precalc Period 1",
+    "subject": "Precalculus",
+    "period": "1",
+    "teacher_name": "Teacher",
+    "students": [],
+    "created_at": "2026-10-24T15:08:46.009588"
+  },
+  "class_67e29b46": {
+    "id": "class_67e29b46",
+    "name": "Geometry Period 4",
+    "subject": "Geometry",
+    "period": "4",
+    "teacher_name": "Teacher",
+    "students": [
+      {
+        "id": "stu_f8825ded",
+        "student_id": "STU_1",
+        "first_name": "Leo",
+        "last_name": "Tolstoy",
+        "email": null,
+        "period": "1"
+      },
+      {
+        "id": "stu_638fe21b",
+        "student_id": "STU_2",
+        "first_name": "Mark",
+        "last_name": "Twain",
+        "email": null,
+        "period": "1"
+      }
+    ],
+    "created_at": "2026-10-24T15:08:46.259205"
+  }
+}
