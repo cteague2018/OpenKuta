@@ -1,8 +1,8 @@
-import pytest
 import sympy as sp
 from backend.app.core.base import GeneratorConfig, ProblemDifficulty
-from backend.app.generators.algebra_1.quadratics import QuadraticEquationsGenerator
-from backend.app.generators.algebra_1.two_step_equations import TwoStepEquationsGenerator
+from backend.app.generators.algebra_1.quadratics import (
+    QuadraticEquationsGenerator,
+)
 
 
 def test_generator_determinism():
@@ -32,14 +32,19 @@ def test_generator_determinism():
 
 def test_quadratic_mild_integer_roots():
     gen = QuadraticEquationsGenerator()
+    diff_dist = {
+        ProblemDifficulty.MILD: 1.0,
+        ProblemDifficulty.MEDIUM: 0.0,
+        ProblemDifficulty.SPICY: 0.0,
+    }
     cfg = GeneratorConfig(
         problem_count=5,
-        difficulty_distribution={ProblemDifficulty.MILD: 1.0, ProblemDifficulty.MEDIUM: 0.0, ProblemDifficulty.SPICY: 0.0},
+        difficulty_distribution=diff_dist,
         seed=101,
     )
     problems = gen.generate(cfg)
 
-    x = sp.Symbol('x')
+    x = sp.Symbol("x")
     for prob in problems:
         assert prob.difficulty == ProblemDifficulty.MILD
         roots = prob.metadata["roots"]
@@ -52,10 +57,18 @@ def test_quadratic_mild_integer_roots():
 
 
 def test_new_kuta_generators():
-    from backend.app.generators.algebra_1.linear_equations import LinearEquationsGenerator
-    from backend.app.generators.algebra_1.systems import SystemsOfEquationsGenerator
-    from backend.app.generators.algebra_1.polynomials import PolynomialFactoringGenerator
-    from backend.app.generators.geometry.pythagorean import PythagoreanTheoremGenerator
+    from backend.app.generators.algebra_1.linear_equations import (
+        LinearEquationsGenerator,
+    )
+    from backend.app.generators.algebra_1.systems import (
+        SystemsOfEquationsGenerator,
+    )
+    from backend.app.generators.algebra_1.polynomials import (
+        PolynomialFactoringGenerator,
+    )
+    from backend.app.generators.geometry.pythagorean import (
+        PythagoreanTheoremGenerator,
+    )
 
     cfg = GeneratorConfig(problem_count=3, seed=50)
 
@@ -63,7 +76,9 @@ def test_new_kuta_generators():
     g_lin = LinearEquationsGenerator()
     probs_lin = g_lin.generate(cfg)
     assert len(probs_lin) == 3
-    assert all("m =" in p.answer_typst or "y =" in p.answer_typst for p in probs_lin)
+    assert all(
+        "m =" in p.answer_typst or "y =" in p.answer_typst for p in probs_lin
+    )
 
     # Systems of Equations
     g_sys = SystemsOfEquationsGenerator()
@@ -84,7 +99,10 @@ def test_new_kuta_generators():
     assert all("=" in p.equation_typst for p in probs_pyth)
 
     # Multi-Step Equations
-    from backend.app.generators.algebra_1.multi_step_equations import MultiStepEquationsGenerator
+    from backend.app.generators.algebra_1.multi_step_equations import (
+        MultiStepEquationsGenerator,
+    )
+
     g_multi = MultiStepEquationsGenerator()
     probs_multi = g_multi.generate(cfg)
     assert len(probs_multi) == 3
@@ -108,17 +126,21 @@ def test_forensic_audit_all_generators_steps_and_workspaces():
         gen = gen_cls()
         for diff in difficulties:
             dist = {d: 1.0 if d == diff else 0.0 for d in difficulties}
-            cfg = GeneratorConfig(problem_count=4, difficulty_distribution=dist, seed=12345)
+            cfg = GeneratorConfig(
+                problem_count=4,
+                difficulty_distribution=dist,
+                seed=12345,
+            )
             problems = gen.generate(cfg)
 
-            assert len(problems) == 4, f"{gen_id} failed to generate 4 problems"
+            assert len(problems) == 4, f"{gen_id} failed: count != 4"
             for prob in problems:
                 assert prob.prompt_text, f"{gen_id} missing prompt_text"
                 assert prob.equation_typst, f"{gen_id} missing equation_typst"
                 assert prob.answer_typst, f"{gen_id} missing answer_typst"
                 assert prob.steps_typst and len(prob.steps_typst) >= 2, (
-                    f"{gen_id} ({diff.value}) has incomplete solution steps: {prob.steps_typst}"
+                    f"{gen_id} ({diff.value}) has incomplete steps"
                 )
-                # Check that steps include both prompt equation and answer
-                assert len(prob.distractors) >= 2, f"{gen_id} missing distractors"
-
+                assert (
+                    len(prob.distractors) >= 2
+                ), f"{gen_id} missing distractors"

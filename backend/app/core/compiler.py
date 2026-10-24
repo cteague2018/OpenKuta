@@ -1,16 +1,14 @@
 from __future__ import annotations
 
-import base64
 import json
-import os
 import pathlib
 import shutil
 import tempfile
-import time
 from typing import Any, Dict, List, Optional
 import cv2
 import jinja2
 import qrcode
+import qrcode.constants as qr_constants
 import typst
 
 from backend.app.core.base import BaseProblem
@@ -36,24 +34,29 @@ def ensure_aruco_markers() -> Dict[int, pathlib.Path]:
     return marker_paths
 
 
-def generate_qr_code(payload: Dict[str, Any], output_path: pathlib.Path) -> pathlib.Path:
+def generate_qr_code(
+    payload: Dict[str, Any], output_path: pathlib.Path
+) -> pathlib.Path:
     """Generate a high-contrast QR code image encoding worksheet metadata."""
     qr_data = json.dumps(payload, separators=(",", ":"))
     qr = qrcode.QRCode(
         version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        error_correction=qr_constants.ERROR_CORRECT_M,
         box_size=8,
         border=1,
     )
     qr.add_data(qr_data)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
-    img.save(str(output_path))
+    with open(output_path, "wb") as f:
+        img.save(f)
     return output_path
 
 
 class TypstCompiler:
-    """High performance Typst template compiler with anti-cheating ArUco fiducials and QR tracking."""
+    """High performance Typst template compiler with anti-cheating ArUco
+    fiducials and QR tracking.
+    """
 
     def __init__(self, template_dir: Optional[pathlib.Path] = None) -> None:
         self.template_dir = template_dir or TEMPLATE_DIR
@@ -86,16 +89,17 @@ class TypstCompiler:
         medium_problems = [p for p in problems if p.difficulty == "medium"]
         spicy_problems = [p for p in problems if p.difficulty == "spicy"]
 
-        # Calculate dynamic workspace height with extra clearance for multi-step problems
+        # Dynamic workspace height with extra clearance for multi-step
         has_multistep = any(
             "multi" in (p.prompt_text or "").lower() or len(p.steps_typst) >= 4
             for p in problems
         )
         total_rows = max(1, (len(problems) + columns - 1) // columns)
-        # For multi-step, budget generous 2-3 rows per page so students have room to show work
         if has_multistep or total_rows <= 3:
             effective_rows = min(total_rows, 3)
-            box_height_pt = max(150, min(270, int(580 / max(1, effective_rows))))
+            box_height_pt = max(
+                150, min(270, int(580 / max(1, effective_rows)))
+            )
         else:
             box_height_pt = max(110, min(240, int(580 / max(1, total_rows))))
 
@@ -127,25 +131,37 @@ class TypstCompiler:
         worksheet_id: str,
         forms_data: Dict[str, List[BaseProblem]],
     ) -> str:
-        """Render the 4-column Master Grading Matrix aligning Forms A-D side by side."""
+        """Render the 4-column Master Grading Matrix aligning Forms A-D."""
         template = self.jinja_env.get_template("matrix_key.typ.j2")
 
         first_form = next(iter(forms_data.values()))
         problem_indices = list(range(1, len(first_form) + 1))
 
-        rows = []
+        rows: List[Dict[str, Any]] = []
         for idx in problem_indices:
-            row = {"index": idx}
+            row: Dict[str, Any] = {"index": idx}
             for form_id in ["A", "B", "C", "D"]:
-                if form_id in forms_data and idx - 1 < len(forms_data[form_id]):
+                if (
+                    form_id in forms_data
+                    and idx - 1 < len(forms_data[form_id])
+                ):
                     prob = forms_data[form_id][idx - 1]
+                    diff_val = (
+                        prob.difficulty.value
+                        if hasattr(prob.difficulty, "value")
+                        else prob.difficulty
+                    )
                     row[form_id] = {
                         "equation": prob.equation_typst,
                         "answer": prob.answer_typst,
-                        "difficulty": prob.difficulty.value if hasattr(prob.difficulty, 'value') else prob.difficulty,
+                        "difficulty": diff_val,
                     }
                 else:
-                    row[form_id] = {"equation": "-", "answer": "-", "difficulty": "-"}
+                    row[form_id] = {
+                        "equation": "-",
+                        "answer": "-",
+                        "difficulty": "-",
+                    }
             rows.append(row)
 
         context = {
@@ -170,7 +186,7 @@ class TypstCompiler:
         student_period: Optional[str] = None,
         class_id: Optional[str] = None,
     ) -> bytes:
-        """End-to-end worksheet generation: QR generation + copy assets + compile in <100ms."""
+        """End-to-end worksheet generation with QR + ArUco markers."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = pathlib.Path(tmp_dir)
 
@@ -182,8 +198,9 @@ class TypstCompiler:
                 marker_filenames[m_id] = f"aruco_{m_id}.png"
 
             # Generate QR code with student and class tracking
-            qr_filename = f"qr_{worksheet_id}_{form_id}_{student_id or 'anon'}.png"
-            payload = {
+            anon_sid = student_id or "anon"
+            qr_filename = f"qr_{worksheet_id}_{form_id}_{anon_sid}.png"
+            payload: Dict[str, Any] = {
                 "w": worksheet_id,
                 "f": form_id,
                 "s": seed,
@@ -226,7 +243,7 @@ class TypstCompiler:
         class_id: str,
         columns: int = 2,
     ) -> bytes:
-        """Generate a single bundled PDF containing a personalized page for every student in the roster."""
+        """Generate bundled PDF with a personalized page per student."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = pathlib.Path(tmp_dir)
 
@@ -240,7 +257,10 @@ class TypstCompiler:
 
             for s_idx, stu in enumerate(students):
                 s_id = stu.get("student_id", f"S{s_idx:04d}")
-                s_name = stu.get("name") or f"{stu.get('first_name', '')} {stu.get('last_name', '')}".strip()
+                fn = stu.get("first_name", "")
+                ln = stu.get("last_name", "")
+                raw_name = f"{fn} {ln}".strip()
+                s_name = stu.get("name") or raw_name
                 s_period = stu.get("period", "1")
 
                 qr_filename = f"qr_batch_{worksheet_id}_{s_id}.png"
@@ -269,10 +289,6 @@ class TypstCompiler:
                 )
                 page_markups.append(markup)
 
-            # Join all student pages with #pagebreak()
-            # In Typst, we only need the page header/set definitions on the first page,
-            # or joining entire independent document sections via pagebreak()
-            # To ensure proper typst set rules across pages:
             combined_markup = "\n#pagebreak()\n".join(page_markups)
 
             source_file = tmp_path / "class_batch.typ"
@@ -297,4 +313,3 @@ class TypstCompiler:
             source_file = tmp_path / "matrix.typ"
             source_file.write_text(typ_markup, encoding="utf-8")
             return typst.compile(source_file)
-

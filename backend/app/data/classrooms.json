@@ -232,5 +232,40 @@
       }
     ],
     "created_at": "2026-10-24T19:56:55.721123"
+  },
+  "class_d8b10dec": {
+    "id": "class_d8b10dec",
+    "name": "Precalc Period 1",
+    "subject": "Precalculus",
+    "period": "1",
+    "teacher_name": "Teacher",
+    "students": [],
+    "created_at": "2026-10-24T20:01:49.441362"
+  },
+  "class_a1fa6e20": {
+    "id": "class_a1fa6e20",
+    "name": "Geometry Period 4",
+    "subject": "Geometry",
+    "period": "4",
+    "teacher_name": "Teacher",
+    "students": [
+      {
+        "id": "stu_fe1862a7",
+        "student_id": "STU_1",
+        "first_name": "Leo",
+        "last_name": "Tolstoy",
+        "email": null,
+        "period": "1"
+      },
+      {
+        "id": "stu_5c6760e3",
+        "student_id": "STU_2",
+        "first_name": "Mark",
+        "last_name": "Twain",
+        "email": null,
+        "period": "1"
+      }
+    ],
+    "created_at": "2026-10-24T20:01:49.678261"
   }
 }
