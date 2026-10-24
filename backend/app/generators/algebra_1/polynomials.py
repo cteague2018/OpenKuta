@@ -26,6 +26,7 @@ class PolynomialFactoringGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
+        idx = problem_idx
         x = sp.Symbol('x')
 
         if difficulty == ProblemDifficulty.MILD:
@@ -36,8 +37,9 @@ class PolynomialFactoringGenerator(BaseGenerator):
             return self._generate_trinomial_non_monic(rng, problem_idx, allow_negatives, x)
 
     def _generate_difference_of_squares_or_gcf(
-        self, rng: random.Random, idx: int, allow_negatives: bool, x: sp.Symbol
+        self, rng: random.Random, problem_idx: int, allow_negatives: bool, x: sp.Symbol
     ) -> BaseProblem:
+        idx = problem_idx
         """Difference of two squares: a^2 x^2 - b^2."""
         b = rng.choice([2, 3, 4, 5, 6, 7, 8, 9, 10])
         a = rng.choice([1, 1, 1, 2, 3])  # mostly 1
@@ -59,7 +61,7 @@ class PolynomialFactoringGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"factor_mild_{idx}",
+            id=f"factor_mild_{problem_idx}",
             prompt_text="Factor each completely.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -71,8 +73,9 @@ class PolynomialFactoringGenerator(BaseGenerator):
         )
 
     def _generate_trinomial_monic(
-        self, rng: random.Random, idx: int, allow_negatives: bool, x: sp.Symbol
+        self, rng: random.Random, problem_idx: int, allow_negatives: bool, x: sp.Symbol
     ) -> BaseProblem:
+        idx = problem_idx
         """Monic trinomial: x^2 + bx + c = (x + p)(x + q)."""
         pool = list(range(1, 10))
         if allow_negatives:
@@ -103,7 +106,7 @@ class PolynomialFactoringGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"factor_med_{idx}",
+            id=f"factor_med_{problem_idx}",
             prompt_text="Factor each completely.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -115,8 +118,9 @@ class PolynomialFactoringGenerator(BaseGenerator):
         )
 
     def _generate_trinomial_non_monic(
-        self, rng: random.Random, idx: int, allow_negatives: bool, x: sp.Symbol
+        self, rng: random.Random, problem_idx: int, allow_negatives: bool, x: sp.Symbol
     ) -> BaseProblem:
+        idx = problem_idx
         """Non-monic trinomial: (ax + p)(bx + q)."""
         a = rng.choice([2, 3, 5])
         b = 1
@@ -142,7 +146,7 @@ class PolynomialFactoringGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"factor_spicy_{idx}",
+            id=f"factor_spicy_{problem_idx}",
             prompt_text="Factor each completely.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",

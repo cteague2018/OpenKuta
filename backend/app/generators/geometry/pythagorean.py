@@ -26,6 +26,7 @@ class PythagoreanTheoremGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
+        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             return self._generate_pythagorean_triple(rng, problem_idx)
         elif difficulty == ProblemDifficulty.MEDIUM:
@@ -33,7 +34,7 @@ class PythagoreanTheoremGenerator(BaseGenerator):
         else:
             return self._generate_radical_hypotenuse(rng, problem_idx)
 
-    def _generate_pythagorean_triple(self, rng: random.Random, idx: int) -> BaseProblem:
+    def _generate_pythagorean_triple(self, rng: random.Random, problem_idx: int) -> BaseProblem:
         """Find the missing hypotenuse with exact integer triple (3-4-5, 5-12-13, 8-15-17)."""
         base_triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25), (6, 8, 10)]
         a_base, b_base, c_base = rng.choice(base_triples)
@@ -56,7 +57,7 @@ class PythagoreanTheoremGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"pyth_mild_{idx}",
+            id=f"pyth_mild_{problem_idx}",
             prompt_text="Find the missing side of each triangle. Round your answer to the nearest tenth if necessary.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -67,7 +68,7 @@ class PythagoreanTheoremGenerator(BaseGenerator):
             metadata={"a": a, "b": b, "c": c}
         )
 
-    def _generate_find_leg(self, rng: random.Random, idx: int) -> BaseProblem:
+    def _generate_find_leg(self, rng: random.Random, problem_idx: int) -> BaseProblem:
         """Given leg and hypotenuse, solve for the other leg."""
         base_triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (6, 8, 10), (9, 12, 15)]
         a_base, b_base, c_base = rng.choice(base_triples)
@@ -90,7 +91,7 @@ class PythagoreanTheoremGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"pyth_med_{idx}",
+            id=f"pyth_med_{problem_idx}",
             prompt_text="Find the missing side of each right triangle.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -101,7 +102,7 @@ class PythagoreanTheoremGenerator(BaseGenerator):
             metadata={"a": a, "b": b, "c": c}
         )
 
-    def _generate_radical_hypotenuse(self, rng: random.Random, idx: int) -> BaseProblem:
+    def _generate_radical_hypotenuse(self, rng: random.Random, problem_idx: int) -> BaseProblem:
         """Non-integer hypotenuse with radical simplification or decimal approximation."""
         a = rng.randint(3, 9)
         b = rng.randint(4, 11)
@@ -138,7 +139,7 @@ class PythagoreanTheoremGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"pyth_spicy_{idx}",
+            id=f"pyth_spicy_{problem_idx}",
             prompt_text="Find the missing side of each right triangle. Give exact simplified radical and decimal to nearest tenth.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",

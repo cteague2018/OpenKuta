@@ -26,6 +26,7 @@ class LinearEquationsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
+        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             return self._generate_slope_from_points(rng, problem_idx, allow_negatives)
         elif difficulty == ProblemDifficulty.MEDIUM:
@@ -34,8 +35,9 @@ class LinearEquationsGenerator(BaseGenerator):
             return self._generate_standard_to_slope_intercept(rng, problem_idx, allow_negatives)
 
     def _generate_slope_from_points(
-        self, rng: random.Random, idx: int, allow_negatives: bool
+        self, rng: random.Random, problem_idx: int, allow_negatives: bool
     ) -> BaseProblem:
+        idx = problem_idx
         """Find the slope of the line through each pair of points."""
         x1 = rng.randint(-8, 8) if allow_negatives else rng.randint(1, 8)
         y1 = rng.randint(-8, 8) if allow_negatives else rng.randint(1, 8)
@@ -73,7 +75,7 @@ class LinearEquationsGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"slope_mild_{idx}",
+            id=f"slope_mild_{problem_idx}",
             prompt_text="Find the slope of the line through each pair of points.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -85,8 +87,9 @@ class LinearEquationsGenerator(BaseGenerator):
         )
 
     def _generate_slope_intercept(
-        self, rng: random.Random, idx: int, allow_negatives: bool
+        self, rng: random.Random, problem_idx: int, allow_negatives: bool
     ) -> BaseProblem:
+        idx = problem_idx
         """Write the slope-intercept equation given a point and slope."""
         m_num = rng.choice([-3, -2, -1, 1, 2, 3])
         m_den = rng.choice([1, 2, 3, 4]) if rng.random() < 0.4 else 1
@@ -128,7 +131,7 @@ class LinearEquationsGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"slope_med_{idx}",
+            id=f"slope_med_{problem_idx}",
             prompt_text="Write the slope-intercept form of the equation of each line.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -140,8 +143,9 @@ class LinearEquationsGenerator(BaseGenerator):
         )
 
     def _generate_standard_to_slope_intercept(
-        self, rng: random.Random, idx: int, allow_negatives: bool
+        self, rng: random.Random, problem_idx: int, allow_negatives: bool
     ) -> BaseProblem:
+        idx = problem_idx
         """Convert standard form Ax + By = C to slope-intercept form y = mx + b."""
         B = rng.choice([2, 3, 4, 5, -2, -3])
         A = rng.choice([1, 2, 3, 4, 6, -1, -2, -3])
@@ -181,7 +185,7 @@ class LinearEquationsGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"slope_spicy_{idx}",
+            id=f"slope_spicy_{problem_idx}",
             prompt_text="Convert each standard form equation into slope-intercept form.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",

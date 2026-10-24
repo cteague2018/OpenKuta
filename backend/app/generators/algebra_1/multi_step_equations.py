@@ -25,6 +25,7 @@ class MultiStepEquationsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True,
     ) -> BaseProblem:
+        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             return self._generate_mild(rng, problem_idx, allow_negatives)
         elif difficulty == ProblemDifficulty.MEDIUM:
@@ -32,7 +33,7 @@ class MultiStepEquationsGenerator(BaseGenerator):
         else:
             return self._generate_spicy(rng, problem_idx, allow_negatives)
 
-    def _generate_mild(self, rng: random.Random, idx: int, allow_negatives: bool) -> BaseProblem:
+    def _generate_mild(self, rng: random.Random, problem_idx: int, allow_negatives: bool) -> BaseProblem:
         """Mild: Distributive property a(x + b) = c or like terms ax + b + cx = d."""
         mode = rng.choice(["distribute", "like_terms"])
 
@@ -79,7 +80,7 @@ class MultiStepEquationsGenerator(BaseGenerator):
         d3 = f"x = {r - 2}"
 
         return BaseProblem(
-            id=f"multistep_mild_{idx}",
+            id=f"multistep_mild_{problem_idx}",
             prompt_text="Solve each multi-step equation.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -89,7 +90,7 @@ class MultiStepEquationsGenerator(BaseGenerator):
             standards=self.standards,
         )
 
-    def _generate_medium(self, rng: random.Random, idx: int, allow_negatives: bool) -> BaseProblem:
+    def _generate_medium(self, rng: random.Random, problem_idx: int, allow_negatives: bool) -> BaseProblem:
         """Medium: Variables on both sides: a*x + b = c*x + d."""
         r = rng.randint(-8, 8) if allow_negatives else rng.randint(1, 8)
         a = rng.choice([3, 4, 5, 6, 7])
@@ -119,7 +120,7 @@ class MultiStepEquationsGenerator(BaseGenerator):
         d3 = f"x = {r + 1}"
 
         return BaseProblem(
-            id=f"multistep_med_{idx}",
+            id=f"multistep_med_{problem_idx}",
             prompt_text="Solve each multi-step equation.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -129,7 +130,7 @@ class MultiStepEquationsGenerator(BaseGenerator):
             standards=self.standards,
         )
 
-    def _generate_spicy(self, rng: random.Random, idx: int, allow_negatives: bool) -> BaseProblem:
+    def _generate_spicy(self, rng: random.Random, problem_idx: int, allow_negatives: bool) -> BaseProblem:
         """Spicy: Distribute and variables on both sides: a(x + b) = c(x + d) + e."""
         r = rng.randint(-6, 6) if allow_negatives else rng.randint(1, 6)
         a = rng.choice([2, 3, 4])
@@ -167,7 +168,7 @@ class MultiStepEquationsGenerator(BaseGenerator):
         d3 = f"x = {r - 1}"
 
         return BaseProblem(
-            id=f"multistep_spicy_{idx}",
+            id=f"multistep_spicy_{problem_idx}",
             prompt_text="Solve each multi-step equation.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",

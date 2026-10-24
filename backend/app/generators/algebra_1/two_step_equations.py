@@ -26,6 +26,7 @@ class TwoStepEquationsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
+        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             return self._generate_mild(rng, problem_idx, allow_negatives)
         elif difficulty == ProblemDifficulty.MEDIUM:
@@ -33,7 +34,7 @@ class TwoStepEquationsGenerator(BaseGenerator):
         else:
             return self._generate_spicy(rng, problem_idx, allow_negatives)
 
-    def _generate_mild(self, rng: random.Random, idx: int, allow_negatives: bool) -> BaseProblem:
+    def _generate_mild(self, rng: random.Random, problem_idx: int, allow_negatives: bool) -> BaseProblem:
         """Standard two-step: a*x + b = c with positive integers and integer solution."""
         r = rng.randint(2, 9)
         a = rng.randint(2, 7)
@@ -59,7 +60,7 @@ class TwoStepEquationsGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"twostep_mild_{idx}",
+            id=f"twostep_mild_{problem_idx}",
             prompt_text="Solve each two-step equation.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -70,7 +71,7 @@ class TwoStepEquationsGenerator(BaseGenerator):
             metadata={"a": a, "b": b, "c": c, "root": r}
         )
 
-    def _generate_medium(self, rng: random.Random, idx: int, allow_negatives: bool) -> BaseProblem:
+    def _generate_medium(self, rng: random.Random, problem_idx: int, allow_negatives: bool) -> BaseProblem:
         """Two-step with negatives and division: x/a + b = c or -a*x + b = c."""
         flavor = rng.choice(["fraction", "negative_coeff"])
 
@@ -129,7 +130,7 @@ class TwoStepEquationsGenerator(BaseGenerator):
             ]
 
         return BaseProblem(
-            id=f"twostep_med_{idx}",
+            id=f"twostep_med_{problem_idx}",
             prompt_text="Solve each equation.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -140,7 +141,7 @@ class TwoStepEquationsGenerator(BaseGenerator):
             metadata={"flavor": flavor, "root": r}
         )
 
-    def _generate_spicy(self, rng: random.Random, idx: int, allow_negatives: bool) -> BaseProblem:
+    def _generate_spicy(self, rng: random.Random, problem_idx: int, allow_negatives: bool) -> BaseProblem:
         """Variables on both sides: a*x + b = c*x + d or distributive a(x + b) = c."""
         # Distributive form: a(x + b) = c
         a = rng.choice([3, 4, 5, -2, -3])
@@ -170,7 +171,7 @@ class TwoStepEquationsGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"twostep_spicy_{idx}",
+            id=f"twostep_spicy_{problem_idx}",
             prompt_text="Solve each multi-step equation.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",

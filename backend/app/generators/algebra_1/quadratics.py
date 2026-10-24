@@ -27,6 +27,7 @@ class QuadraticEquationsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
+        idx = problem_idx
         x = sp.Symbol('x')
 
         if difficulty == ProblemDifficulty.MILD:
@@ -37,8 +38,9 @@ class QuadraticEquationsGenerator(BaseGenerator):
             return self._generate_quadratic_formula_spicy(rng, problem_idx, allow_negatives, x)
 
     def _generate_factoring_mild(
-        self, rng: random.Random, idx: int, allow_negatives: bool, x: sp.Symbol
+        self, rng: random.Random, problem_idx: int, allow_negatives: bool, x: sp.Symbol
     ) -> BaseProblem:
+        idx = problem_idx
         """Monic quadratics with integer roots: x^2 + bx + c = 0."""
         # Pick integer roots r1, r2
         cand_roots = list(range(1, 9))
@@ -89,7 +91,7 @@ class QuadraticEquationsGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"quad_mild_{idx}",
+            id=f"quad_mild_{problem_idx}",
             prompt_text="Solve each quadratic equation by factoring.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -101,8 +103,9 @@ class QuadraticEquationsGenerator(BaseGenerator):
         )
 
     def _generate_completing_square_medium(
-        self, rng: random.Random, idx: int, allow_negatives: bool, x: sp.Symbol
+        self, rng: random.Random, problem_idx: int, allow_negatives: bool, x: sp.Symbol
     ) -> BaseProblem:
+        idx = problem_idx
         """Completing the square: x^2 + 2kx = d - k^2."""
         # Pick even linear coefficient 2*k
         k_pool = [1, 2, 3, 4, 5]
@@ -142,7 +145,7 @@ class QuadraticEquationsGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"quad_med_{idx}",
+            id=f"quad_med_{problem_idx}",
             prompt_text="Solve each equation by completing the square.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
@@ -154,8 +157,9 @@ class QuadraticEquationsGenerator(BaseGenerator):
         )
 
     def _generate_quadratic_formula_spicy(
-        self, rng: random.Random, idx: int, allow_negatives: bool, x: sp.Symbol
+        self, rng: random.Random, problem_idx: int, allow_negatives: bool, x: sp.Symbol
     ) -> BaseProblem:
+        idx = problem_idx
         """Quadratic formula: ax^2 + bx + c = 0 with a > 1 and radical simplification."""
         a = rng.choice([2, 3, 4, 5])
         b_cands = [1, 3, 5, 7]
@@ -218,7 +222,7 @@ class QuadraticEquationsGenerator(BaseGenerator):
         ]
 
         return BaseProblem(
-            id=f"quad_spicy_{idx}",
+            id=f"quad_spicy_{problem_idx}",
             prompt_text="Solve each equation using the quadratic formula.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
