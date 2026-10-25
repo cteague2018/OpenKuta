@@ -3,13 +3,17 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.api.routes import router
 from backend.app.api.classroom_routes import router as classroom_router
-
+from backend.app.api.multitenant_routes import router as multitenant_router
+from backend.app.api.qr_routes import router as qr_router
+from backend.app.api.routes import router
 
 app = FastAPI(
-    title="OpenKuta Math Assessment Engine",
-    description="Deterministic math worksheet generator, Typst typesetting engine, and OpenCV/SymPy grading pipeline",
+    title="OpenMathForge Math Assessment Engine",
+    description=(
+        "Deterministic math worksheet generator, Typst typesetting engine, "
+        "and OpenCV/SymPy grading pipeline"
+    ),
     version="0.1.0",
 )
 
@@ -24,12 +28,14 @@ app.add_middleware(
 
 app.include_router(router)
 app.include_router(classroom_router)
+app.include_router(qr_router)
+app.include_router(multitenant_router)
 
 
 @app.get("/")
-def root():
+def root() -> dict[str, str]:
     return {
-        "engine": "OpenKuta",
+        "engine": "OpenMathForge",
         "version": "0.1.0",
         "status": "online",
         "docs_url": "/docs",
@@ -37,6 +43,5 @@ def root():
 
 
 @app.get("/health")
-def health():
+def health() -> dict[str, str]:
     return {"status": "ok"}
-

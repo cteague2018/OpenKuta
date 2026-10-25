@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -19,7 +18,6 @@ class CalculusDerivativesGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             # Power rule: f(x) = a x^n + b x^m
             a = rng.choice([2, 3, 4, 5, -2, -3])
@@ -35,10 +33,10 @@ class CalculusDerivativesGenerator(BaseGenerator):
             t1 = f"{d1_coef} x^{n-1}" if n-1 > 1 else f"{d1_coef} x"
             t2 = f"{d2_coef} x" if m-1 == 1 else f"{d2_coef}"
             sign2 = "+" if d2_coef > 0 else "-"
-            ans_typst = f"f'(x) = {t1} {sign2} {abs(d2_coef)}"
+            ans_typst = f"f'(x) = {t1} {sign2} {abs(d2_coef)} x" if m-1 == 1 else f"f'(x) = {t1} {sign2} {abs(d2_coef)}"
 
             steps = [
-                f"Apply the Power Rule: $ (d)/(d x) [c x^n] = c dot n x^{{n-1}} $",
+                "Apply the Power Rule: $ (d)/(d x) [c x^n] = c dot n x^{n-1} $",
                 f"Differentiate each term: $ (d)/(d x) [{a} x^{n}] = {d1_coef} x^{{n-1}} $",
                 f"Differentiate second term: $ (d)/(d x) [{b} x^{m}] = {t2} $",
                 f"Derivative of constant {c} is 0.",
@@ -67,7 +65,7 @@ class CalculusDerivativesGenerator(BaseGenerator):
 
             steps = [
                 f"Identify inner and outer functions: $ u = {a} x^2 + {b} $, $ f(u) = u^{n} $",
-                f"Apply Chain Rule: $ f'(x) = f'(u) dot u' $",
+                "Apply Chain Rule: $ f'(x) = f'(u) dot u' $",
                 f"Outer derivative: $ {n} u^{{n-1}} = {n} ({a} x^2 + {b})^{{n-1}} $",
                 f"Inner derivative: $ u' = (d)/(d x) [{a} x^2 + {b}] = {2*a} x $",
                 f"Multiply: $ f'(x) = {n} ({a} x^2 + {b})^{{n-1}} dot ({2*a} x) = {ans_typst} $"
@@ -90,7 +88,7 @@ class CalculusDerivativesGenerator(BaseGenerator):
             ans_typst = f"f'(x) = x^{k-1} e^x (x + {k})"
 
             steps = [
-                f"Apply Product Rule: $ (u v)' = u' v + u v' $",
+                "Apply Product Rule: $ (u v)' = u' v + u v' $",
                 f"Let $ u = x^{k} $ and $ v = e^x $",
                 f"Calculate derivatives: $ u' = {k} x^{{k-1}} $, $ v' = e^x $",
                 f"Assemble: $ f'(x) = {k} x^{{k-1}} e^x + x^{k} e^x $",
@@ -103,7 +101,7 @@ class CalculusDerivativesGenerator(BaseGenerator):
                 equation_typst=eq_typst,
                 answer_typst=ans_typst,
                 steps_typst=steps,
-                distractors=[f"f'(x) = {k} x^{k-1} e^x", f"f'(x) = x^k e^x"],
+                distractors=[f"f'(x) = {k} x^{k-1} e^x", "f'(x) = x^k e^x"],
                 difficulty=ProblemDifficulty.SPICY,
                 standards=self.standards
             )

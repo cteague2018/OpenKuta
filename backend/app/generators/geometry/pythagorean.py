@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import math
 import random
-from typing import List
-import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -26,7 +24,6 @@ class PythagoreanTheoremGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             return self._generate_pythagorean_triple(rng, problem_idx)
         elif difficulty == ProblemDifficulty.MEDIUM:
@@ -49,7 +46,7 @@ class PythagoreanTheoremGenerator(BaseGenerator):
         d3 = f"c = {int(math.sqrt(abs(b**2 - a**2)))}" if b != a else f"c = {c + 1}"
 
         steps = [
-            f"Pythagorean Theorem: $ a^2 + b^2 = c^2 $",
+            "Pythagorean Theorem: $ a^2 + b^2 = c^2 $",
             f"Substitute known legs: $ ({a})^2 + ({b})^2 = c^2 $",
             f"Calculate squares: $ {a*a} + {b*b} = {c*c} = c^2 $",
             f"Take the square root: $ c = sqrt({c*c}) = {c} $",
@@ -83,7 +80,7 @@ class PythagoreanTheoremGenerator(BaseGenerator):
         d3 = f"b = {b + 1}"
 
         steps = [
-            f"Pythagorean Theorem: $ a^2 + b^2 = c^2 $",
+            "Pythagorean Theorem: $ a^2 + b^2 = c^2 $",
             f"Substitute known side and hypotenuse: $ ({a})^2 + b^2 = ({c})^2 $",
             f"Isolate $ b^2 $: $ b^2 = {c*c} - {a*a} = {b*b} $",
             f"Take square root: $ b = sqrt({b*b}) = {b} $",

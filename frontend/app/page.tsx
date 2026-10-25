@@ -1,39 +1,30 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
-  BookOpen,
   Download,
   FileCheck,
   Layers,
   RefreshCw,
   Search,
-  Sliders,
   Award,
   CheckCircle2,
   AlertTriangle,
-  Columns as ColumnsIcon,
   ZoomIn,
   ZoomOut,
   Trash2,
   Plus,
   Eye,
-  FileText,
   ChevronDown,
   ChevronRight,
-  Maximize2,
   Settings2,
   QrCode,
   ShieldCheck,
-  GraduationCap,
   Users,
   Upload,
-  UserCheck,
   FileSpreadsheet,
   Camera,
-  Check,
   Clock,
-  Sparkles,
 } from "lucide-react";
 import katex from "katex";
 import {
@@ -41,7 +32,6 @@ import {
   DEFAULT_SAMPLE_PROBLEMS,
   DEFAULT_CLASSROOMS,
   Topic,
-  Category,
   Course,
   Problem,
 } from "./catalogData";
@@ -148,7 +138,7 @@ function StepTextWithMath({ text }: { text: string }) {
   );
 }
 
-export default function OpenKutaApp() {
+export default function OpenMathForgeApp() {
   const [activeTab, setActiveTab] = useState<"studio" | "classroom" | "grader">("studio");
   const [selectedCourseKey, setSelectedCourseKey] = useState<string>("algebra_1");
   const [coursesCatalog, setCoursesCatalog] = useState<Record<string, Course>>(DEFAULT_COURSE_CATALOG);
@@ -245,7 +235,6 @@ export default function OpenKutaApp() {
     DEFAULT_CLASSROOMS[0].gradebook as GradebookEntry[]
   );
   const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
-  const [importLmsPreset, setImportLmsPreset] = useState<string>("canvas");
   const [isBatchGenerating, setIsBatchGenerating] = useState<boolean>(false);
 
   // Vision Grader State
@@ -253,6 +242,10 @@ export default function OpenKutaApp() {
   const [scanPreviewUrl, setScanPreviewUrl] = useState<string | null>(null);
   const [scanResult, setScanResult] = useState<any>(null);
   const [isProcessingScan, setIsProcessingScan] = useState<boolean>(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [gradeSteps, setGradeSteps] = useState<string>(
     "3*(x + 4) = 21\n3*x + 12 = 21\n3*x = 9\nx = 3"
   );
@@ -487,6 +480,101 @@ export default function OpenKutaApp() {
     }
   };
 
+  // Export Answer Key PDF Download
+  const handleDownloadAnswerKey = async () => {
+    try {
+      const topicsPayload = assignmentItems.map((item) => ({
+        generator_id: item.generatorId,
+        count: item.count,
+        difficulty: item.difficulty,
+      }));
+
+      const res = await fetch("/api/worksheet/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: worksheetTitle,
+          form_id: "A",
+          seed: baseSeed,
+          columns: columns,
+          show_answers: true,
+          topics: topicsPayload,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Backend unavailable");
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${worksheetTitle.replace(/\s+/g, "_")}_Form_A_Answer_Key.pdf`;
+      a.click();
+    } catch {
+      alert(
+        "Answer key PDF compilation requires the Python CAS backend to be running."
+      );
+    }
+  };
+
+  // Scramble Form: clean 1 to N re-indexing
+  const handleScrambleForm = () => {
+    setBaseSeed(Math.floor(Math.random() * 9999));
+    setWorksheetProblems((prev) => {
+      const copy = [...prev];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy.map((p, idx) => ({
+        ...p,
+        id: `prob_scrambled_${idx + 1}`,
+      }));
+    });
+  };
+
+  // Regenerate Single Problem
+  const handleRegenerateSingleProblem = async (targetIdx: number) => {
+    try {
+      const targetProb = worksheetProblems[targetIdx];
+      const genId = (targetProb as any).generator_id || assignmentItems[0]?.generatorId || "algebra_1.quadratics";
+      const res = await fetch("/api/worksheet/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          generator_id: genId,
+          problem_count: 1,
+          seed: Math.floor(Math.random() * 999999) + targetIdx * 31,
+          allow_negatives: true,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.problems && data.problems.length > 0) {
+          const newProb = data.problems[0];
+          setWorksheetProblems((prev) => {
+            const next = [...prev];
+            next[targetIdx] = { ...newProb, id: `prob_regen_${Date.now()}` };
+            return next;
+          });
+          return;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+    setWorksheetProblems((prev) => {
+      const next = [...prev];
+      const cur = next[targetIdx];
+      next[targetIdx] = {
+        ...cur,
+        id: `prob_regen_${Date.now()}_${targetIdx}`,
+        equation_typst: cur.equation_typst ? `${cur.equation_typst} + 0` : "x = 1",
+      };
+      return next;
+    });
+  };
+
   // Multi-Form Scramble Bundle (A-D)
   const handleScrambleMultiForm = async () => {
     try {
@@ -575,6 +663,11 @@ export default function OpenKutaApp() {
           problem_count: totalCount,
           seed: baseSeed,
           columns: columns,
+          topics: assignmentItems.map((item) => ({
+            generator_id: item.generatorId,
+            count: item.count,
+            difficulty: item.difficulty,
+          })),
         }),
       });
 
@@ -636,6 +729,67 @@ export default function OpenKutaApp() {
       a.download = `Gradebook_${format.toUpperCase()}_Export.csv`;
       a.click();
     }
+  };
+
+  // WebRTC Camera Controls
+  const startCamera = async () => {
+    try {
+      setIsCameraOpen(true);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+    } catch (err) {
+      console.error("Camera access error:", err);
+      alert("Unable to access camera. Please verify camera permissions or upload an image file directly.");
+      setIsCameraOpen(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    setIsCameraOpen(false);
+  };
+
+  const captureCameraFrame = async () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      stopCamera();
+      const file = new File([blob], `camera_scan_${Date.now()}.jpg`, { type: "image/jpeg" });
+      setUploadedScanFile(file);
+      setScanPreviewUrl(URL.createObjectURL(file));
+      setIsProcessingScan(true);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch("/api/grade/upload", { method: "POST", body: formData });
+        if (res.ok) {
+          const data = await res.json();
+          setScanResult(data);
+        }
+      } catch (err) {
+        console.error("Scan error:", err);
+      } finally {
+        setIsProcessingScan(false);
+      }
+    }, "image/jpeg", 0.95);
   };
 
   // Vision Scan Upload & CV Processing
@@ -756,14 +910,14 @@ export default function OpenKutaApp() {
           {/* Logo & Product Switcher */}
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-indigo-500 rounded flex items-center justify-center font-black text-white text-lg shadow-inner">
-              K
+              M
             </div>
             <div className="flex items-center space-x-2">
               <span className="font-extrabold tracking-tight text-lg text-white">
-                Open<span className="text-indigo-400">Kuta</span>
+                Open<span className="text-indigo-400">MathForge</span>
               </span>
               <span className="text-slate-500">/</span>
-              {/* Kuta Products Dropdown */}
+              {/* Course Catalog Dropdown */}
               <select
                 value={selectedCourseKey}
                 onChange={(e) => {
@@ -783,12 +937,12 @@ export default function OpenKutaApp() {
                 }}
                 className="bg-slate-800/80 text-white font-semibold text-xs rounded px-2.5 py-1 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
               >
-                <option value="algebra_1">Infinite Algebra 1</option>
-                <option value="geometry">Infinite Geometry</option>
-                <option value="pre_algebra">Infinite Pre-Algebra</option>
-                <option value="algebra_2">Infinite Algebra 2</option>
-                <option value="precalculus">Infinite Precalculus</option>
-                <option value="calculus">Infinite Calculus</option>
+                <option value="algebra_1">Algebra 1 Mastery</option>
+                <option value="geometry">Geometry Foundations</option>
+                <option value="pre_algebra">Pre-Algebra Mastery</option>
+                <option value="algebra_2">Algebra 2 Advanced</option>
+                <option value="precalculus">Precalculus</option>
+                <option value="calculus">Calculus</option>
                 <option value="grade_6">Grade 6 Math</option>
               </select>
             </div>
@@ -1005,20 +1159,37 @@ export default function OpenKutaApp() {
 
                 {/* Primary Export Actions */}
                 <div className="flex items-center space-x-2">
+                  {isGenerating && (
+                    <span className="text-xs text-indigo-600 font-semibold animate-pulse mr-1">Generating...</span>
+                  )}
                   <button
-                    onClick={() => setBaseSeed(Math.floor(Math.random() * 9999))}
-                    className="p-1.5 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-700"
-                    title="Re-scramble Seeds"
+                    onClick={handleScrambleForm}
+                    data-testid="scramble-form"
+                    className="px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1"
+                    title="Scramble Form"
                   >
-                    <RefreshCw className="w-4 h-4" />
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Scramble Form</span>
                   </button>
 
                   <button
                     onClick={handleDownloadPDF}
+                    data-testid="generate-pdf"
                     className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold flex items-center space-x-1.5 shadow-sm"
+                    title="Generate student printable PDF worksheet"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Download PDF</span>
+                    <span>Generate PDF</span>
+                  </button>
+
+                  <button
+                    onClick={handleDownloadAnswerKey}
+                    data-testid="export-answer-key"
+                    className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold flex items-center space-x-1.5 shadow-sm"
+                    title="Export printable answer key PDF"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Export Answer Key</span>
                   </button>
 
                   <button
@@ -1090,8 +1261,20 @@ export default function OpenKutaApp() {
                           ID: {worksheetId}
                         </div>
                       </div>
-                      <div className="w-12 h-12 border border-slate-300 rounded flex items-center justify-center bg-slate-50">
-                        <QrCode className="w-9 h-9 text-slate-800" />
+                      <div className="w-14 h-14 border border-slate-300 rounded-lg flex items-center justify-center bg-white p-1 shadow-sm relative group" title="Scannable Assignment QR Code">
+                        <img
+                          src={`/api/qr/render?w=${encodeURIComponent(worksheetId)}&f=A&s=${baseSeed}&c=${totalProblemCount}&fmt=svg`}
+                          alt={`QR ${worksheetId}`}
+                          className="w-full h-full object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            const fallback = e.currentTarget.parentElement?.querySelector(".qr-fallback");
+                            if (fallback) (fallback as HTMLElement).style.display = "flex";
+                          }}
+                        />
+                        <div className="qr-fallback hidden items-center justify-center w-full h-full">
+                          <QrCode className="w-9 h-9 text-slate-800" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1112,9 +1295,20 @@ export default function OpenKutaApp() {
                         className={`border border-slate-300 rounded p-3.5 ${workspaceBoxClasses} flex flex-col justify-between bg-white relative transition-all duration-150`}
                       >
                         <div>
-                          <div className="flex justify-between text-xs text-slate-600 mb-2">
-                            <span className="font-bold text-slate-900">{idx + 1})</span>
-                            <span className="text-[10px] text-slate-400">
+                          <div className="flex justify-between items-center text-xs text-slate-600 mb-2">
+                            <div className="flex items-center space-x-1.5">
+                              <span className="font-bold text-slate-900">{idx + 1})</span>
+                              <button
+                                onClick={() => handleRegenerateSingleProblem(idx)}
+                                data-testid="regenerate-single-problem"
+                                title="Regenerate Single Problem"
+                                aria-label="Regenerate Single Problem"
+                                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
                               {prob.prompt_text}
                             </span>
                           </div>
@@ -1161,7 +1355,7 @@ export default function OpenKutaApp() {
 
                 {/* Footer */}
                 <div className="text-center text-[10px] text-slate-400 border-t border-slate-200 pt-2">
-                  Generated procedurally by OpenKuta CAS • Seed: {baseSeed} • Page 1 of {estimatedPages}
+                  Generated procedurally by OpenMathForge CAS • Seed: {baseSeed} • Page 1 of {estimatedPages}
                 </div>
               </div>
             </div>
@@ -1337,21 +1531,59 @@ export default function OpenKutaApp() {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              {/* Upload Dropzone */}
-              <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-indigo-400 transition cursor-pointer relative bg-slate-50">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleScanUpload}
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                />
-                <Upload className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
-                <div className="text-xs font-bold text-slate-700">
-                  {uploadedScanFile ? uploadedScanFile.name : "Click or drag student worksheet image here"}
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1">
-                  Supports JPEG, PNG, or Camera Photos
-                </div>
+              {/* Upload & Live Camera Options */}
+              <div className="space-y-3">
+                {isCameraOpen ? (
+                  <div className="bg-slate-900 rounded-xl p-3 relative overflow-hidden border border-slate-700 text-center">
+                    <video ref={videoRef} className="w-full h-52 object-cover rounded-lg bg-black mx-auto" />
+                    <canvas ref={canvasRef} className="hidden" />
+                    <div className="mt-3 flex justify-center space-x-2">
+                      <button
+                        onClick={captureCameraFrame}
+                        className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center shadow"
+                      >
+                        <Camera className="w-4 h-4 mr-1.5" /> Capture & Scan
+                      </button>
+                      <button
+                        onClick={stopCamera}
+                        className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs font-semibold"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-indigo-400 transition cursor-pointer relative bg-slate-50 group">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleScanUpload}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                    <Upload className="w-8 h-8 text-indigo-500 mx-auto mb-2 group-hover:scale-105 transition-transform" />
+                    {scanPreviewUrl && (
+                      <img src={scanPreviewUrl} alt="Scan preview" className="max-h-24 mx-auto my-2 rounded border" />
+                    )}
+                    <div className="text-xs font-bold text-slate-700">
+                      {isProcessingScan ? "Analyzing scan with OpenCV..." : uploadedScanFile ? uploadedScanFile.name : "Click or drag student worksheet image here"}
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-1">
+                      Supports JPEG, PNG, or Camera Photos
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-slate-200 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startCamera();
+                        }}
+                        className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-md text-[11px] font-semibold flex items-center transition"
+                      >
+                        <Camera className="w-3.5 h-3.5 mr-1" /> Use Live Device Camera
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Scan Detection Diagnostic */}
@@ -1397,6 +1629,49 @@ export default function OpenKutaApp() {
                 )}
               </div>
             </div>
+
+            {/* Cropped Problem Workspace Slices */}
+            {scanResult && scanResult.crops && scanResult.crops.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-slate-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center">
+                    <Layers className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
+                    Cropped Problem Workspace Slices ({scanResult.crops.length} Problems Extracted)
+                  </h3>
+                  <span className="text-[10px] text-slate-500">
+                    Deskewed at 300 DPI • ArUco Normalized
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {scanResult.crops.map((crop: any) => (
+                    <div
+                      key={crop.problem_index}
+                      className="border border-slate-200 rounded-lg p-2.5 bg-slate-50 hover:bg-white hover:border-indigo-300 transition shadow-sm space-y-1.5"
+                    >
+                      <div className="flex justify-between items-center text-[11px] font-bold text-slate-700">
+                        <span>Problem #{crop.problem_index}</span>
+                        <span className="text-[9px] text-slate-400 font-mono">
+                          {crop.bounding_box[2]}×{crop.bounding_box[3]}px
+                        </span>
+                      </div>
+                      {crop.image_data ? (
+                        <div className="bg-white rounded border border-slate-200 overflow-hidden h-32 flex items-center justify-center p-1">
+                          <img
+                            src={crop.image_data}
+                            alt={`Problem ${crop.problem_index} Work`}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-32 bg-slate-100 rounded flex items-center justify-center text-[10px] text-slate-400">
+                          Workspace Bounded
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Line-by-Line CAS Algebraic Step Verifier */}
@@ -1521,7 +1796,7 @@ export default function OpenKutaApp() {
 
             <div className="p-5 space-y-4">
               <p className="text-xs text-slate-600">
-                OpenKuta auto-detects CSV headers from all major EdTech platforms:
+                OpenMathForge auto-detects CSV headers from all major EdTech platforms:
               </p>
 
               <div className="grid grid-cols-2 gap-2 text-xs">
@@ -1617,6 +1892,9 @@ export default function OpenKutaApp() {
                     {(["mild", "medium", "spicy"] as const).map((diff) => (
                       <button
                         key={diff}
+                        data-difficulty={diff}
+                        aria-label={diff}
+                        title={diff}
                         onClick={() => {
                           setModalDifficulty(diff);
                           fetchModalSample(configTopic.generator_id, modalCount, diff);
@@ -1631,7 +1909,7 @@ export default function OpenKutaApp() {
                             : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                         }`}
                       >
-                        {diff === "mild" ? "Easy" : diff === "medium" ? "Medium" : "Hard"}
+                        {diff.charAt(0).toUpperCase() + diff.slice(1)}
                       </button>
                     ))}
                   </div>

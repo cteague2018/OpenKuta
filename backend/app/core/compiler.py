@@ -5,14 +5,14 @@ import pathlib
 import shutil
 import tempfile
 from typing import Any, Dict, List, Optional
+
 import cv2
 import jinja2
 import qrcode
 import qrcode.constants as qr_constants
-import typst  # type: ignore
+import typst
 
 from backend.app.core.base import BaseProblem
-
 
 TEMPLATE_DIR = pathlib.Path(__file__).parent.parent / "templates"
 STATIC_ASSETS_DIR = pathlib.Path(__file__).parent.parent / "static" / "markers"

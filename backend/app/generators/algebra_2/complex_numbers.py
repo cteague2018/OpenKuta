@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -19,7 +18,6 @@ class Algebra2ComplexNumbersGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         a = rng.choice([2, 3, 4, 5, -2, -3])
         b = rng.choice([2, 3, 4, 6, -3, -5])
         c = rng.choice([1, 2, 3, 4, -1, -4])
@@ -70,12 +68,12 @@ class Algebra2ComplexNumbersGenerator(BaseGenerator):
             ]
 
             return BaseProblem(
-                id=f"a2_cplx_med_{problem_idx}",
+                id=f"a2_cplx_{difficulty.value}_{problem_idx}",
                 prompt_text="Simplify each expression into standard a + bi form.",
                 equation_typst=eq_typst,
                 answer_typst=ans_typst,
                 steps_typst=steps,
                 distractors=[f"{a*c + b*d} {ans_sign} {abs(imag_part)} i", f"{real_part} - {abs(imag_part)} i"],
-                difficulty=ProblemDifficulty.MEDIUM,
+                difficulty=difficulty,
                 standards=self.standards
             )

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List, Tuple
-import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -24,7 +22,6 @@ class SystemsOfEquationsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         # Backward parameterization: choose integer solution (x_sol, y_sol)
         x_sol = rng.randint(-6, 6) if allow_negatives else rng.randint(1, 6)
         y_sol = rng.randint(-6, 6) if allow_negatives else rng.randint(1, 6)
@@ -39,7 +36,6 @@ class SystemsOfEquationsGenerator(BaseGenerator):
     def _generate_elimination_direct(
         self, rng: random.Random, problem_idx: int, x_sol: int, y_sol: int
     ) -> BaseProblem:
-        idx = problem_idx
         """Coefficients match or are opposites directly: e.g. +y and -y."""
         a1 = rng.choice([2, 3, 4, -2, -3])
         b_val = rng.choice([1, 2])
@@ -90,7 +86,6 @@ class SystemsOfEquationsGenerator(BaseGenerator):
     def _generate_substitution(
         self, rng: random.Random, problem_idx: int, x_sol: int, y_sol: int
     ) -> BaseProblem:
-        idx = problem_idx
         """One equation has an isolated variable: e.g. y = mx + c."""
         # y = m*x + b
         m = rng.choice([-3, -2, -1, 1, 2, 3])
@@ -134,7 +129,6 @@ class SystemsOfEquationsGenerator(BaseGenerator):
     def _generate_elimination_scaling(
         self, rng: random.Random, problem_idx: int, x_sol: int, y_sol: int
     ) -> BaseProblem:
-        idx = problem_idx
         """Requires multiplying one or both equations by scalar constants."""
         a1, b1 = rng.choice([(2, 3), (3, 2), (4, 3), (5, 2)])
         a2, b2 = rng.choice([(3, -2), (2, -5), (3, 4), (-2, 5)])

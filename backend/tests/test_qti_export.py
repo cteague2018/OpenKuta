@@ -2,7 +2,6 @@ import io
 import json
 import pathlib
 import zipfile
-import pytest
 
 from backend.app.core.base import GeneratorConfig
 from backend.app.export.qti_builder import QTIBuilder

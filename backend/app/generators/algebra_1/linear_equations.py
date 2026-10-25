@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import List, Tuple
+
 import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
@@ -26,7 +26,6 @@ class LinearEquationsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             return self._generate_slope_from_points(rng, problem_idx, allow_negatives)
         elif difficulty == ProblemDifficulty.MEDIUM:
@@ -37,7 +36,6 @@ class LinearEquationsGenerator(BaseGenerator):
     def _generate_slope_from_points(
         self, rng: random.Random, problem_idx: int, allow_negatives: bool
     ) -> BaseProblem:
-        idx = problem_idx
         """Find the slope of the line through each pair of points."""
         x1 = rng.randint(-8, 8) if allow_negatives else rng.randint(1, 8)
         y1 = rng.randint(-8, 8) if allow_negatives else rng.randint(1, 8)
@@ -69,7 +67,7 @@ class LinearEquationsGenerator(BaseGenerator):
 
         steps = [
             f"Given points: $ (x_1, y_1) = ({x1}, {y1}) $ and $ (x_2, y_2) = ({x2}, {y2}) $",
-            f"Use slope formula: $ m = (y_2 - y_1) / (x_2 - x_1) $",
+            "Use slope formula: $ m = (y_2 - y_1) / (x_2 - x_1) $",
             f"Substitute coordinates: $ m = ({y2} - ({y1})) / ({x2} - ({x1})) = {dy} / {dx} $",
             f"Simplify fraction: $ {ans_typst} $"
         ]
@@ -89,7 +87,6 @@ class LinearEquationsGenerator(BaseGenerator):
     def _generate_slope_intercept(
         self, rng: random.Random, problem_idx: int, allow_negatives: bool
     ) -> BaseProblem:
-        idx = problem_idx
         """Write the slope-intercept equation given a point and slope."""
         m_num = rng.choice([-3, -2, -1, 1, 2, 3])
         m_den = rng.choice([1, 2, 3, 4]) if rng.random() < 0.4 else 1
@@ -124,7 +121,7 @@ class LinearEquationsGenerator(BaseGenerator):
         d3 = f"y = -{m_str_disp}x {b_sign}".strip()
 
         steps = [
-            f"Point-slope form: $ y - y_1 = m(x - x_1) $",
+            "Point-slope form: $ y - y_1 = m(x - x_1) $",
             f"Substitute $ m = {m_str} $ and $ ({x1}, {y1}) $: $ y - ({y1}) = {m_str}(x - ({x1})) $",
             f"Distribute and isolate $y$: $ y = {m_str_disp}x {b_sign} $",
             f"Result: $ {ans_typst} $"
@@ -145,7 +142,6 @@ class LinearEquationsGenerator(BaseGenerator):
     def _generate_standard_to_slope_intercept(
         self, rng: random.Random, problem_idx: int, allow_negatives: bool
     ) -> BaseProblem:
-        idx = problem_idx
         """Convert standard form Ax + By = C to slope-intercept form y = mx + b."""
         B = rng.choice([2, 3, 4, 5, -2, -3])
         A = rng.choice([1, 2, 3, 4, 6, -1, -2, -3])

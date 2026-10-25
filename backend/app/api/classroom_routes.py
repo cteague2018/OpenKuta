@@ -4,16 +4,16 @@ import csv
 import io
 import uuid
 from typing import Any, Dict, List, Optional
+
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 from pydantic import BaseModel, Field
 
-from backend.app.classroom.models import Classroom, Student, StudentSubmission
+from backend.app.classroom.models import StudentSubmission
 from backend.app.classroom.roster_parser import RosterParser
 from backend.app.classroom.store import ClassroomStore
 from backend.app.core.base import GeneratorConfig, ProblemDifficulty
 from backend.app.core.compiler import TypstCompiler
 from backend.app.generators import get_generator
-
 
 router = APIRouter(prefix="/api/classroom")
 store = ClassroomStore()
@@ -27,15 +27,22 @@ class CreateClassRequest(BaseModel):
     teacher_name: str = Field(default="Teacher")
 
 
+class TopicItem(BaseModel):
+    generator_id: str
+    count: int = 4
+    difficulty: str = "medium"
+
+
 class BatchWorksheetRequest(BaseModel):
     class_id: str
-    generator_id: str = Field(default="algebra_1.quadratics")
+    generator_id: Optional[str] = "algebra_1.quadratics"
     title: str = Field(default="Unit 4 Practice")
     form_id: str = Field(default="A")
     problem_count: int = Field(default=6, ge=2, le=30)
     seed: int = Field(default=42)
     columns: int = Field(default=2, ge=1, le=3)
     difficulty_distribution: Optional[Dict[str, float]] = None
+    topics: Optional[List[TopicItem]] = None
 
 
 class RecordGradeRequest(BaseModel):
@@ -50,7 +57,7 @@ class RecordGradeRequest(BaseModel):
 
 
 @router.get("/classes")
-def list_classes():
+def list_classes() -> List[Dict[str, Any]]:
     """List all registered classrooms with student enrollment numbers."""
     classes = store.list_classes()
     return [
@@ -68,7 +75,7 @@ def list_classes():
 
 
 @router.post("/classes")
-def create_class(req: CreateClassRequest):
+def create_class(req: CreateClassRequest) -> Any:
     """Create a new classroom/period."""
     c = store.create_class(
         name=req.name,
@@ -80,7 +87,7 @@ def create_class(req: CreateClassRequest):
 
 
 @router.get("/classes/{class_id}")
-def get_class(class_id: str):
+def get_class(class_id: str) -> Any:
     """Get classroom details and full student roster."""
     c = store.get_class(class_id)
     if not c:
@@ -92,17 +99,23 @@ def get_class(class_id: str):
 async def import_roster(
     class_id: str = Form(...),
     file: UploadFile = File(...),
-):
-    """Upload CSV from Google Classroom, Canvas SIS, Clever, OneRoster, or generic CSV."""
+) -> Dict[str, Any]:
+    """Upload CSV from Google Classroom, Canvas SIS, Clever, OneRoster,
+    or generic CSV.
+    """
     c = store.get_class(class_id)
     if not c:
         raise HTTPException(status_code=404, detail="Classroom not found")
 
     content = await file.read()
-    students, detected_fmt = RosterParser.parse_csv(content, default_period=c.period)
+    students, detected_fmt = RosterParser.parse_csv(
+        content, default_period=c.period
+    )
 
     if not students:
-        raise HTTPException(status_code=400, detail="No students could be parsed from CSV")
+        raise HTTPException(
+            status_code=400, detail="No students could be parsed from CSV"
+        )
 
     updated_class = store.add_students_to_class(class_id, students)
 
@@ -116,29 +129,58 @@ async def import_roster(
 
 
 @router.post("/batch-worksheet")
-def generate_class_batch_worksheet(req: BatchWorksheetRequest):
-    """Generate a single bundled PDF for the entire class with pre-printed names and personalized QR codes."""
+def generate_class_batch_worksheet(req: BatchWorksheetRequest) -> Response:
+    """Generate a single bundled PDF for the entire class with pre-printed
+    names and personalized QR codes.
+    """
     c = store.get_class(req.class_id)
     if not c:
         raise HTTPException(status_code=404, detail="Classroom not found")
     if not c.students:
-        raise HTTPException(status_code=400, detail="Classroom has no students in roster")
+        raise HTTPException(
+            status_code=400, detail="Classroom has no students in roster"
+        )
 
-    gen = get_generator(req.generator_id)
-    diff_dist = {
-        ProblemDifficulty(k): v
-        for k, v in (req.difficulty_distribution or {
-            "mild": 0.4,
-            "medium": 0.4,
-            "spicy": 0.2,
-        }).items()
-    }
-    cfg = GeneratorConfig(
-        problem_count=req.problem_count,
-        seed=req.seed,
-        difficulty_distribution=diff_dist,
-    )
-    problems = gen.generate(cfg)
+    if req.topics and len(req.topics) > 0:
+        problems = []
+        item_seed = req.seed
+        for t in req.topics:
+            t_gen = get_generator(t.generator_id)
+            t_diff = ProblemDifficulty(t.difficulty)
+            dist = {
+                d: (1.0 if d == t_diff else 0.0)
+                for d in [
+                    ProblemDifficulty.MILD,
+                    ProblemDifficulty.MEDIUM,
+                    ProblemDifficulty.SPICY,
+                ]
+            }
+            t_cfg = GeneratorConfig(
+                problem_count=t.count,
+                seed=item_seed,
+                difficulty_distribution=dist,
+            )
+            problems.extend(t_gen.generate(t_cfg))
+            item_seed += 77
+    else:
+        gen = get_generator(req.generator_id or "algebra_1.quadratics")
+        diff_dist = {
+            ProblemDifficulty(k): v
+            for k, v in (
+                req.difficulty_distribution
+                or {
+                    "mild": 0.4,
+                    "medium": 0.4,
+                    "spicy": 0.2,
+                }
+            ).items()
+        }
+        cfg = GeneratorConfig(
+            problem_count=req.problem_count,
+            seed=req.seed,
+            difficulty_distribution=diff_dist,
+        )
+        problems = gen.generate(cfg)
     worksheet_id = f"WS-{req.seed % 10000:04d}"
 
     students_data = [
@@ -161,16 +203,19 @@ def generate_class_batch_worksheet(req: BatchWorksheetRequest):
         columns=req.columns,
     )
 
+    filename = f'{c.name.replace(" ", "_")}_Class_Set.pdf'
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{c.name.replace(" ", "_")}_Class_Set.pdf"'},
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
 @router.get("/gradebook/{class_id}")
-def get_gradebook(class_id: str):
-    """Return gradebook table showing students and their verified assessment submissions."""
+def get_gradebook(class_id: str) -> Dict[str, Any]:
+    """Return gradebook table showing students and their verified
+    assessment submissions.
+    """
     c = store.get_class(class_id)
     if not c:
         raise HTTPException(status_code=404, detail="Classroom not found")
@@ -206,10 +251,12 @@ def get_gradebook(class_id: str):
 
 
 @router.post("/record-grade")
-def record_grade(req: RecordGradeRequest):
+def record_grade(req: RecordGradeRequest) -> Dict[str, Any]:
     """Record or update verified student submission score."""
     student = store.find_student(req.class_id, req.student_id)
-    student_name = student.full_name if student else f"Student {req.student_id}"
+    student_name = (
+        student.full_name if student else f"Student {req.student_id}"
+    )
 
     sub = StudentSubmission(
         submission_id=f"sub_{uuid.uuid4().hex[:8]}",
@@ -229,7 +276,7 @@ def record_grade(req: RecordGradeRequest):
 
 
 @router.get("/export-gradebook-csv/{class_id}")
-def export_gradebook_csv(class_id: str, format: str = "canvas"):
+def export_gradebook_csv(class_id: str, format: str = "canvas") -> Response:
     """Export gradebook to Canvas SIS or Google Classroom compatible CSV."""
     c = store.get_class(class_id)
     if not c:
@@ -242,21 +289,52 @@ def export_gradebook_csv(class_id: str, format: str = "canvas"):
     writer = csv.writer(output)
 
     if format == "canvas":
-        writer.writerow(["Student", "ID", "SIS User ID", "Section", "OpenKuta Assessment"])
+        writer.writerow([
+            "Student",
+            "ID",
+            "SIS User ID",
+            "Section",
+            "OpenMathForge Assessment",
+        ])
         for stu in c.students:
-            score = sub_map[stu.student_id].score_percentage if stu.student_id in sub_map else ""
-            writer.writerow([f"{stu.last_name}, {stu.first_name}", stu.id, stu.student_id, stu.period or c.period, score])
+            score = (
+                sub_map[stu.student_id].score_percentage
+                if stu.student_id in sub_map
+                else ""
+            )
+            writer.writerow([
+                f"{stu.last_name}, {stu.first_name}",
+                stu.id,
+                stu.student_id,
+                stu.period or c.period,
+                score,
+            ])
     else:
         # Google Classroom / Standard
-        writer.writerow(["Student ID", "First Name", "Last Name", "Email", "Score (%)", "Status"])
+        writer.writerow([
+            "Student ID",
+            "First Name",
+            "Last Name",
+            "Email",
+            "Score (%)",
+            "Status",
+        ])
         for stu in c.students:
             sub = sub_map.get(stu.student_id)
             score = f"{sub.score_percentage:.1f}" if sub else ""
             status = "Graded" if sub else "Missing"
-            writer.writerow([stu.student_id, stu.first_name, stu.last_name, stu.email or "", score, status])
+            writer.writerow([
+                stu.student_id,
+                stu.first_name,
+                stu.last_name,
+                stu.email or "",
+                score,
+                status,
+            ])
 
+    filename = f'{c.name.replace(" ", "_")}_Gradebook.csv'
     return Response(
         content=output.getvalue(),
         media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="{c.name.replace(" ", "_")}_Gradebook.csv"'},
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

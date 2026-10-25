@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -19,11 +18,11 @@ class Grade6PercentsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         pct = rng.choice([10, 15, 20, 25, 30, 40, 50, 75])
         base = rng.choice([20, 40, 50, 60, 80, 100, 120, 200])
 
-        val = (pct * base) // 100
+        val_calc = (pct * base) / 100
+        val = int(val_calc) if val_calc.is_integer() else round(val_calc, 2)
         eq_typst = f"\"What is \" {pct}% \" of \" {base} \"?\""
         ans_typst = f"{val}"
 

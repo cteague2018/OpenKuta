@@ -1,9 +1,7 @@
-import json
-import numpy as np
 import cv2
-import pytest
+import numpy as np
 
-from backend.app.grading.aligner import WorksheetAligner, CANONICAL_WIDTH, CANONICAL_HEIGHT
+from backend.app.grading.aligner import CANONICAL_HEIGHT, CANONICAL_WIDTH, WorksheetAligner
 from backend.app.grading.extractor import ProblemWorkspaceExtractor
 from backend.app.grading.verifier import CASStepVerifier, ErrorType
 
@@ -91,4 +89,34 @@ def test_aligner_aruco_and_qr():
     warped, is_aligned = aligner.align_and_deskew(canvas)
     assert is_aligned is True
     assert warped.shape == (CANONICAL_HEIGHT, CANONICAL_WIDTH, 3)
+
+
+def test_qr_code_generation_and_decoding(tmp_path):
+    """Test generating a metadata QR code and decoding it via OpenCV."""
+    from backend.app.core.compiler import generate_qr_code
+    from backend.app.grading.aligner import WorksheetAligner
+
+    qr_path = tmp_path / "test_qr.png"
+    payload = {
+        "w": "ws_audit_2026",
+        "f": "C",
+        "s": 98765,
+        "c": 6,
+        "sid": "STU-5555",
+        "cid": "cls_alg2_p1",
+    }
+    generate_qr_code(payload, qr_path)
+    assert qr_path.exists()
+
+    aligner = WorksheetAligner()
+    img = cv2.imread(str(qr_path))
+    decoded = aligner.decode_qr(img)
+
+    assert decoded.get("worksheet_id") == "ws_audit_2026"
+    assert decoded.get("form_id") == "C"
+    assert decoded.get("seed") == 98765
+    assert decoded.get("problem_count") == 6
+    assert decoded.get("student_id") == "STU-5555"
+    assert decoded.get("class_id") == "cls_alg2_p1"
+
 

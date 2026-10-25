@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -19,7 +18,6 @@ class Grade6OneStepGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         op = rng.choice(["add", "sub", "mul", "div"])
         x_val = rng.choice([3, 4, 5, 6, 7, 8, 9, 12])
         k = rng.choice([2, 3, 4, 5, 6, 7])

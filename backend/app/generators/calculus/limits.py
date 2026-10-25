@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -19,7 +18,6 @@ class CalculusLimitsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             # Direct substitution: lim_{x -> c} (a x^2 + b x + d)
             c = rng.choice([-3, -2, -1, 1, 2, 3, 4])
@@ -32,7 +30,7 @@ class CalculusLimitsGenerator(BaseGenerator):
             ans_typst = f"{val}"
 
             steps = [
-                f"Check for continuity: Polynomials are continuous everywhere.",
+                "Check for continuity: Polynomials are continuous everywhere.",
                 f"Use direct substitution: substitute $ x = {c} $",
                 f"Evaluate terms: $ {a}({c})^2 + {b}({c}) + {d} $",
                 f"Simplify: $ {a}({c**2}) + ({b*c}) + {d} = {val} $",
@@ -91,7 +89,7 @@ class CalculusLimitsGenerator(BaseGenerator):
             ans_typst = f"{num}/{den}" if den != 1 else f"{num}"
 
             steps = [
-                f"Both numerator and denominator have highest power of $ x^2 $.",
+                "Both numerator and denominator have highest power of $ x^2 $.",
                 f"Divide every term by $ x^2 $: $ lim_(x -> oo) ({a} + {b}/x) / ({c} + {d}/x^2) $",
                 f"As $ x -> oo $, terms with $ 1/x $ approach 0: $ {b}/x -> 0 $ and $ {d}/x^2 -> 0 $",
                 f"Evaluate remaining leading coefficients: $ {a} / {c} $",

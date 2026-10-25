@@ -1,5 +1,4 @@
-import pytest
-from backend.app.core.base import GeneratorConfig, ProblemDifficulty
+from backend.app.core.base import GeneratorConfig
 from backend.app.core.compiler import TypstCompiler
 from backend.app.generators.algebra_1.quadratics import QuadraticEquationsGenerator
 from backend.app.generators.algebra_1.two_step_equations import TwoStepEquationsGenerator

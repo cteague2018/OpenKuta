@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import List
+
 import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
@@ -26,7 +26,6 @@ class PolynomialFactoringGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         x = sp.Symbol('x')
 
         if difficulty == ProblemDifficulty.MILD:
@@ -39,7 +38,6 @@ class PolynomialFactoringGenerator(BaseGenerator):
     def _generate_difference_of_squares_or_gcf(
         self, rng: random.Random, problem_idx: int, allow_negatives: bool, x: sp.Symbol
     ) -> BaseProblem:
-        idx = problem_idx
         """Difference of two squares: a^2 x^2 - b^2."""
         b = rng.choice([2, 3, 4, 5, 6, 7, 8, 9, 10])
         a = rng.choice([1, 1, 1, 2, 3])  # mostly 1
@@ -55,7 +53,7 @@ class PolynomialFactoringGenerator(BaseGenerator):
         d3 = f"({ax_str} - {b // 2 if b % 2 == 0 else b})({ax_str} + {b // 2 if b % 2 == 0 else b})"
 
         steps = [
-            f"Recognize difference of two squares: $ A^2 - B^2 = (A - B)(A + B) $",
+            "Recognize difference of two squares: $ A^2 - B^2 = (A - B)(A + B) $",
             f"Identify $ A = {ax_str} $ and $ B = {b} $",
             f"Factor: $ {ans_typst} $"
         ]
@@ -75,7 +73,6 @@ class PolynomialFactoringGenerator(BaseGenerator):
     def _generate_trinomial_monic(
         self, rng: random.Random, problem_idx: int, allow_negatives: bool, x: sp.Symbol
     ) -> BaseProblem:
-        idx = problem_idx
         """Monic trinomial: x^2 + bx + c = (x + p)(x + q)."""
         pool = list(range(1, 10))
         if allow_negatives:
@@ -120,7 +117,6 @@ class PolynomialFactoringGenerator(BaseGenerator):
     def _generate_trinomial_non_monic(
         self, rng: random.Random, problem_idx: int, allow_negatives: bool, x: sp.Symbol
     ) -> BaseProblem:
-        idx = problem_idx
         """Non-monic trinomial: (ax + p)(bx + q)."""
         a = rng.choice([2, 3, 5])
         b = 1
@@ -141,7 +137,7 @@ class PolynomialFactoringGenerator(BaseGenerator):
         steps = [
             f"Given non-monic trinomial: $ {eq_typst} $",
             f"Use grouping / ac method: find factors of $ a c = {a * (p * q)} $ summing to middle coefficient",
-            f"Split middle term and factor by grouping",
+            "Split middle term and factor by grouping",
             f"Factored form: $ {ans_typst} $"
         ]
 

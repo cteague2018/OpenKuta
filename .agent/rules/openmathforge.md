@@ -1,9 +1,9 @@
 ---
 trigger: alwaysOn
-description: Invariants and system standards for OpenKuta development
+description: Invariants and system standards for OpenMathForge development
 ---
 
-# OpenKuta System Invariants & Architecture Rules
+# OpenMathForge System Invariants & Architecture Rules
 
 1. Deterministic Math Core:
    - NEVER use LLMs to generate problem equations or calculate answers.

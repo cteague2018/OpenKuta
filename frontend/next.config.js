@@ -2,7 +2,7 @@
 const backendUrl =
   process.env.BACKEND_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://openkuta.onrender.com";
+  "http://127.0.0.1:8000";
 
 const nextConfig = {
   reactStrictMode: true,
@@ -17,4 +17,3 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
-

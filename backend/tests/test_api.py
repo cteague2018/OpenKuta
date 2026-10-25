@@ -1,7 +1,5 @@
 import io
-import json
 import zipfile
-import pytest
 
 from backend.app.api.routes import (
     GeneratePDFRequest,
@@ -16,13 +14,13 @@ from backend.app.api.routes import (
     preview_problems,
     verify_steps,
 )
-from backend.app.main import root, health
+from backend.app.main import health, root
 
 
 def test_health_and_root():
     assert health() == {"status": "ok"}
     r = root()
-    assert r["engine"] == "OpenKuta"
+    assert r["engine"] == "OpenMathForge"
     assert r["status"] == "online"
 
 
@@ -109,16 +107,16 @@ def test_export_qti_endpoint():
 
 def test_classroom_api_endpoints():
     from backend.app.api.classroom_routes import (
-        CreateClassRequest,
         BatchWorksheetRequest,
+        CreateClassRequest,
         RecordGradeRequest,
         create_class,
-        list_classes,
-        get_class,
-        generate_class_batch_worksheet,
-        get_gradebook,
-        record_grade,
         export_gradebook_csv,
+        generate_class_batch_worksheet,
+        get_class,
+        get_gradebook,
+        list_classes,
+        record_grade,
     )
 
     # List classes (seeded default)

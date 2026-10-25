@@ -1,27 +1,31 @@
 from __future__ import annotations
 
+import base64
 import io
 import json
 import pathlib
 import uuid
 import zipfile
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, File, HTTPException, UploadFile
+
+import cv2
+import numpy as np
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from backend.app.core.base import GeneratorConfig, ProblemDifficulty
 from backend.app.core.compiler import TypstCompiler
+from backend.app.core.rate_limiter import TokenBucketRateLimiter
 from backend.app.export.qti_builder import QTIBuilder
 from backend.app.generators import (
+    COURSE_CATALOG,
     GENERATOR_REGISTRY,
-    KUTA_COURSE_CATALOG,
     get_generator,
 )
 from backend.app.grading.aligner import WorksheetAligner
 from backend.app.grading.extractor import ProblemWorkspaceExtractor
 from backend.app.grading.verifier import CASStepVerifier
-
 
 router = APIRouter(prefix="/api")
 compiler = TypstCompiler()
@@ -29,6 +33,8 @@ aligner = WorksheetAligner()
 extractor = ProblemWorkspaceExtractor()
 cas_verifier = CASStepVerifier()
 qti_builder = QTIBuilder()
+pdf_limiter = TokenBucketRateLimiter(capacity=10, refill_rate_per_sec=2.0)
+upload_limiter = TokenBucketRateLimiter(capacity=10, refill_rate_per_sec=2.0)
 
 
 class GeneratePDFRequest(BaseModel):
@@ -70,15 +76,15 @@ class StepVerifyRequest(BaseModel):
 
 
 @router.get("/catalog")
-def get_catalog():
-    """Return comprehensive 7-product Kuta course catalog with categories
+def get_catalog() -> Any:
+    """Return comprehensive 7-tier curriculum course catalog with categories
     and topics.
     """
-    return KUTA_COURSE_CATALOG
+    return COURSE_CATALOG
 
 
 @router.get("/generators")
-def list_generators():
+def list_generators() -> List[Dict[str, Any]]:
     """List available procedural CAS math problem generators."""
     return [
         {
@@ -92,7 +98,7 @@ def list_generators():
 
 
 @router.get("/standards")
-def get_standards():
+def get_standards() -> Any:
     """Return hierarchical CCSS-M and TEKS curriculum standards."""
     standards_path = (
         pathlib.Path(__file__).parent.parent / "export" / "standards.json"
@@ -103,34 +109,55 @@ def get_standards():
 
 
 @router.post("/worksheet/preview")
-def preview_problems(req: GeneratePDFRequest):
+def preview_problems(req: GeneratePDFRequest) -> Dict[str, Any]:
     """Generate problem data for live frontend KaTeX preview."""
-    gen = get_generator(req.generator_id)
-    diff_dist = {
-        ProblemDifficulty(k): v
-        for k, v in (req.difficulty_distribution or {
-            "mild": 0.4,
-            "medium": 0.4,
-            "spicy": 0.2,
-        }).items()
-    }
-    cfg = GeneratorConfig(
-        problem_count=req.problem_count,
-        seed=req.seed,
-        difficulty_distribution=diff_dist,
-        allow_negatives=req.allow_negatives,
-    )
-    problems = gen.generate(cfg)
+    active_seed = req.seed if req.seed is not None else 42
+    problems = []
+    if req.topics:
+        item_seed = active_seed
+        for t in req.topics:
+            t_gen = get_generator(t.get("generator_id", req.generator_id))
+            t_count = t.get("count", 4)
+            t_diff = t.get("difficulty", "medium")
+            diff_dist = {
+                ProblemDifficulty.MILD: 1.0 if t_diff == "mild" else 0.0,
+                ProblemDifficulty.MEDIUM: 1.0 if t_diff == "medium" else 0.0,
+                ProblemDifficulty.SPICY: 1.0 if t_diff == "spicy" else 0.0,
+            }
+            cfg = GeneratorConfig(
+                problem_count=t_count,
+                seed=item_seed,
+                difficulty_distribution=diff_dist,
+                allow_negatives=req.allow_negatives,
+            )
+            problems.extend(t_gen.generate(cfg))
+            item_seed += 113
+    else:
+        gen = get_generator(req.generator_id)
+        diff_dist = {
+            ProblemDifficulty(k): v
+            for k, v in (req.difficulty_distribution or {
+                "mild": 0.4,
+                "medium": 0.4,
+                "spicy": 0.2,
+            }).items()
+        }
+        cfg = GeneratorConfig(
+            problem_count=req.problem_count,
+            seed=active_seed,
+            difficulty_distribution=diff_dist,
+            allow_negatives=req.allow_negatives,
+        )
+        problems = gen.generate(cfg)
     return {
         "worksheet_id": f"WS-{uuid.uuid4().hex[:6].upper()}",
         "generator_id": req.generator_id,
-        "seed": cfg.seed,
+        "seed": active_seed,
         "problems": [p.model_dump() for p in problems],
     }
 
 
-@router.post("/worksheet/pdf")
-def generate_pdf(req: GeneratePDFRequest):
+def generate_pdf(req: GeneratePDFRequest) -> Response:
     """Generate and stream a student printable PDF worksheet with corner
     ArUco markers and QR code.
     """
@@ -184,12 +211,14 @@ def generate_pdf(req: GeneratePDFRequest):
         seed=active_seed,
         problems=problems,
         columns=req.columns,
+        show_answers=req.show_answers,
         student_name=req.student_name,
         student_id=req.student_id,
         student_period=req.student_period,
     )
 
-    disposition = f'inline; filename="{worksheet_id}_Form_{req.form_id}.pdf"'
+    suffix = "_Answer_Key" if req.show_answers else ""
+    disposition = f'inline; filename="{worksheet_id}_Form_{req.form_id}{suffix}.pdf"'
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
@@ -197,8 +226,18 @@ def generate_pdf(req: GeneratePDFRequest):
     )
 
 
+@router.post("/worksheet/pdf")
+@router.post("/generate-pdf")
+@router.post("/compile-typst")
+def generate_pdf_endpoint(req: GeneratePDFRequest, request: Request) -> Response:
+    client_ip = request.client.host if request.client else "local"
+    if not pdf_limiter.check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
+    return generate_pdf(req)
+
+
 @router.post("/worksheet/multi-form")
-def generate_multi_form(req: MultiFormRequest):
+def generate_multi_form(req: MultiFormRequest) -> Response:
     """Generate Forms A-D worksheets + companion Master Grading Matrix
     ZIP bundle.
     """
@@ -276,17 +315,34 @@ def generate_multi_form(req: MultiFormRequest):
     )
 
 
-@router.post("/grade/upload")
-async def grade_upload(file: UploadFile = File(...)):
+def grade_upload(file: UploadFile) -> Dict[str, Any]:
     """Receive student scan image, apply ArUco perspective deskewing,
     crop workspaces, decode student QR, and run verification.
     """
-    image_bytes = await file.read()
+    filename = file.filename or ""
+    if ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(status_code=400, detail="Directory traversal prohibited in filename")
+
+    image_bytes = file.file.read()
+    if len(image_bytes) < 16:
+        raise HTTPException(status_code=400, detail="File too small or truncated byte stream")
+    if len(image_bytes) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size exceeds maximum threshold")
+
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    if img is None:
+        raise HTTPException(status_code=400, detail="Non-image file or invalid image format")
+
+    h, w = img.shape[:2]
+    if h > 5000 or w > 5000 or (h * w) > 25_000_000:
+        raise HTTPException(status_code=400, detail="Image dimensions exceed safe limits (decompression bomb protection)")
+
     try:
-        align_result = aligner.process(image_bytes)
+        align_result = aligner.process(img)
     except Exception as e:
         msg = f"Image processing failed: {str(e)}"
-        raise HTTPException(status_code=400, detail=msg)
+        raise HTTPException(status_code=400, detail=msg) from e
 
     problem_count = align_result.metadata.get("problem_count", 6)
     crops = extractor.extract_workspaces(
@@ -320,21 +376,30 @@ async def grade_upload(file: UploadFile = File(...)):
             {
                 "problem_index": c.problem_index,
                 "bounding_box": c.bounding_box,
+                "image_data": f"data:image/jpeg;base64,{base64.b64encode(cv2.imencode('.jpg', c.raw_crop, [cv2.IMWRITE_JPEG_QUALITY, 80])[1].tobytes()).decode('ascii')}" if c.raw_crop.size > 0 else None,
             }
             for c in crops
         ],
     }
 
 
+@router.post("/grade/upload")
+def grade_upload_route(request: Request, file: UploadFile = File(...)) -> Dict[str, Any]:
+    client_ip = request.client.host if request.client else "local"
+    if not upload_limiter.check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
+    return grade_upload(file)
+
+
 @router.post("/grade/verify-steps")
-def verify_steps(req: StepVerifyRequest):
+def verify_steps(req: StepVerifyRequest) -> Any:
     """CAS verification of student step transitions with error diagnostic."""
     report = cas_verifier.verify_solution_steps(req.problem_id, req.steps)
     return report
 
 
 @router.post("/export/qti")
-def export_qti(req: QTIExportRequest):
+def export_qti(req: QTIExportRequest) -> Response:
     """Generate and download Canvas / Schoology QTI 2.1 quiz ZIP package."""
     problems = []
     if req.topics:

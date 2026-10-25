@@ -1,5 +1,3 @@
-import io
-import pytest
 from backend.app.classroom.models import RosterFormat
 from backend.app.classroom.roster_parser import RosterParser
 from backend.app.classroom.store import ClassroomStore

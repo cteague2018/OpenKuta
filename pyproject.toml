@@ -3,10 +3,10 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "openkuta"
+name = "openmathforge"
 version = "0.1.0"
 description = "Deterministic math worksheet generation and CV grading engine"
-authors = [{ name = "OpenKuta Team" }]
+authors = [{ name = "OpenMathForge Team" }]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -29,6 +29,34 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["backend/tests"]
-pythonpath = ["backend"]
+testpaths = ["backend/tests", "tests"]
+pythonpath = [".", "backend"]
+
+[tool.mypy]
+python_version = "3.10"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = false
+explicit_package_bases = true
+mypy_path = "."
+
+[[tool.mypy.overrides]]
+module = [
+    "sympy.*",
+    "cv2.*",
+    "qrcode.*",
+    "typst.*",
+    "jinja2.*",
+]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "I"]
+ignore = ["E501", "B008"]
 

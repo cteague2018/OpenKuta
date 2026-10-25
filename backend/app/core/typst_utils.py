@@ -36,7 +36,7 @@ def sympy_to_typst(expr: sp.Expr | int | float | str) -> str:
             return f"-({abs(expr.p)}/{expr.q})"
         return f"{expr.p}/{expr.q}"
 
-    return s
+    return str(s)
 
 
 def format_polynomial_typst(poly_expr: sp.Expr, var: sp.Symbol = sp.Symbol('x')) -> str:

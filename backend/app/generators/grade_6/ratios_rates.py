@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -19,7 +18,6 @@ class Grade6RatiosRatesGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             # Unit rate: $cost for n items
             n = rng.choice([3, 4, 5, 6])
@@ -30,7 +28,7 @@ class Grade6RatiosRatesGenerator(BaseGenerator):
             ans_typst = f"\"\\${rate} per item\""
 
             steps = [
-                f"Recall unit rate formula: $ \"Unit Rate\" = (\"Total Cost\") / (\"Total Items\") $",
+                "Recall unit rate formula: $ \"Unit Rate\" = (\"Total Cost\") / (\"Total Items\") $",
                 f"Divide cost by number of items: $ ({total}) / ({n}) $",
                 f"Calculate quotient: $ {rate} $",
                 f"Result: $ {ans_typst} $"
@@ -65,12 +63,12 @@ class Grade6RatiosRatesGenerator(BaseGenerator):
             ]
 
             return BaseProblem(
-                id=f"g6_ratio_med_{problem_idx}",
+                id=f"g6_ratio_{difficulty.value}_{problem_idx}",
                 prompt_text="Find the missing value to make an equivalent ratio.",
                 equation_typst=eq_typst,
                 answer_typst=ans_typst,
                 steps_typst=steps,
                 distractors=[f"x = {c + 1}", f"x = {d - b}", f"x = {c * 2}"],
-                difficulty=ProblemDifficulty.MEDIUM,
+                difficulty=difficulty,
                 standards=self.standards
             )

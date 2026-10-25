@@ -1,6 +1,8 @@
-# OpenKuta 📐⚡
+# OpenMathForge 📐⚡
 
-Open-source deterministic math worksheet generator, Typst typesetting engine, OpenCV ArUco/QR deskewing pipeline, SymPy step-by-step equivalence grader, LMS roster gradebook, and QTI 2.1 export suite.
+An open-source, web-based algorithmic math worksheet generator and grading engine built with SymPy and Typst as a modern alternative to traditional desktop tools like Kuta Software.
+
+OpenMathForge integrates procedural mathematical generation, sub-100ms vector typesetting, computer vision marker deskewing, symbolic CAS partial-credit grading, LMS roster synchronization, and IMS QTI 2.1 export.
 
 ---
 
@@ -8,7 +10,7 @@ Open-source deterministic math worksheet generator, Typst typesetting engine, Op
 
 1. **Deterministic CAS Math Core**
    - Procedural backward parameterization via **SymPy**. Zero LLM hallucinations, guaranteed integer/rational invariants, full seed determinism.
-   - Comprehensive Kuta course catalog: Pre-Algebra, Algebra 1, Geometry, Algebra 2, Precalculus, Calculus, Grade 6 Math.
+   - Comprehensive curriculum catalog across 7 tiers: Grade 6 Math, Pre-Algebra, Algebra 1, Geometry, Algebra 2, Precalculus, and Calculus (43+ algorithmic generators).
 2. **Typesetting & Anti-Cheating Document Engine**
    - Sub-100ms compilation via **Typst** (`typst-py`).
    - 4 ArUco 4x4 corner fiducials and metadata QR codes `{worksheet_id, form_id, seed, student_id}`.
@@ -54,21 +56,23 @@ cd frontend
 npm install
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to access the OpenKuta Studio.
+Open [http://localhost:3000](http://localhost:3000) to access the OpenMathForge Studio.
 
 ---
 
-## 🌐 Deployment to Vercel
+## 🌐 Deployment to Vercel & Render
 
-### Deploy via Vercel CLI
-```bash
-cd frontend
-vercel
-# Follow prompts to link project and deploy
-```
+### Frontend (Vercel)
+- Set Root Directory to `frontend`.
+- Set Environment Variable `BACKEND_URL` to your deployed FastAPI backend URL on Render (e.g., `https://openmathforge-backend.onrender.com`).
 
-### Environment Variables
-- `BACKEND_URL`: URL of your deployed OpenKuta FastAPI backend (e.g. `https://api.yourdomain.com`). Defaults to `http://127.0.0.1:8000` for local development.
+### Backend (Render)
+- Configured via `render.yaml` with automated Docker build (`Dockerfile`).
+
+---
+
+## ⚖️ Trademark & Non-Affiliation Disclaimer
+OpenMathForge is an independent, community-driven free and open-source software project released under the MIT License. Kuta Software® is a registered trademark of Kuta Software LLC. OpenMathForge is not affiliated with, endorsed by, sponsored by, or associated with Kuta Software LLC in any way. Any reference to Kuta Software is strictly nominative for descriptive, educational, and interoperability comparison.
 
 ---
 

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: openkuta-backend
+    name: openmathforge-backend
     env: docker
     dockerfilePath: ./Dockerfile
     plan: free

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
-import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -23,7 +21,6 @@ class ImplicitDifferentiationGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             return self._generate_mild(rng, problem_idx)
         elif difficulty == ProblemDifficulty.MEDIUM:
@@ -118,9 +115,9 @@ class ImplicitDifferentiationGenerator(BaseGenerator):
 
         steps = [
             f"Differentiate both sides with respect to x: $ (d)/(d x) [x y + y^2] = (d)/(d x) [{k}] $",
-            f"Apply the product rule to x y and chain rule to y^2: $ (1 dot y + x dot (d y)/(d x)) + 2 y dot (d y)/(d x) = 0 $",
-            f"Group terms with dy/dx: $ (x + 2 y) dot (d y)/(d x) + y = 0 $",
-            f"Subtract y from both sides: $ (x + 2 y) dot (d y)/(d x) = -y $",
+            "Apply the product rule to x y and chain rule to y^2: $ (1 dot y + x dot (d y)/(d x)) + 2 y dot (d y)/(d x) = 0 $",
+            "Group terms with dy/dx: $ (x + 2 y) dot (d y)/(d x) + y = 0 $",
+            "Subtract y from both sides: $ (x + 2 y) dot (d y)/(d x) = -y $",
             f"Divide by (x + 2 y): $ {ans_typst} $"
         ]
 

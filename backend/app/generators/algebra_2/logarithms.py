@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -19,7 +18,6 @@ class Algebra2LogarithmsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        idx = problem_idx
         base = rng.choice([2, 3, 4, 5, 10])
         exponent = rng.choice([2, 3, 4])
         arg = base ** exponent
@@ -30,7 +28,7 @@ class Algebra2LogarithmsGenerator(BaseGenerator):
             ans_typst = f"{exponent}"
 
             steps = [
-                f"Recall definition of logarithm: $ log_b(x) = y <==> b^y = x $",
+                "Recall definition of logarithm: $ log_b(x) = y <==> b^y = x $",
                 f"Set equal to y: $ log_{base}({arg}) = y <==> {base}^y = {arg} $",
                 f"Express {arg} as a power of {base}: $ {base}^{exponent} = {arg} $",
                 f"Equate exponents: $ y = {exponent} $",
@@ -50,7 +48,7 @@ class Algebra2LogarithmsGenerator(BaseGenerator):
         else:
             # Solve log_b(2x - c) = exponent
             c = rng.choice([1, 3, 5])
-            val = arg + c
+            arg + c
             # let 2x = val ==> if val is odd, use x + c
             eq_typst = f"log_{base}(x - {c}) = {exponent}"
             x_val = arg + c
@@ -66,12 +64,12 @@ class Algebra2LogarithmsGenerator(BaseGenerator):
             ]
 
             return BaseProblem(
-                id=f"a2_log_med_{problem_idx}",
+                id=f"a2_log_{difficulty.value}_{problem_idx}",
                 prompt_text="Solve each logarithmic equation.",
                 equation_typst=eq_typst,
                 answer_typst=ans_typst,
                 steps_typst=steps,
                 distractors=[f"x = {arg}", f"x = {arg - c}", f"x = {x_val + 2}"],
-                difficulty=ProblemDifficulty.MEDIUM,
+                difficulty=difficulty,
                 standards=self.standards
             )

@@ -4,7 +4,16 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+
 import sympy as sp
+from sympy.parsing.sympy_parser import (
+    convert_xor,
+    implicit_multiplication_application,
+    parse_expr,
+    standard_transformations,
+)
+
+_PARSER_TRANSFORMS = standard_transformations + (implicit_multiplication_application, convert_xor)
 
 
 class ErrorType(str, Enum):
@@ -37,14 +46,49 @@ class ProblemGradingReport:
     final_answer_correct: bool
 
 
+PROHIBITED_PATTERNS = re.compile(
+    r"(__|import|eval|exec|compile|globals|locals|system|popen|subprocess|os\.|sys\.|builtins|open\(|pty|spawn)",
+    re.IGNORECASE,
+)
+
+SAFE_GLOBALS: Dict[str, Any] = {
+    "__builtins__": {},
+    "Symbol": sp.Symbol,
+    "Integer": sp.Integer,
+    "Float": sp.Float,
+    "Rational": sp.Rational,
+    "sqrt": sp.sqrt,
+    "sin": sp.sin,
+    "cos": sp.cos,
+    "tan": sp.tan,
+    "log": sp.log,
+    "exp": sp.exp,
+    "pi": sp.pi,
+    "E": sp.E,
+    "I": sp.I,
+    "x": sp.Symbol("x"),
+    "y": sp.Symbol("y"),
+    "z": sp.Symbol("z"),
+    "t": sp.Symbol("t"),
+    "theta": sp.Symbol("theta"),
+}
+
+
 class CASStepVerifier:
     """Line-by-line algebraic equivalence verifier using SymPy with misconception classification."""
 
     def __init__(self) -> None:
         self.x = sp.Symbol('x')
 
+    def sanitize_math_input(self, text: str) -> str:
+        """Reject code injection, dunders, and dangerous function calls."""
+        if PROHIBITED_PATTERNS.search(text):
+            raise ValueError(f"Prohibited code pattern detected in input: {text}")
+        return text
+
     def parse_latex_to_sympy(self, step_str: str) -> sp.Expr | Tuple[sp.Expr, sp.Expr]:
-        """Convert a LaTeX / math step into SymPy expression(s)."""
+        """Convert a LaTeX / math step into SymPy expression(s) securely."""
+        self.sanitize_math_input(step_str)
         s = step_str.replace("$", "").strip()
 
         # Handle common LaTeX tokens
@@ -57,13 +101,13 @@ class CASStepVerifier:
         # Check for equation (=)
         if "=" in s:
             parts = s.split("=")
-            lhs_str = parts[0].strip()
-            rhs_str = parts[1].strip()
-            lhs = sp.sympify(lhs_str)
-            rhs = sp.sympify(rhs_str)
+            lhs_str = self.sanitize_math_input(parts[0].strip())
+            rhs_str = self.sanitize_math_input(parts[1].strip())
+            lhs = parse_expr(lhs_str, global_dict=SAFE_GLOBALS, transformations=_PARSER_TRANSFORMS)
+            rhs = parse_expr(rhs_str, global_dict=SAFE_GLOBALS, transformations=_PARSER_TRANSFORMS)
             return (lhs, rhs)
         else:
-            return sp.sympify(s)
+            return parse_expr(self.sanitize_math_input(s), global_dict=SAFE_GLOBALS, transformations=_PARSER_TRANSFORMS)
 
     def extract_difference_expr(self, step_obj: sp.Expr | Tuple[sp.Expr, sp.Expr]) -> sp.Expr:
         """Normalize an equation or expression into an invariant difference expression."""

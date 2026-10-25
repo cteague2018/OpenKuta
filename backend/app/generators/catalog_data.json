@@ -15,7 +15,7 @@
           {
             "id": "algebra_1.beginning_algeb.order_of_operations",
             "name": "Order of operations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "grade_6.order_of_operations",
             "available": true
           },
           {
@@ -109,31 +109,31 @@
           {
             "id": "algebra_1.inequalities.graphing_single_variable_",
             "name": "Graphing single-variable inequalities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
             "id": "algebra_1.inequalities.one_step_inequalities",
             "name": "One-step inequalities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
             "id": "algebra_1.inequalities.two_step_inequalities",
             "name": "Two-step inequalities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
             "id": "algebra_1.inequalities.multi_step_inequalities",
             "name": "Multi-step inequalities",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
             "id": "algebra_1.inequalities.compound_inequalities",
             "name": "Compound inequalities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
@@ -278,7 +278,7 @@
           {
             "id": "algebra_1.exponents.properties_of_exponents",
             "name": "Properties of exponents",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.exponent_rules",
             "available": true
           },
           {
@@ -442,13 +442,13 @@
           {
             "id": "algebra_1.radical_express.the_distance_formula",
             "name": "The Distance Formula",
-            "generator_id": "algebra_2.radicals",
+            "generator_id": "geometry.coordinate_geometry",
             "available": true
           },
           {
             "id": "algebra_1.radical_express.the_midpoint_formula",
             "name": "The Midpoint Formula",
-            "generator_id": "algebra_2.radicals",
+            "generator_id": "geometry.coordinate_geometry",
             "available": true
           },
           {
@@ -670,13 +670,13 @@
           {
             "id": "geometry.parallel_lines_.the_midpoint_formula",
             "name": "The Midpoint Formula",
-            "generator_id": "geometry.angles_lines",
+            "generator_id": "geometry.coordinate_geometry",
             "available": true
           },
           {
             "id": "geometry.parallel_lines_.the_distance_formula",
             "name": "The Distance Formula",
-            "generator_id": "geometry.angles_lines",
+            "generator_id": "geometry.coordinate_geometry",
             "available": true
           },
           {
@@ -893,7 +893,7 @@
           {
             "id": "geometry.right_triangles.special_right_triangles",
             "name": "Special right triangles",
-            "generator_id": "geometry.pythagorean",
+            "generator_id": "geometry.special_right_triangles",
             "available": true
           },
           {
@@ -1174,7 +1174,7 @@
           {
             "id": "algebra_2.beginning_algeb.order_of_operations",
             "name": "Order of operations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "grade_6.order_of_operations",
             "available": true
           },
           {
@@ -1221,13 +1221,13 @@
           {
             "id": "algebra_2.equations_and_i.multi_step_inequalities",
             "name": "Multi-step inequalities",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
             "id": "algebra_2.equations_and_i.compound_inequalities",
             "name": "Compound inequalities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
@@ -1520,7 +1520,7 @@
           {
             "id": "algebra_2.polynomial_func.dividing",
             "name": "Dividing",
-            "generator_id": "algebra_1.factoring",
+            "generator_id": "algebra_2.polynomial_division",
             "available": true
           },
           {
@@ -1674,7 +1674,7 @@
           {
             "id": "algebra_2.radical_functio.the_properties_of_exponen",
             "name": "The properties of exponents",
-            "generator_id": "algebra_2.radicals",
+            "generator_id": "algebra_1.exponent_rules",
             "available": true
           },
           {
@@ -1845,7 +1845,7 @@
           {
             "id": "algebra_2.exponential_and.properties_of_logarithms",
             "name": "Properties of logarithms",
-            "generator_id": "algebra_2.logarithms",
+            "generator_id": "algebra_2.log_properties",
             "available": true
           },
           {
@@ -2005,13 +2005,13 @@
           {
             "id": "algebra_2.trigonometry.the_law_of_sines",
             "name": "The Law of Sines",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.triangle_trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.the_law_of_cosines",
             "name": "The Law of Cosines",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.triangle_trig",
             "available": true
           },
           {
@@ -2176,7 +2176,7 @@
           {
             "id": "precalculus.power_polynomia.dividing_polynomial_funct",
             "name": "Dividing polynomial functions",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.polynomial_division",
             "available": true
           },
           {
@@ -2259,7 +2259,7 @@
           {
             "id": "precalculus.exponential_and.properties_of_logarithms",
             "name": "Properties of logarithms",
-            "generator_id": "algebra_2.logarithms",
+            "generator_id": "algebra_2.log_properties",
             "available": true
           },
           {
@@ -2390,13 +2390,13 @@
           {
             "id": "precalculus.trigonometry.the_law_of_sines",
             "name": "The Law of Sines",
-            "generator_id": "precalculus.trig",
+            "generator_id": "precalculus.triangle_trig",
             "available": true
           },
           {
             "id": "precalculus.trigonometry.the_law_of_cosines",
             "name": "The Law of Cosines",
-            "generator_id": "precalculus.trig",
+            "generator_id": "precalculus.triangle_trig",
             "available": true
           },
           {
@@ -2812,13 +2812,13 @@
           {
             "id": "precalculus.introduction_to.approximating_area_under_",
             "name": "Approximating area under a curve",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "calculus.riemann_sums",
             "available": true
           },
           {
             "id": "precalculus.introduction_to.area_under_a_curve_by_lim",
             "name": "Area under a curve by limit of sums",
-            "generator_id": "calculus.limits",
+            "generator_id": "calculus.riemann_sums",
             "available": true
           },
           {
@@ -2853,7 +2853,7 @@
           {
             "id": "calculus.limits.at_removable_discontinuit",
             "name": "At removable discontinuities",
-            "generator_id": "calculus.limits",
+            "generator_id": "calculus.lhopital",
             "available": true
           },
           {
@@ -2865,7 +2865,7 @@
           {
             "id": "calculus.limits.at_infinity",
             "name": "At infinity",
-            "generator_id": "calculus.limits",
+            "generator_id": "calculus.lhopital",
             "available": true
           }
         ]
@@ -3078,7 +3078,7 @@
           {
             "id": "calculus.applications_of.l_h_pital_s_rule",
             "name": "L'H\u00f4pital's Rule",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.lhopital",
             "available": true
           }
         ]
@@ -3148,19 +3148,19 @@
           {
             "id": "calculus.definite_integr.approximating_area_under_",
             "name": "Approximating area under a curve",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.riemann_sums",
             "available": true
           },
           {
             "id": "calculus.definite_integr.area_under_a_curve_by_lim",
             "name": "Area under a curve by limit of sums",
-            "generator_id": "calculus.limits",
+            "generator_id": "calculus.riemann_sums",
             "available": true
           },
           {
             "id": "calculus.definite_integr.riemann_sum_tables",
             "name": "Riemann sum tables",
-            "generator_id": "calculus.integrals",
+            "generator_id": "calculus.riemann_sums",
             "available": true
           },
           {
@@ -3195,7 +3195,7 @@
           {
             "id": "calculus.applications_of.area_under_a_curve",
             "name": "Area under a curve",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.riemann_sums",
             "available": true
           },
           {
@@ -3493,7 +3493,7 @@
           {
             "id": "grade_6.negative_number.numbers_on_a_number_line",
             "name": "Numbers on a number line",
-            "generator_id": "grade_6.one_step",
+            "generator_id": "grade_6.integers",
             "available": true
           },
           {
@@ -3505,7 +3505,7 @@
           {
             "id": "grade_6.negative_number.opposites_of_numbers",
             "name": "Opposites of numbers",
-            "generator_id": "grade_6.one_step",
+            "generator_id": "grade_6.integers",
             "available": true
           },
           {
@@ -3552,7 +3552,7 @@
           {
             "id": "grade_6.coordinate_plan.distances_on_the_coordina",
             "name": "Distances on the coordinate plane",
-            "generator_id": "grade_6.one_step",
+            "generator_id": "geometry.coordinate_geometry",
             "available": true
           },
           {
@@ -3593,7 +3593,7 @@
           {
             "id": "grade_6.numeric_express.numeric_expressions_and_t",
             "name": "Numeric expressions and the order of operations",
-            "generator_id": "grade_6.ratios_rates",
+            "generator_id": "grade_6.order_of_operations",
             "available": true
           },
           {
@@ -3703,7 +3703,7 @@
           {
             "id": "grade_6.inequalities.solving_and_graphing_one_",
             "name": "Solving and graphing one-step inequalities",
-            "generator_id": "grade_6.one_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
@@ -3925,25 +3925,25 @@
           {
             "id": "pre_algebra.arithmetic_numb.adding_and_subtracting_in",
             "name": "Adding and subtracting integers",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "grade_6.integers",
             "available": true
           },
           {
             "id": "pre_algebra.arithmetic_numb.multiplying_and_dividing_",
             "name": "Multiplying and dividing integers",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "grade_6.integers",
             "available": true
           },
           {
             "id": "pre_algebra.arithmetic_numb.order_of_operations_with_",
             "name": "Order of operations with integers",
-            "generator_id": "grade_6.ratios_rates",
+            "generator_id": "grade_6.order_of_operations",
             "available": true
           },
           {
             "id": "pre_algebra.arithmetic_numb.evaluating_variable_expre",
             "name": "Evaluating variable expressions",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "grade_6.order_of_operations",
             "available": true
           },
           {
@@ -3995,19 +3995,19 @@
           {
             "id": "pre_algebra.inequalities.one_step_inequalities",
             "name": "One-step inequalities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
             "id": "pre_algebra.inequalities.two_step_inequalities",
             "name": "Two-step inequalities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
             "id": "pre_algebra.inequalities.multi_step_inequalities",
             "name": "Multi-step inequalities",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {

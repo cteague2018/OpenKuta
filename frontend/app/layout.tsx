@@ -2,7 +2,7 @@ import "./globals.css";
 import React from "react";
 
 export const metadata = {
-  title: "OpenKuta - Deterministic CAS Assessment & Vision Grader",
+  title: "OpenMathForge - Deterministic CAS Assessment & Vision Grader",
   description: "Procedural math worksheet generator, Typst layout engine, and CV line-by-line step grader",
 };
 

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
-import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -25,7 +23,6 @@ class MultiStepEquationsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True,
     ) -> BaseProblem:
-        idx = problem_idx
         if difficulty == ProblemDifficulty.MILD:
             return self._generate_mild(rng, problem_idx, allow_negatives)
         elif difficulty == ProblemDifficulty.MEDIUM:

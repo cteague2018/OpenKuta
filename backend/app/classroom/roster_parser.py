@@ -4,6 +4,7 @@ import csv
 import io
 import uuid
 from typing import List, Tuple
+
 from backend.app.classroom.models import RosterFormat, Student
 
 
@@ -54,10 +55,10 @@ class RosterParser:
             if not row or len(row) == 0:
                 continue
 
-            def get_val(key_candidates: List[str]) -> str:
+            def get_val(key_candidates: List[str], current_row: List[str] = row) -> str:
                 for k in key_candidates:
-                    if k in header_map and header_map[k] < len(row):
-                        v = row[header_map[k]].strip()
+                    if k in header_map and header_map[k] < len(current_row):
+                        v = current_row[header_map[k]].strip()
                         if v:
                             return v
                 return ""
