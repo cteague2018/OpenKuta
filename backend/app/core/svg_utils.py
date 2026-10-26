@@ -4,6 +4,8 @@ import html
 import math
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
+_SVG_STYLE = 'style="max-width:100%;height:auto;display:block;margin:0 auto;"'
+
 
 def _esc(text: Any) -> str:
     return html.escape(str(text), quote=True)
@@ -15,8 +17,8 @@ def svg_coordinate_plane(
     x_max: int = 8,
     y_min: int = -8,
     y_max: int = 8,
-    width: int = 210,
-    height: int = 210,
+    width: int = 220,
+    height: int = 220,
     lines: Optional[List[Dict[str, Any]]] = None,
     vertical_lines: Optional[List[Dict[str, Any]]] = None,
     points: Optional[Sequence[Any]] = None,
@@ -32,7 +34,7 @@ def svg_coordinate_plane(
     riemann_boxes: Optional[Sequence[Any]] = None,
     axis_labels: Tuple[str, str] = ("x", "y"),
 ) -> str:
-    """Render a clean vector coordinate plane with optional mathematical plots."""
+    """Render a clean vector coordinate plane with auto-expanding bounds so no plotted elements clip."""
     if circles and not circles_ellipses:
         circles_ellipses = circles
     if vertical_lines:
@@ -40,7 +42,113 @@ def svg_coordinate_plane(
             {"x": vl["x"], "color": vl.get("color", "#dc2626")} for vl in vertical_lines
         ]
 
-    pad = 18.0
+    # Auto-expand coordinate bounds so all points, circles, vectors, asymptotes, and intercepts fit with margin
+    req_x: List[float] = []
+    req_y: List[float] = []
+
+    if points:
+        for pt in points:
+            if isinstance(pt, (tuple, list)):
+                req_x.append(float(pt[0]))
+                req_y.append(float(pt[1]))
+            else:
+                req_x.append(float(pt["x"]))
+                req_y.append(float(pt["y"]))
+
+    if circles_ellipses:
+        for ce in circles_ellipses:
+            ch = float(ce["h"])
+            ck = float(ce["k"])
+            rx_v = abs(float(ce.get("rx", ce.get("r", 1))))
+            ry_v = abs(float(ce.get("ry", ce.get("r", 1))))
+            req_x.extend([ch - rx_v, ch + rx_v])
+            req_y.extend([ck - ry_v, ck + ry_v])
+
+    if vectors:
+        for vec in vectors:
+            if "x1" in vec and "x2" in vec:
+                x0, y0 = float(vec["x1"]), float(vec["y1"])
+                x2_v, y2_v = float(vec["x2"]), float(vec["y2"])
+            else:
+                x0, y0 = float(vec.get("x0", 0.0)), float(vec.get("y0", 0.0))
+                x2_v, y2_v = x0 + float(vec["dx"]), y0 + float(vec["dy"])
+            req_x.extend([x0, x2_v])
+            req_y.extend([y0, y2_v])
+
+    if polygons:
+        for poly in polygons:
+            if poly.get("stroke") == "none":
+                continue
+            verts = poly.get("vertices") or poly.get("points") or []
+            for vx, vy in verts:
+                req_x.append(float(vx))
+                req_y.append(float(vy))
+
+    if asymptotes:
+        for asym in asymptotes:
+            if asym.get("x") is not None:
+                req_x.append(float(asym["x"]))
+            if asym.get("y") is not None:
+                req_y.append(float(asym["y"]))
+
+    if lines:
+        for ln in lines:
+            if ln.get("x_vert") is not None:
+                req_x.append(float(ln["x_vert"]))
+            else:
+                b_val = float(ln.get("b", 0.0))
+                if abs(b_val) <= 16:
+                    req_y.append(b_val)
+
+    if shaded_between:
+        a_val = float(shaded_between["a"])
+        b_val = float(shaded_between["b"])
+        req_x.extend([a_val, b_val])
+        fn1 = shaded_between.get("fn1") or shaded_between.get("fn_top") or (lambda _: 0.0)
+        fn2 = shaded_between.get("fn2") or shaded_between.get("fn_bot") or (lambda _: 0.0)
+        for i in range(9):
+            xv = a_val + (b_val - a_val) * i / 8.0
+            for f_chk in (fn1, fn2):
+                try:
+                    yv = float(f_chk(xv))
+                    if math.isfinite(yv) and abs(yv) <= 30:
+                        req_y.append(yv)
+                except Exception:
+                    pass
+
+    if riemann_boxes:
+        for box in riemann_boxes:
+            if isinstance(box, (tuple, list)):
+                bx0, bh, bw = float(box[0]), float(box[1]), float(box[2])
+                bx1 = bx0 + bw
+            else:
+                bx0, bx1, bh = float(box["x0"]), float(box["x1"]), float(box["h"])
+            req_x.extend([bx0, bx1])
+            req_y.extend([0.0, bh])
+
+    if functions:
+        for fn_spec in functions:
+            fn_c = fn_spec["fn"]
+            for xv in (-3.0, -1.5, 0.0, 1.5, 3.0):
+                if fn_spec.get("x_start") is not None and xv < float(fn_spec["x_start"]):
+                    continue
+                if fn_spec.get("x_end") is not None and xv > float(fn_spec["x_end"]):
+                    continue
+                try:
+                    yv = float(fn_c(xv))
+                    if math.isfinite(yv) and abs(yv) <= 18:
+                        req_y.append(yv)
+                except Exception:
+                    pass
+
+    if req_x:
+        x_min = min(x_min, int(math.floor(min(req_x))) - 2)
+        x_max = max(x_max, int(math.ceil(max(req_x))) + 2)
+    if req_y:
+        y_min = min(y_min, int(math.floor(min(req_y))) - 2)
+        y_max = max(y_max, int(math.ceil(max(req_y))) + 2)
+
+    pad = 22.0
     plot_w = width - 2 * pad
     plot_h = height - 2 * pad
     dx = max(x_max - x_min, 1)
@@ -52,8 +160,8 @@ def svg_coordinate_plane(
         return round(px, 2), round(py, 2)
 
     parts: List[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
-        '<defs>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
+        "<defs>",
         f'<clipPath id="plot-clip"><rect x="{pad}" y="{pad}" width="{plot_w}" height="{plot_h}"/></clipPath>',
     ]
 
@@ -65,7 +173,7 @@ def svg_coordinate_plane(
                 pts_str = " ".join(f"{px},{py}" for px, py in poly_pts)
                 parts.append(f'<clipPath id="hp-clip-{idx}"><polygon points="{pts_str}"/></clipPath>')
 
-    parts.append('</defs>')
+    parts.append("</defs>")
 
     # Background
     parts.append(f'<rect x="{pad}" y="{pad}" width="{plot_w}" height="{plot_h}" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>')
@@ -92,7 +200,6 @@ def svg_coordinate_plane(
                     f'<polygon points="{pts_str}" fill="{color}" fill-opacity="0.22" clip-path="url(#plot-clip)"/>'
                 )
         else:
-            # Intersection of all half planes
             color = shaded_half_planes[0].get("color", "#2563eb")
             inner = f'<rect x="{pad}" y="{pad}" width="{plot_w}" height="{plot_h}" fill="{color}" fill-opacity="0.26"/>'
             for idx in range(len(shaded_half_planes) - 1, -1, -1):
@@ -158,7 +265,7 @@ def svg_coordinate_plane(
             continue
         px, _ = to_px(gx, 0)
         if pad + 8 <= px <= width - pad - 8:
-            parts.append(f'<text x="{px}" y="{min(oy_clamped + 10, height - 4)}" font-family="sans-serif" font-size="7" fill="#475569" text-anchor="middle">{gx}</text>')
+            parts.append(f'<text x="{px}" y="{min(oy_clamped + 10, height - 6)}" font-family="sans-serif" font-size="7" fill="#475569" text-anchor="middle">{gx}</text>')
     for gy in range(int(math.ceil(y_min)), int(math.floor(y_max)) + 1):
         if gy == 0 or gy % label_step_y != 0:
             continue
@@ -168,7 +275,7 @@ def svg_coordinate_plane(
 
     # Axis names
     parts.append(f'<text x="{width - pad + 4}" y="{oy_clamped + 3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">{_esc(axis_labels[0])}</text>')
-    parts.append(f'<text x="{ox_clamped}" y="{pad - 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(axis_labels[1])}</text>')
+    parts.append(f'<text x="{ox_clamped}" y="{pad - 6}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(axis_labels[1])}</text>')
 
     # Slope field
     if slope_field is not None:
@@ -223,9 +330,13 @@ def svg_coordinate_plane(
             )
             labels = poly.get("labels", [])
             for idx, (px, py) in enumerate(px_verts):
-                parts.append(f'<circle cx="{px}" cy="{py}" r="2.5" fill="{color}"/>')
+                if poly.get("stroke") != "none":
+                    parts.append(f'<circle cx="{px}" cy="{py}" r="2.5" fill="{color}"/>')
                 if idx < len(labels) and labels[idx]:
-                    parts.append(f'<text x="{px + 4}" y="{py - 4}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="{color}">{_esc(labels[idx])}</text>')
+                    anchor = "end" if px > width - pad - 28 else "start"
+                    lx = round(px - 4, 2) if anchor == "end" else round(px + 4, 2)
+                    ly = round(py + 10, 2) if py < pad + 14 else round(py - 4, 2)
+                    parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(labels[idx])}</text>')
 
     # Circles / Ellipses
     if circles_ellipses:
@@ -321,7 +432,12 @@ def svg_coordinate_plane(
             ay2 = round(y2 - ah * math.sin(ang + 0.45), 2)
             parts.append(f'<polygon points="{x2},{y2} {ax1},{ay1} {ax2},{ay2}" fill="{color}"/>')
             if vec.get("label"):
-                parts.append(f'<text x="{round((x1 + x2) / 2 + 4, 2)}" y="{round((y1 + y2) / 2 - 4, 2)}" font-family="sans-serif" font-size="8" font-weight="bold" fill="{color}">{_esc(vec["label"])}</text>')
+                mx = round((x1 + x2) / 2, 2)
+                my = round((y1 + y2) / 2, 2)
+                anchor = "end" if mx > width - pad - 35 else "start"
+                lx = round(mx - 4, 2) if anchor == "end" else round(mx + 4, 2)
+                ly = round(my + 10, 2) if my < pad + 14 else round(my - 4, 2)
+                parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(vec["label"])}</text>')
 
     # Points
     if points:
@@ -338,12 +454,12 @@ def svg_coordinate_plane(
                 is_open = bool(pt.get("open", False))
                 lbl = str(pt.get("label", ""))
             fill = "#ffffff" if is_open else color
-            if pad - 2 <= px <= width - pad + 2 and pad - 2 <= py <= height - pad + 2:
-                parts.append(f'<circle cx="{px}" cy="{py}" r="3.2" fill="{fill}" stroke="{color}" stroke-width="1.6"/>')
-                if lbl:
-                    lx = min(max(px + 5, pad + 4), width - pad - 24)
-                    ly = min(max(py - 5, pad + 8), height - pad - 4)
-                    parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="{color}">{_esc(lbl)}</text>')
+            parts.append(f'<circle cx="{px}" cy="{py}" r="3.2" fill="{fill}" stroke="{color}" stroke-width="1.6"/>')
+            if lbl:
+                anchor = "end" if px > width - pad - 36 else "start"
+                lx = round(px - 5, 2) if anchor == "end" else round(px + 5, 2)
+                ly = round(py + 11, 2) if py < pad + 14 else round(py - 5, 2)
+                parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(lbl)}</text>')
 
     parts.append("</svg>")
     return "".join(parts)
@@ -384,13 +500,13 @@ def svg_number_line(
     min_val: int = -10,
     max_val: int = 10,
     width: int = 240,
-    height: int = 58,
+    height: int = 62,
     intervals: Optional[List[Dict[str, Any]]] = None,
     rays: Optional[Sequence[Tuple[float, str, bool]]] = None,
     segments: Optional[Sequence[Tuple[float, float, bool, bool]]] = None,
     points: Optional[Sequence[Any]] = None,
 ) -> str:
-    """Render a number line with optional rays, intervals, or labeled points."""
+    """Render a number line with auto-expanding range so rays, segments, and points never clip."""
     intervals = list(intervals or [])
     if rays:
         for val, direction, closed in rays:
@@ -398,8 +514,22 @@ def svg_number_line(
     if segments:
         for a, b, closed_a, closed_b in segments:
             intervals.append({"type": "segment", "a": a, "b": b, "closed_a": closed_a, "closed_b": closed_b})
-    pad = 18.0
-    line_y = 32.0
+
+    req_vals: List[float] = []
+    for iv in intervals:
+        if iv.get("type", "ray") == "ray":
+            req_vals.append(float(iv["val"]))
+        elif iv.get("type") == "segment":
+            req_vals.extend([float(iv["a"]), float(iv["b"])])
+    if points:
+        for pt in points:
+            req_vals.append(float(pt[0]) if isinstance(pt, (tuple, list)) else float(pt["val"]))
+    if req_vals:
+        min_val = min(min_val, int(math.floor(min(req_vals))) - 2)
+        max_val = max(max_val, int(math.ceil(max(req_vals))) + 2)
+
+    pad = 22.0
+    line_y = 34.0
     span = max(max_val - min_val, 1)
     plot_w = width - 2 * pad
 
@@ -407,7 +537,7 @@ def svg_number_line(
         return round(pad + (v - min_val) / span * plot_w, 2)
 
     parts: List[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<line x1="{pad - 8}" y1="{line_y}" x2="{width - pad + 8}" y2="{line_y}" stroke="#334155" stroke-width="1.5"/>',
         f'<polygon points="{pad - 10},{line_y} {pad - 4},{line_y - 3.5} {pad - 4},{line_y + 3.5}" fill="#334155"/>',
         f'<polygon points="{width - pad + 10},{line_y} {width - pad + 4},{line_y - 3.5} {width - pad + 4},{line_y + 3.5}" fill="#334155"/>',
@@ -460,7 +590,8 @@ def svg_number_line(
                 lbl = str(pt.get("label", ""))
             parts.append(f'<circle cx="{xv}" cy="{line_y}" r="4" fill="{color}" stroke="#ffffff" stroke-width="1"/>')
             if lbl:
-                parts.append(f'<text x="{xv}" y="{line_y - 8}" font-family="sans-serif" font-size="8" font-weight="bold" fill="{color}" text-anchor="middle">{_esc(lbl)}</text>')
+                anchor = "start" if xv < pad + 18 else ("end" if xv > width - pad - 18 else "middle")
+                parts.append(f'<text x="{xv}" y="{line_y - 8}" font-family="sans-serif" font-size="8" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(lbl)}</text>')
 
     parts.append("</svg>")
     return "".join(parts)
@@ -469,17 +600,27 @@ def svg_number_line(
 def svg_polar_grid(
     *,
     max_r: int = 5,
-    width: int = 200,
-    height: int = 200,
+    width: int = 210,
+    height: int = 210,
     points: Optional[List[Tuple[float, float, str]]] = None,
     curve_fn: Optional[Callable[[float], float]] = None,
     curve_points: Optional[Sequence[Tuple[float, float]]] = None,
 ) -> str:
-    """Render a polar coordinate grid with optional plotted polar points (r, theta_rad, label) or polar curve r(theta)."""
+    """Render a polar coordinate grid with optional plotted polar points or polar curve."""
+    req_r: List[float] = []
+    if points:
+        for rv, _, _ in points:
+            req_r.append(abs(float(rv)))
+    if curve_points:
+        for rv, _ in curve_points:
+            req_r.append(abs(float(rv)))
+    if req_r:
+        max_r = max(max_r, int(math.ceil(max(req_r))) + 1)
+
     cx, cy = width / 2.0, height / 2.0
-    max_px = min(width, height) / 2.0 - 20.0
+    max_px = min(width, height) / 2.0 - 22.0
     parts: List[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<rect x="0" y="0" width="{width}" height="{height}" fill="#ffffff"/>',
     ]
     for r in range(1, max_r + 1):
@@ -525,7 +666,10 @@ def svg_polar_grid(
             parts.append(f'<line x1="{cx}" y1="{cy}" x2="{px}" y2="{py}" stroke="#2563eb" stroke-width="1.4"/>')
             parts.append(f'<circle cx="{px}" cy="{py}" r="3.5" fill="#dc2626"/>')
             if lbl:
-                parts.append(f'<text x="{px + 5}" y="{py - 4}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626">{_esc(lbl)}</text>')
+                anchor = "end" if px > width - 38 else "start"
+                lx = round(px - 5, 2) if anchor == "end" else round(px + 5, 2)
+                ly = round(py + 11, 2) if py < 22 else round(py - 4, 2)
+                parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="{anchor}">{_esc(lbl)}</text>')
 
     parts.append("</svg>")
     return "".join(parts)
@@ -546,7 +690,7 @@ def svg_dot_plot(data: Any, title: str = "Dot Plot") -> str:
             counts[x] = counts.get(x, 0) + 1
     max_c = max(counts.values())
     width = 230
-    height = max(75, 42 + max_c * 11)
+    height = max(78, 44 + max_c * 11)
     pad = 22.0
     line_y = height - 20.0
     span = max(max_v - min_v, 1)
@@ -555,7 +699,7 @@ def svg_dot_plot(data: Any, title: str = "Dot Plot") -> str:
         return round(pad + (v - min_v) / span * (width - 2 * pad), 2)
 
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<text x="{width / 2}" y="12" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(title)}</text>',
         f'<line x1="{pad}" y1="{line_y}" x2="{width - pad}" y2="{line_y}" stroke="#334155" stroke-width="1.5"/>',
     ]
@@ -572,16 +716,15 @@ def svg_dot_plot(data: Any, title: str = "Dot Plot") -> str:
 
 def svg_histogram(bins: Sequence[Tuple[str, int]], title: str = "Histogram") -> str:
     """Render a statistical histogram / bar chart."""
-    width, height = 230, 125
-    pad_l, pad_r, pad_t, pad_b = 26.0, 14.0, 18.0, 24.0
+    width, height = 230, 128
+    pad_l, pad_r, pad_t, pad_b = 26.0, 16.0, 20.0, 24.0
     plot_w = width - pad_l - pad_r
     plot_h = height - pad_t - pad_b
     max_freq = max([b[1] for b in bins] + [4])
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<text x="{width / 2}" y="12" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(title)}</text>',
     ]
-    # Horizontal gridlines
     step_y = 1 if max_freq <= 6 else 2
     for fy in range(0, max_freq + 1, step_y):
         py = round(pad_t + plot_h - (fy / max_freq) * plot_h, 2)
@@ -599,7 +742,7 @@ def svg_histogram(bins: Sequence[Tuple[str, int]], title: str = "Histogram") -> 
         by = round(pad_t + plot_h - bh, 2)
         parts.append(f'<rect x="{bx}" y="{by}" width="{round(bw, 2)}" height="{bh}" fill="#60a5fa" fill-opacity="0.75" stroke="#1d4ed8" stroke-width="1"/>')
         parts.append(f'<text x="{round(bx + bw / 2, 2)}" y="{pad_t + plot_h + 12}" font-family="sans-serif" font-size="6.8" fill="#334155" text-anchor="middle">{_esc(lbl)}</text>')
-        parts.append(f'<text x="{round(bx + bw / 2, 2)}" y="{max(by - 3, pad_t + 7)}" font-family="sans-serif" font-size="7" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{freq}</text>')
+        parts.append(f'<text x="{round(bx + bw / 2, 2)}" y="{max(by - 3, pad_t + 8)}" font-family="sans-serif" font-size="7" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{freq}</text>')
 
     parts.append("</svg>")
     return "".join(parts)
@@ -614,8 +757,8 @@ def svg_box_plot(
     title: str = "Box-and-Whisker Plot",
 ) -> str:
     """Render a 5-number summary box-and-whisker plot above a number line."""
-    width, height = 240, 82
-    pad = 20.0
+    width, height = 240, 84
+    pad = 22.0
     lo = int(math.floor(min_v)) - 1
     hi = int(math.ceil(max_v)) + 1
     span = max(hi - lo, 1)
@@ -630,7 +773,7 @@ def svg_box_plot(
 
     x_min, x_q1, x_med, x_q3, x_max = to_x(min_v), to_x(q1), to_x(med), to_x(q3), to_x(max_v)
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<text x="{width / 2}" y="12" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(title)}</text>',
         f'<line x1="{pad}" y1="{line_y}" x2="{width - pad}" y2="{line_y}" stroke="#334155" stroke-width="1.3"/>',
     ]
@@ -640,7 +783,6 @@ def svg_box_plot(
         parts.append(f'<line x1="{xv}" y1="{line_y - 3}" x2="{xv}" y2="{line_y + 3}" stroke="#334155" stroke-width="1"/>')
         parts.append(f'<text x="{xv}" y="{line_y + 12}" font-family="sans-serif" font-size="7" fill="#334155" text-anchor="middle">{v}</text>')
 
-    # Whiskers & Box
     parts.append(f'<line x1="{x_min}" y1="{mid_y}" x2="{x_q1}" y2="{mid_y}" stroke="#1d4ed8" stroke-width="1.6"/>')
     parts.append(f'<line x1="{x_q3}" y1="{mid_y}" x2="{x_max}" y2="{mid_y}" stroke="#1d4ed8" stroke-width="1.6"/>')
     parts.append(f'<line x1="{x_min}" y1="{box_y + 3}" x2="{x_min}" y2="{box_y + box_h - 3}" stroke="#1d4ed8" stroke-width="1.6"/>')
@@ -653,10 +795,10 @@ def svg_box_plot(
 
 def svg_pie_chart(slices: Sequence[Tuple[str, float, str]], title: str = "Circle Graph") -> str:
     """Render a labeled pie/circle graph. Each slice is (label, percentage_0_to_100, color)."""
-    width, height = 220, 130
+    width, height = 225, 130
     cx, cy, r = 65.0, 70.0, 44.0
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<text x="{width / 2}" y="13" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(title)}</text>',
     ]
     angle_acc = -math.pi / 2
@@ -669,8 +811,8 @@ def svg_pie_chart(slices: Sequence[Tuple[str, float, str]], title: str = "Circle
         large = 1 if sweep > math.pi else 0
         parts.append(f'<path d="M {cx} {cy} L {x1} {y1} A {r} {r} 0 {large} 1 {x2} {y2} Z" fill="{color}" stroke="#ffffff" stroke-width="1.2"/>')
         ly = 32 + idx * 18
-        parts.append(f'<rect x="122" y="{ly - 7}" width="9" height="9" fill="{color}"/>')
-        parts.append(f'<text x="135" y="{ly}" font-family="sans-serif" font-size="7.5" fill="#1e293b">{_esc(lbl)} ({pct:g}%)</text>')
+        parts.append(f'<rect x="120" y="{ly - 7}" width="9" height="9" fill="{color}"/>')
+        parts.append(f'<text x="133" y="{ly}" font-family="sans-serif" font-size="7.5" fill="#1e293b">{_esc(lbl)} ({pct:g}%)</text>')
         angle_acc = a2
     parts.append("</svg>")
     return "".join(parts)
@@ -685,18 +827,18 @@ def svg_venn_diagram(
     label_b: str = "B",
 ) -> str:
     """Render a two-set Venn diagram with counts."""
-    width, height = 210, 120
+    width, height = 215, 120
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<rect x="4" y="4" width="{width - 8}" height="{height - 8}" fill="#f8fafc" stroke="#64748b" stroke-width="1.2"/>',
         '<circle cx="82" cy="62" r="38" fill="#60a5fa" fill-opacity="0.28" stroke="#2563eb" stroke-width="1.5"/>',
         '<circle cx="128" cy="62" r="38" fill="#f87171" fill-opacity="0.28" stroke="#dc2626" stroke-width="1.5"/>',
         f'<text x="65" y="20" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{_esc(label_a)}</text>',
         f'<text x="145" y="20" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#991b1b" text-anchor="middle">{_esc(label_b)}</text>',
-        f'<text x="64" y="65" font-family="sans-serif" font-size="10" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(only_a)}</text>',
-        f'<text x="105" y="65" font-family="sans-serif" font-size="10" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(both)}</text>',
-        f'<text x="146" y="65" font-family="sans-serif" font-size="10" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(only_b)}</text>',
-        f'<text x="{width - 14}" y="{height - 12}" font-family="sans-serif" font-size="8" fill="#475569" text-anchor="end">{_esc(neither)}</text>',
+        f'<text x="64" y="65" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(only_a)}</text>',
+        f'<text x="105" y="65" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(both)}</text>',
+        f'<text x="146" y="65" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(only_b)}</text>',
+        f'<text x="{width - 12}" y="{height - 10}" font-family="sans-serif" font-size="7.5" fill="#475569" text-anchor="end">{_esc(neither)}</text>',
         "</svg>",
     ]
     return "".join(parts)
@@ -707,22 +849,24 @@ def svg_data_table(
     rows: Sequence[Sequence[str]],
     title: str = "",
 ) -> str:
-    """Render a crisp vector data table (for function tables, Riemann tables, derivative tables, etc.)."""
+    """Render a crisp vector data table with auto-sized column widths so cell text never overflows."""
     n_cols = max(len(headers), 1)
     n_rows = len(rows) + 1
-    col_w = max(36, min(62, 220 // n_cols))
+    max_chars = max(
+        [len(str(h)) for h in headers] + [len(str(c)) for row in rows for c in row] + [4]
+    )
+    col_w = max(40, min(92, max(220 // n_cols, max_chars * 5 + 14)))
     row_h = 18
     title_h = 16 if title else 4
     width = n_cols * col_w + 12
     height = title_h + n_rows * row_h + 8
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
     ]
     if title:
         parts.append(f'<text x="{width / 2}" y="12" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(title)}</text>')
     x0 = 6
     y0 = title_h
-    # Header row
     parts.append(f'<rect x="{x0}" y="{y0}" width="{n_cols * col_w}" height="{row_h}" fill="#e2e8f0" stroke="#475569" stroke-width="1"/>')
     for c_idx, h_text in enumerate(headers):
         cx = x0 + c_idx * col_w + col_w / 2
@@ -730,7 +874,6 @@ def svg_data_table(
         if c_idx > 0:
             parts.append(f'<line x1="{x0 + c_idx * col_w}" y1="{y0}" x2="{x0 + c_idx * col_w}" y2="{y0 + n_rows * row_h}" stroke="#64748b" stroke-width="0.8"/>')
 
-    # Data rows
     for r_idx, row in enumerate(rows):
         ry = y0 + (r_idx + 1) * row_h
         bg = "#ffffff" if r_idx % 2 == 0 else "#f8fafc"
@@ -756,33 +899,33 @@ def svg_right_triangle(
     c_label: str = "",
     theta_label: str = "",
 ) -> str:
-    """Render a labeled right triangle diagram."""
+    """Render a labeled right triangle diagram with wide side padding so labels never clip."""
     side_a = side_a or a_label
     side_b = side_b or b_label
     side_c = side_c or c_label
     angle_b = angle_b or theta_label
-    width, height = 185, 115
-    x1, y1 = 30, 90   # Right angle C
-    x2, y2 = 150, 90  # Vertex B
-    x3, y3 = 30, 22   # Vertex A
+    width, height = 225, 118
+    x1, y1 = 58, 92   # Right angle C
+    x2, y2 = 166, 92  # Vertex B
+    x3, y3 = 58, 22   # Vertex A
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<polygon points="{x1},{y1} {x2},{y2} {x3},{y3}" fill="#eff6ff" stroke="#1e40af" stroke-width="1.8"/>',
         f'<rect x="{x1}" y="{y1 - 10}" width="10" height="10" fill="none" stroke="#1e40af" stroke-width="1.2"/>',
-        f'<text x="{x1 - 10}" y="{y1 + 10}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">C</text>',
+        f'<text x="{x1 - 10}" y="{y1 + 11}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">C</text>',
         f'<text x="{x2 + 6}" y="{y2 + 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">B</text>',
         f'<text x="{x3 - 10}" y="{y3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">A</text>',
     ]
     if side_a:
-        parts.append(f'<text x="{(x1 + x2) / 2}" y="{y1 + 14}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(side_a)}</text>')
+        parts.append(f'<text x="{(x1 + x2) / 2}" y="{y1 + 14}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(side_a)}</text>')
     if side_b:
-        parts.append(f'<text x="{x1 - 6}" y="{(y1 + y3) / 2 + 3}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#dc2626" text-anchor="end">{_esc(side_b)}</text>')
+        parts.append(f'<text x="{x1 - 6}" y="{(y1 + y3) / 2 + 3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" text-anchor="end">{_esc(side_b)}</text>')
     if side_c:
-        parts.append(f'<text x="{(x2 + x3) / 2 + 8}" y="{(y2 + y3) / 2 - 4}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#dc2626">{_esc(side_c)}</text>')
+        parts.append(f'<text x="{(x2 + x3) / 2 + 6}" y="{(y2 + y3) / 2 - 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626">{_esc(side_c)}</text>')
     if angle_b:
-        parts.append(f'<text x="{x2 - 28}" y="{y2 - 5}" font-family="sans-serif" font-size="8" fill="#0f172a">{_esc(angle_b)}</text>')
+        parts.append(f'<text x="{x2 - 28}" y="{y2 - 5}" font-family="sans-serif" font-size="7.5" fill="#0f172a" text-anchor="middle">{_esc(angle_b)}</text>')
     if angle_a:
-        parts.append(f'<text x="{x3 + 5}" y="{y3 + 22}" font-family="sans-serif" font-size="8" fill="#0f172a">{_esc(angle_a)}</text>')
+        parts.append(f'<text x="{x3 + 5}" y="{y3 + 22}" font-family="sans-serif" font-size="7.5" fill="#0f172a">{_esc(angle_a)}</text>')
     parts.append("</svg>")
     return "".join(parts)
 
@@ -805,39 +948,39 @@ def svg_general_triangle(
     side_b: str = "",
     side_c: str = "",
 ) -> str:
-    """Render a labeled general triangle (with optional exterior angle at C)."""
+    """Render a labeled general triangle with ample horizontal padding so labels never clip."""
     ang_a = ang_a or angle_a
     ang_b = ang_b or angle_b
     ang_c = ang_c or angle_c
     side_bc = side_bc or side_a
     side_ac = side_ac or side_b
     side_ab = side_ab or side_c
-    width, height = 200, 115
-    xa, ya = 26, 92
-    xc, yc = 138, 92
-    xb, yb = 78, 20
+    width, height = 235, 118
+    xa, ya = 52, 92
+    xc, yc = 158, 92
+    xb, yb = 102, 22
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<polygon points="{xa},{ya} {xc},{yc} {xb},{yb}" fill="#f0fdf4" stroke="#15803d" stroke-width="1.8"/>',
         f'<text x="{xa - 9}" y="{ya + 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">{_esc(label_a)}</text>',
-        f'<text x="{xb}" y="{yb - 5}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(label_b)}</text>',
+        f'<text x="{xb}" y="{yb - 6}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(label_b)}</text>',
         f'<text x="{xc + 4}" y="{yc + 11}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">{_esc(label_c)}</text>',
     ]
     if ext_c:
-        parts.append(f'<line x1="{xc}" y1="{yc}" x2="185" y2="{yc}" stroke="#15803d" stroke-width="1.8"/>')
-        parts.append(f'<text x="{xc + 16}" y="{yc - 6}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626">{_esc(ext_c)}</text>')
+        parts.append(f'<line x1="{xc}" y1="{yc}" x2="215" y2="{yc}" stroke="#15803d" stroke-width="1.8"/>')
+        parts.append(f'<text x="{xc + 12}" y="{yc - 6}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626">{_esc(ext_c)}</text>')
     if ang_a:
         parts.append(f'<text x="{xa + 14}" y="{ya - 5}" font-family="sans-serif" font-size="7.5" fill="#1e293b">{_esc(ang_a)}</text>')
     if ang_b:
         parts.append(f'<text x="{xb}" y="{yb + 18}" font-family="sans-serif" font-size="7.5" fill="#1e293b" text-anchor="middle">{_esc(ang_b)}</text>')
     if ang_c:
-        parts.append(f'<text x="{xc - 22}" y="{yc - 5}" font-family="sans-serif" font-size="7.5" fill="#1e293b">{_esc(ang_c)}</text>')
+        parts.append(f'<text x="{xc - 20}" y="{yc - 5}" font-family="sans-serif" font-size="7.5" fill="#1e293b" text-anchor="middle">{_esc(ang_c)}</text>')
     if side_ac:
-        parts.append(f'<text x="{(xa + xc) / 2}" y="{ya + 13}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1d4ed8" text-anchor="middle">{_esc(side_ac)}</text>')
+        parts.append(f'<text x="{(xa + xc) / 2}" y="{ya + 14}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1d4ed8" text-anchor="middle">{_esc(side_ac)}</text>')
     if side_ab:
-        parts.append(f'<text x="{(xa + xb) / 2 - 8}" y="{(ya + yb) / 2}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1d4ed8" text-anchor="end">{_esc(side_ab)}</text>')
+        parts.append(f'<text x="{(xa + xb) / 2 - 6}" y="{(ya + yb) / 2}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1d4ed8" text-anchor="end">{_esc(side_ab)}</text>')
     if side_bc:
-        parts.append(f'<text x="{(xb + xc) / 2 + 8}" y="{(yb + yc) / 2}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1d4ed8">{_esc(side_bc)}</text>')
+        parts.append(f'<text x="{(xb + xc) / 2 + 6}" y="{(yb + yc) / 2}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1d4ed8">{_esc(side_bc)}</text>')
     parts.append("</svg>")
     return "".join(parts)
 
@@ -852,12 +995,12 @@ def svg_parallel_transversal(
     """Render two parallel lines cut by a transversal with labeled angles."""
     ang1_label = angle1_label or ang1_label
     ang2_label = angle2_label or ang2_label
-    width, height = 195, 110
+    width, height = 215, 114
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
-        '<line x1="20" y1="35" x2="175" y2="35" stroke="#1e293b" stroke-width="1.8"/>',
-        '<line x1="20" y1="80" x2="175" y2="80" stroke="#1e293b" stroke-width="1.8"/>',
-        '<line x1="60" y1="10" x2="135" y2="102" stroke="#2563eb" stroke-width="1.8"/>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
+        '<line x1="20" y1="35" x2="195" y2="35" stroke="#1e293b" stroke-width="1.8"/>',
+        '<line x1="20" y1="80" x2="195" y2="80" stroke="#1e293b" stroke-width="1.8"/>',
+        '<line x1="60" y1="10" x2="135" y2="104" stroke="#2563eb" stroke-width="1.8"/>',
         f'<text x="72" y="48" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626">{_esc(ang1_label)}</text>',
     ]
     if mode == "alt_interior":
@@ -879,10 +1022,10 @@ def svg_circle_diagram(
 ) -> str:
     """Render a circle with radius, optional central angle sector, or chord."""
     show_sector = show_sector or shade_sector
-    width, height = 160, 120
-    cx, cy, r = 80.0, 60.0, 44.0
+    width, height = 210, 124
+    cx, cy, r = 105.0, 62.0, 44.0
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="#f8fafc" stroke="#1e40af" stroke-width="1.8"/>',
     ]
     if show_sector:
@@ -893,9 +1036,9 @@ def svg_circle_diagram(
         parts.append(f'<line x1="{cx}" y1="{cy}" x2="{cx + r}" y2="{cy}" stroke="#dc2626" stroke-width="1.8"/>')
     parts.append(f'<circle cx="{cx}" cy="{cy}" r="2.5" fill="#1e293b"/>')
     if radius_label:
-        parts.append(f'<text x="{cx + r / 2}" y="{cy - 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(radius_label)}</text>')
+        parts.append(f'<text x="{cx + r / 2}" y="{cy + 12}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(radius_label)}</text>')
     if angle_label:
-        parts.append(f'<text x="{cx + 15}" y="{cy - 8}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e3a8a">{_esc(angle_label)}</text>')
+        parts.append(f'<text x="{cx}" y="{cy - 8}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(angle_label)}</text>')
     if chord_label:
         parts.append(f'<line x1="{cx - 32}" y1="{cy - 30}" x2="{cx + 32}" y2="{cy - 30}" stroke="#15803d" stroke-width="1.8"/>')
         parts.append(f'<text x="{cx}" y="{cy - 34}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#15803d" text-anchor="middle">{_esc(chord_label)}</text>')
@@ -905,44 +1048,43 @@ def svg_circle_diagram(
 
 def svg_solid_3d(solid: str = "prism", dim1: str = "", dim2: str = "", dim3: str = "") -> str:
     """Render a clean 3D geometric solid (prism, cylinder, cone, sphere, pyramid)."""
-    width, height = 175, 115
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">']
+    width, height = 220, 118
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>']
     if solid == "cylinder":
         parts.extend([
-            '<ellipse cx="85" cy="26" rx="38" ry="11" fill="#dbeafe" stroke="#1e40af" stroke-width="1.5"/>',
-            '<line x1="47" y1="26" x2="47" y2="86" stroke="#1e40af" stroke-width="1.5"/>',
-            '<line x1="123" y1="26" x2="123" y2="86" stroke="#1e40af" stroke-width="1.5"/>',
-            '<ellipse cx="85" cy="86" rx="38" ry="11" fill="#eff6ff" stroke="#1e40af" stroke-width="1.5" stroke-dasharray="3,2"/>',
-            '<line x1="85" y1="26" x2="123" y2="26" stroke="#dc2626" stroke-width="1.5"/>',
-            f'<text x="104" y="22" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim1)}</text>',
-            f'<text x="130" y="58" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e293b">{_esc(dim2)}</text>',
+            '<ellipse cx="98" cy="26" rx="38" ry="11" fill="#dbeafe" stroke="#1e40af" stroke-width="1.5"/>',
+            '<line x1="60" y1="26" x2="60" y2="86" stroke="#1e40af" stroke-width="1.5"/>',
+            '<line x1="136" y1="26" x2="136" y2="86" stroke="#1e40af" stroke-width="1.5"/>',
+            '<ellipse cx="98" cy="86" rx="38" ry="11" fill="#eff6ff" stroke="#1e40af" stroke-width="1.5" stroke-dasharray="3,2"/>',
+            '<line x1="98" y1="26" x2="136" y2="26" stroke="#dc2626" stroke-width="1.5"/>',
+            f'<text x="117" y="21" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim1)}</text>',
+            f'<text x="142" y="58" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e293b">{_esc(dim2)}</text>',
         ])
     elif solid == "cone":
         parts.extend([
-            '<ellipse cx="85" cy="88" rx="38" ry="11" fill="#eff6ff" stroke="#1e40af" stroke-width="1.5"/>',
-            '<line x1="47" y1="88" x2="85" y2="18" stroke="#1e40af" stroke-width="1.5"/>',
-            '<line x1="123" y1="88" x2="85" y2="18" stroke="#1e40af" stroke-width="1.5"/>',
-            '<line x1="85" y1="18" x2="85" y2="88" stroke="#64748b" stroke-width="1.2" stroke-dasharray="3,2"/>',
-            '<line x1="85" y1="88" x2="123" y2="88" stroke="#dc2626" stroke-width="1.5"/>',
-            f'<text x="104" y="98" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim1)}</text>',
-            f'<text x="78" y="58" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e293b" text-anchor="end">{_esc(dim2)}</text>',
+            '<ellipse cx="98" cy="88" rx="38" ry="11" fill="#eff6ff" stroke="#1e40af" stroke-width="1.5"/>',
+            '<line x1="60" y1="88" x2="98" y2="18" stroke="#1e40af" stroke-width="1.5"/>',
+            '<line x1="136" y1="88" x2="98" y2="18" stroke="#1e40af" stroke-width="1.5"/>',
+            '<line x1="98" y1="18" x2="98" y2="88" stroke="#64748b" stroke-width="1.2" stroke-dasharray="3,2"/>',
+            '<line x1="98" y1="88" x2="136" y2="88" stroke="#dc2626" stroke-width="1.5"/>',
+            f'<text x="117" y="100" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim1)}</text>',
+            f'<text x="92" y="58" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e293b" text-anchor="end">{_esc(dim2)}</text>',
         ])
     elif solid == "sphere":
         parts.extend([
-            '<circle cx="85" cy="58" r="40" fill="#eff6ff" stroke="#1e40af" stroke-width="1.6"/>',
-            '<ellipse cx="85" cy="58" rx="40" ry="12" fill="none" stroke="#64748b" stroke-width="1.2" stroke-dasharray="3,2"/>',
-            '<line x1="85" y1="58" x2="125" y2="58" stroke="#dc2626" stroke-width="1.6"/>',
-            f'<text x="105" y="53" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim1)}</text>',
+            '<circle cx="105" cy="58" r="40" fill="#eff6ff" stroke="#1e40af" stroke-width="1.6"/>',
+            '<ellipse cx="105" cy="58" rx="40" ry="12" fill="none" stroke="#64748b" stroke-width="1.2" stroke-dasharray="3,2"/>',
+            '<line x1="105" y1="58" x2="145" y2="58" stroke="#dc2626" stroke-width="1.6"/>',
+            f'<text x="125" y="53" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim1)}</text>',
         ])
     else:
-        # Rectangular prism
         parts.extend([
-            '<rect x="35" y="38" width="72" height="52" fill="#eff6ff" fill-opacity="0.7" stroke="#1e40af" stroke-width="1.5"/>',
-            '<polygon points="35,38 58,20 130,20 107,38" fill="#dbeafe" fill-opacity="0.7" stroke="#1e40af" stroke-width="1.5"/>',
-            '<polygon points="107,38 130,20 130,72 107,90" fill="#bfdbfe" fill-opacity="0.7" stroke="#1e40af" stroke-width="1.5"/>',
-            f'<text x="71" y="102" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim1)}</text>',
-            f'<text x="124" y="88" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#15803d">{_esc(dim2)}</text>',
-            f'<text x="29" y="66" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e3a8a" text-anchor="end">{_esc(dim3)}</text>',
+            '<rect x="52" y="38" width="72" height="52" fill="#eff6ff" fill-opacity="0.7" stroke="#1e40af" stroke-width="1.5"/>',
+            '<polygon points="52,38 75,20 147,20 124,38" fill="#dbeafe" fill-opacity="0.7" stroke="#1e40af" stroke-width="1.5"/>',
+            '<polygon points="124,38 147,20 147,72 124,90" fill="#bfdbfe" fill-opacity="0.7" stroke="#1e40af" stroke-width="1.5"/>',
+            f'<text x="88" y="103" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim1)}</text>',
+            f'<text x="141" y="88" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#15803d">{_esc(dim2)}</text>',
+            f'<text x="46" y="66" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e3a8a" text-anchor="end">{_esc(dim3)}</text>',
         ])
     parts.append("</svg>")
     return "".join(parts)
@@ -954,21 +1096,21 @@ def svg_tape_or_hanger(
     total_label: str = "",
 ) -> str:
     """Render a Grade 6 tape diagram or balanced hanger diagram."""
-    width, height = 210, 78
+    width, height = 215, 78
     labels = list(parts_labels or ["x", "x", "4"])
     n = max(len(labels), 1)
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">']
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>']
     if mode == "hanger":
         parts.extend([
-            '<line x1="105" y1="8" x2="105" y2="20" stroke="#334155" stroke-width="1.8"/>',
-            '<polygon points="105,18 45,32 165,32" fill="none" stroke="#334155" stroke-width="1.6"/>',
-            '<rect x="25" y="36" width="52" height="26" rx="4" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.4"/>',
-            '<rect x="133" y="36" width="52" height="26" rx="4" fill="#fef3c7" stroke="#d97706" stroke-width="1.4"/>',
-            f'<text x="51" y="53" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(" + ".join(labels))}</text>',
-            f'<text x="159" y="53" font-family="sans-serif" font-size="9" font-weight="bold" fill="#92400e" text-anchor="middle">{_esc(total_label)}</text>',
+            '<line x1="107" y1="8" x2="107" y2="20" stroke="#334155" stroke-width="1.8"/>',
+            '<polygon points="107,18 47,32 167,32" fill="none" stroke="#334155" stroke-width="1.6"/>',
+            '<rect x="25" y="36" width="56" height="26" rx="4" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.4"/>',
+            '<rect x="133" y="36" width="56" height="26" rx="4" fill="#fef3c7" stroke="#d97706" stroke-width="1.4"/>',
+            f'<text x="53" y="53" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(" + ".join(labels))}</text>',
+            f'<text x="161" y="53" font-family="sans-serif" font-size="9" font-weight="bold" fill="#92400e" text-anchor="middle">{_esc(total_label)}</text>',
         ])
     else:
-        x0, y0, tw, th = 18.0, 32.0, 174.0, 24.0
+        x0, y0, tw, th = 18.0, 32.0, 179.0, 24.0
         bw = tw / n
         if total_label:
             parts.append(f'<text x="{x0 + tw / 2}" y="22" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#dc2626" text-anchor="middle">Total = {_esc(total_label)}</text>')
@@ -988,12 +1130,12 @@ def svg_area_model(
     title: str = "Area Diagram",
 ) -> str:
     """Render a rectangular area model / box diagram for distributive property or decimal operations."""
-    width, height = 210, 92
+    width, height = 215, 92
     n = max(len(top_labels), 1)
-    x0, y0, tw, th = 36.0, 32.0, 154.0, 44.0
+    x0, y0, tw, th = 38.0, 32.0, 156.0, 44.0
     bw = tw / n
     parts = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<text x="{width / 2}" y="12" font-family="sans-serif" font-size="8" font-weight="bold" fill="#334155" text-anchor="middle">{_esc(title)}</text>',
         f'<text x="{x0 - 6}" y="{y0 + th / 2 + 3}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#dc2626" text-anchor="end">{_esc(side_label)}</text>',
     ]
@@ -1015,46 +1157,45 @@ def svg_polygon_diagram(
     dim3: str = "",
 ) -> str:
     """Render a 2D polygon (parallelogram, trapezoid, rhombus, kite, regular, net)."""
-    width, height = 185, 110
-    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">']
+    width, height = 215, 114
+    parts = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>']
     if shape == "trapezoid":
         parts.extend([
-            '<polygon points="52,26 132,26 156,82 28,82" fill="#eff6ff" stroke="#1e40af" stroke-width="1.6"/>',
-            '<line x1="52" y1="26" x2="52" y2="82" stroke="#dc2626" stroke-width="1.3" stroke-dasharray="3,2"/>',
-            f'<text x="92" y="20" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(dim1)}</text>',
-            f'<text x="92" y="96" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(dim2)}</text>',
-            f'<text x="56" y="56" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626">{_esc(dim3)}</text>',
+            '<polygon points="56,26 136,26 160,82 32,82" fill="#eff6ff" stroke="#1e40af" stroke-width="1.6"/>',
+            '<line x1="56" y1="26" x2="56" y2="82" stroke="#dc2626" stroke-width="1.3" stroke-dasharray="3,2"/>',
+            f'<text x="96" y="20" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(dim1)}</text>',
+            f'<text x="96" y="96" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(dim2)}</text>',
+            f'<text x="60" y="56" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626">{_esc(dim3)}</text>',
         ])
     elif shape in ("rhombus", "kite"):
         top_y, mid_y, bot_y = (18, 54, 90) if shape == "rhombus" else (18, 44, 92)
         parts.extend([
-            f'<polygon points="92,{top_y} 146,{mid_y} 92,{bot_y} 38,{mid_y}" fill="#eff6ff" stroke="#1e40af" stroke-width="1.6"/>',
-            f'<line x1="38" y1="{mid_y}" x2="146" y2="{mid_y}" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="3,2"/>',
-            f'<line x1="92" y1="{top_y}" x2="92" y2="{bot_y}" stroke="#15803d" stroke-width="1.2" stroke-dasharray="3,2"/>',
-            f'<text x="122" y="{mid_y - 4}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626">{_esc(dim1)}</text>',
-            f'<text x="96" y="{bot_y - 12}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#15803d">{_esc(dim2)}</text>',
+            f'<polygon points="102,{top_y} 156,{mid_y} 102,{bot_y} 48,{mid_y}" fill="#eff6ff" stroke="#1e40af" stroke-width="1.6"/>',
+            f'<line x1="48" y1="{mid_y}" x2="156" y2="{mid_y}" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="3,2"/>',
+            f'<line x1="102" y1="{top_y}" x2="102" y2="{bot_y}" stroke="#15803d" stroke-width="1.2" stroke-dasharray="3,2"/>',
+            f'<text x="132" y="{mid_y - 4}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626">{_esc(dim1)}</text>',
+            f'<text x="106" y="{bot_y - 12}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#15803d">{_esc(dim2)}</text>',
         ])
     elif shape == "net":
         parts.extend([
-            '<rect x="68" y="14" width="38" height="24" fill="#dbeafe" stroke="#1e40af" stroke-width="1.3"/>',
-            '<rect x="30" y="38" width="38" height="28" fill="#eff6ff" stroke="#1e40af" stroke-width="1.3"/>',
-            '<rect x="68" y="38" width="38" height="28" fill="#bfdbfe" stroke="#1e40af" stroke-width="1.3"/>',
-            '<rect x="106" y="38" width="38" height="28" fill="#eff6ff" stroke="#1e40af" stroke-width="1.3"/>',
-            '<rect x="144" y="38" width="26" height="28" fill="#dbeafe" stroke="#1e40af" stroke-width="1.3"/>',
-            '<rect x="68" y="66" width="38" height="24" fill="#dbeafe" stroke="#1e40af" stroke-width="1.3"/>',
-            f'<text x="87" y="55" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(dim1)}</text>',
-            f'<text x="87" y="102" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim2)}</text>',
+            '<rect x="78" y="14" width="38" height="24" fill="#dbeafe" stroke="#1e40af" stroke-width="1.3"/>',
+            '<rect x="40" y="38" width="38" height="28" fill="#eff6ff" stroke="#1e40af" stroke-width="1.3"/>',
+            '<rect x="78" y="38" width="38" height="28" fill="#bfdbfe" stroke="#1e40af" stroke-width="1.3"/>',
+            '<rect x="116" y="38" width="38" height="28" fill="#eff6ff" stroke="#1e40af" stroke-width="1.3"/>',
+            '<rect x="154" y="38" width="26" height="28" fill="#dbeafe" stroke="#1e40af" stroke-width="1.3"/>',
+            '<rect x="78" y="66" width="38" height="24" fill="#dbeafe" stroke="#1e40af" stroke-width="1.3"/>',
+            f'<text x="97" y="55" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(dim1)}</text>',
+            f'<text x="97" y="102" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim2)}</text>',
         ])
     elif shape == "regular":
         parts.extend([
-            '<polygon points="92,16 136,38 122,84 62,84 48,38" fill="#eff6ff" stroke="#1e40af" stroke-width="1.6"/>',
-            '<circle cx="92" cy="54" r="2.2" fill="#1e293b"/>',
-            '<line x1="92" y1="54" x2="92" y2="84" stroke="#dc2626" stroke-width="1.4" stroke-dasharray="3,2"/>',
-            f'<text x="96" y="72" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626">{_esc(dim1)}</text>',
-            f'<text x="92" y="96" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(dim2)}</text>',
+            '<polygon points="102,16 146,38 132,84 72,84 58,38" fill="#eff6ff" stroke="#1e40af" stroke-width="1.6"/>',
+            '<circle cx="102" cy="54" r="2.2" fill="#1e293b"/>',
+            '<line x1="102" y1="54" x2="102" y2="84" stroke="#dc2626" stroke-width="1.4" stroke-dasharray="3,2"/>',
+            f'<text x="106" y="72" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626">{_esc(dim1)}</text>',
+            f'<text x="102" y="96" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(dim2)}</text>',
         ])
     else:
-        # Parallelogram
         parts.extend([
             '<polygon points="48,26 152,26 132,82 28,82" fill="#eff6ff" stroke="#1e40af" stroke-width="1.6"/>',
             '<line x1="48" y1="26" x2="48" y2="82" stroke="#dc2626" stroke-width="1.3" stroke-dasharray="3,2"/>',

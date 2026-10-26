@@ -1135,7 +1135,7 @@ def _gen_decoupled_subtopic(
                 "$ \"Right equilateral triangle\" $",
             ],
             "diagram_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=f"{c} deg"),
-            "answer_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=f"{c} deg", side_c=f"{ang_type} {side_type}"),
+            "answer_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=f"{c} deg", side_b=f"{ang_type} {side_type}"),
         }
 
     if "triangle angle sum" in t_low:

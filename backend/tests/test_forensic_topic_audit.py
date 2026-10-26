@@ -1,8 +1,44 @@
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from backend.app.core.base import GeneratorConfig, ProblemDifficulty
 from backend.app.core.compiler import TypstCompiler
 from backend.app.generators import COURSE_CATALOG, GENERATOR_REGISTRY, get_generator
+
+
+def _assert_svg_not_clipped(svg_str: str, tid: str, diff_val: str, field_name: str) -> None:
+    """Ensure every SVG has responsive scaling and zero out-of-bounds circles, ellipses, or labels."""
+    assert svg_str.startswith("<svg") and svg_str.endswith("</svg>")
+    root = ET.fromstring(svg_str)
+    vb = root.attrib.get("viewBox", "0 0 220 220").split()
+    width = float(vb[2])
+    height = float(vb[3])
+    assert "max-width:100%;height:auto" in root.attrib.get("style", ""), f"{tid} {field_name} missing responsive SVG style"
+    for elem in root.iter():
+        tag = elem.tag.split("}")[-1]
+        if tag == "circle":
+            cx = float(elem.attrib["cx"])
+            cy = float(elem.attrib["cy"])
+            r = float(elem.attrib["r"])
+            assert cx - r >= -0.5 and cx + r <= width + 0.5, f"{tid} ({diff_val}) {field_name} circle x clipped: {cx} in {width}"
+            assert cy - r >= -0.5 and cy + r <= height + 0.5, f"{tid} ({diff_val}) {field_name} circle y clipped: {cy} in {height}"
+        elif tag == "ellipse":
+            cx = float(elem.attrib["cx"])
+            cy = float(elem.attrib["cy"])
+            rx = float(elem.attrib["rx"])
+            ry = float(elem.attrib["ry"])
+            assert cx - rx >= -0.5 and cx + rx <= width + 0.5, f"{tid} ({diff_val}) {field_name} ellipse x clipped"
+            assert cy - ry >= -0.5 and cy + ry <= height + 0.5, f"{tid} ({diff_val}) {field_name} ellipse y clipped"
+        elif tag == "text":
+            tx = float(elem.attrib["x"])
+            ty = float(elem.attrib["y"])
+            txt = elem.text or ""
+            anchor = elem.attrib.get("text-anchor", "start")
+            est_w = len(txt) * 4.2
+            x0 = tx if anchor == "start" else (tx - est_w if anchor == "end" else tx - est_w / 2)
+            x1 = tx + est_w if anchor == "start" else (tx if anchor == "end" else tx + est_w / 2)
+            assert x0 >= -4.0 and x1 <= width + 4.0, f"{tid} ({diff_val}) {field_name} text '{txt}' clipped horizontally"
+            assert 4.0 <= ty <= height + 2.0, f"{tid} ({diff_val}) {field_name} text '{txt}' clipped vertically"
 
 
 def test_catalog_uniqueness_and_frontend_sync():
@@ -29,7 +65,10 @@ def test_catalog_uniqueness_and_frontend_sync():
     assert "diagram_svg?: string | null;" in fe_text
     assert "answer_svg?: string | null;" in fe_text
     for tid in topic_ids:
-        assert f'"{tid}"' in fe_text, f"Missing topic {tid} in frontend/app/catalogData.ts"
+        assert f'"id": "{tid}"' in fe_text, f"Missing topic id {tid} in frontend/app/catalogData.ts"
+        assert f'"generator_id": "{tid}"' in fe_text, (
+            f"Mismatched generator_id {tid} in frontend/app/catalogData.ts"
+        )
 
 
 def test_all_598_topics_across_all_difficulties_and_visuals():
@@ -93,9 +132,9 @@ def test_all_598_topics_across_all_difficulties_and_visuals():
                         if p.diagram_svg or p.answer_svg:
                             svg_count += 1
                             if p.diagram_svg:
-                                assert p.diagram_svg.startswith("<svg") and p.diagram_svg.endswith("</svg>")
+                                _assert_svg_not_clipped(p.diagram_svg, tid, diff.value, "diagram_svg")
                             if p.answer_svg:
-                                assert p.answer_svg.startswith("<svg") and p.answer_svg.endswith("</svg>")
+                                _assert_svg_not_clipped(p.answer_svg, tid, diff.value, "answer_svg")
 
                         # Check mandatory SVG presence for explicit visual/table topics
                         t_low = tname.lower()

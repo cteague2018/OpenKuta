@@ -111,12 +111,12 @@
       {% if show_answers and answer_svg_files and loop.index in answer_svg_files %}
       #v(3pt)
       #align(center)[
-        #image("{{ answer_svg_files[loop.index] }}", height: 95pt, fit: "contain")
+        #image("{{ answer_svg_files[loop.index] }}", height: {{ ((box_height_pt * 0.45) | int) if (box_height_pt * 0.45) < 110 else 110 }}pt, width: 92%, fit: "contain")
       ]
       {% elif diagram_files and loop.index in diagram_files %}
       #v(3pt)
       #align(center)[
-        #image("{{ diagram_files[loop.index] }}", height: 95pt, fit: "contain")
+        #image("{{ diagram_files[loop.index] }}", height: {{ ((box_height_pt * 0.45) | int) if (box_height_pt * 0.45) < 110 else 110 }}pt, width: 92%, fit: "contain")
       ]
       {% endif %}
 

@@ -1722,7 +1722,8 @@ export default function OpenMathForgeApp() {
                       key={pageIdx}
                       style={{
                         width: "816px",
-                        height: "1056px",
+                        minHeight: "1056px",
+                        height: showAnswerKey ? "auto" : "1056px",
                         transform: `scale(${zoomLevel / 100})`,
                         transformOrigin: "top center",
                       }}
@@ -1817,7 +1818,7 @@ export default function OpenMathForgeApp() {
                           className="grid gap-4 flex-1 h-full"
                           style={{
                             gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-                            gridTemplateRows: `repeat(${pageRowCount}, minmax(0, 1fr))`,
+                            gridTemplateRows: showAnswerKey ? "auto" : `repeat(${pageRowCount}, minmax(0, 1fr))`,
                           }}
                         >
                           {pageProblems.map((prob, pIdx) => {
@@ -1852,13 +1853,13 @@ export default function OpenMathForgeApp() {
 
                                   {prob.diagram_svg && !showAnswerKey && (
                                     <div
-                                      className="my-1.5 flex justify-center items-center max-h-36 overflow-hidden"
+                                      className="my-1.5 flex justify-center items-center [&>svg]:max-h-40 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
                                       dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
                                     />
                                   )}
                                   {prob.diagram_svg && showAnswerKey && !prob.answer_svg && (
                                     <div
-                                      className="my-1.5 flex justify-center items-center max-h-36 overflow-hidden"
+                                      className="my-1.5 flex justify-center items-center [&>svg]:max-h-40 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
                                       dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
                                     />
                                   )}
@@ -1894,7 +1895,7 @@ export default function OpenMathForgeApp() {
                                     </div>
                                     {prob.answer_svg && (
                                       <div
-                                        className="my-1.5 flex justify-center items-center bg-white/80 rounded p-1 border border-amber-200/70 max-h-40 overflow-hidden"
+                                        className="my-1.5 flex justify-center items-center bg-white/95 rounded p-1.5 border border-amber-200/70 [&>svg]:max-h-44 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
                                         dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
                                       />
                                     )}
@@ -2940,7 +2941,7 @@ export default function OpenMathForgeApp() {
                               <div className="flex flex-col items-center">
                                 <span className="text-[9px] uppercase text-slate-400 font-semibold">Problem Visual</span>
                                 <div
-                                  className="max-h-28 overflow-hidden"
+                                  className="flex justify-center items-center [&>svg]:max-h-32 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
                                   dangerouslySetInnerHTML={{ __html: p.diagram_svg }}
                                 />
                               </div>
@@ -2949,7 +2950,7 @@ export default function OpenMathForgeApp() {
                               <div className="flex flex-col items-center">
                                 <span className="text-[9px] uppercase text-amber-600 font-semibold">Answer Visual</span>
                                 <div
-                                  className="max-h-28 overflow-hidden"
+                                  className="flex justify-center items-center [&>svg]:max-h-32 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
                                   dangerouslySetInnerHTML={{ __html: p.answer_svg }}
                                 />
                               </div>
