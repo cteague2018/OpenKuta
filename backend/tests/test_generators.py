@@ -57,7 +57,7 @@ def test_quadratic_mild_integer_roots():
         assert poly.subs(x, r2) == 0
 
 
-def test_new_kuta_generators():
+def test_new_course_generators():
     from backend.app.generators.algebra_1.linear_equations import (
         LinearEquationsGenerator,
     )

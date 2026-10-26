@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""OpenKuta Comprehensive Secrets Detection Script.
+"""OpenMathForge Comprehensive Secrets Detection Script.
 Scans files and git tracking for hardcoded tokens, API keys, credentials, and private keys.
 """
 

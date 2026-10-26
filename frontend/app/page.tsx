@@ -187,7 +187,7 @@ export default function OpenMathForgeApp() {
     },
   ]);
 
-  // Modal / Configurator State (matching Kuta's signature Question Dialog)
+  // Modal / Configurator State
   const [configTopic, setConfigTopic] = useState<Topic | null>(null);
   const [modalCount, setModalCount] = useState<number>(4);
   const [modalDifficulty, setModalDifficulty] = useState<"mild" | "medium" | "spicy">("medium");
@@ -1038,7 +1038,7 @@ export default function OpenMathForgeApp() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans">
-      {/* Kuta Top Application Bar */}
+      {/* Studio Top Application Bar */}
       <header className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border-b border-indigo-900/50 shadow-md">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           {/* Logo & Product Switcher */}
@@ -1170,7 +1170,7 @@ export default function OpenMathForgeApp() {
       {/* Main Studio View */}
       {activeTab === "studio" ? (
         <div className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar: Kuta Topic Browser & Question Bank */}
+          {/* Left Sidebar: Topic Browser & Question Bank */}
           <aside className="w-80 bg-white border-r border-slate-200 flex flex-col h-[calc(100vh-3.5rem)] shadow-sm">
             {/* Filter Search */}
             <div className="p-3 border-b border-slate-200 bg-slate-50">
@@ -1266,7 +1266,7 @@ export default function OpenMathForgeApp() {
 
           {/* Center Area: Toolbar & WYSIWYG Document Canvas */}
           <section className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-slate-200">
-            {/* Kuta Document Ribbon Toolbar */}
+            {/* Document Ribbon Toolbar */}
             <div className="bg-white px-4 py-2 border-b border-slate-300 flex items-center justify-between shadow-2xs z-10">
               {/* Title & Sheet Settings */}
               <div className="flex items-center space-x-3">
@@ -2245,7 +2245,7 @@ export default function OpenMathForgeApp() {
         </div>
       )}
 
-      {/* Kuta Question Configurator Modal */}
+      {/* Question Configurator Modal */}
       {configTopic && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl border border-slate-300 w-full max-w-2xl overflow-hidden flex flex-col">

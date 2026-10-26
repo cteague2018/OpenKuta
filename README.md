@@ -1,6 +1,6 @@
 # OpenMathForge 📐⚡
 
-An open-source, web-based algorithmic math worksheet generator and grading engine built with SymPy and Typst as a modern alternative to traditional desktop tools like Kuta Software.
+An open-source, web-based algorithmic math worksheet generator and grading engine built with SymPy and Typst as a modern, high-performance web alternative to legacy desktop worksheet software.
 
 OpenMathForge integrates procedural mathematical generation, sub-100ms vector typesetting, computer vision marker deskewing, symbolic CAS partial-credit grading, LMS roster synchronization, and IMS QTI 2.1 export.
 
@@ -71,8 +71,8 @@ Open [http://localhost:3000](http://localhost:3000) to access the OpenMathForge 
 
 ---
 
-## ⚖️ Trademark & Non-Affiliation Disclaimer
-OpenMathForge is an independent, community-driven free and open-source software project released under the MIT License. Kuta Software® is a registered trademark of Kuta Software LLC. OpenMathForge is not affiliated with, endorsed by, sponsored by, or associated with Kuta Software LLC in any way. Any reference to Kuta Software is strictly nominative for descriptive, educational, and interoperability comparison.
+## ⚖️ Open Source & Privacy Mission
+OpenMathForge is an independent, community-driven free and open-source software project released under the MIT License. Built for mathematics educators worldwide, it provides modern algorithmic authoring, high-speed Typst vector compilation, and local-first zero-PII privacy protection.
 
 ---
 

@@ -230,4 +230,3 @@ def get_generator(generator_id: str) -> BaseGenerator:
 _CATALOG_PATH = Path(__file__).resolve().parent / "catalog_data.json"
 with open(_CATALOG_PATH, "r", encoding="utf-8") as _f:
     COURSE_CATALOG: Dict[str, Dict[str, Any]] = json.load(_f)
-KUTA_COURSE_CATALOG = COURSE_CATALOG
