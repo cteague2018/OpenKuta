@@ -24,14 +24,41 @@ export interface LocalClassroom {
   createdAt: string;
 }
 
+export interface DeletedClassItem {
+  classroom: LocalClassroom;
+  deletedAt: string;
+}
+
+export interface DeletedStudentItem {
+  student: LocalStudent;
+  classId: string;
+  className: string;
+  deletedAt: string;
+}
+
+export interface VaultSnapshot {
+  id: string;
+  timestamp: string;
+  label: string;
+  classesCount: number;
+  totalStudents: number;
+  data: LocalVaultData;
+}
+
 export interface LocalVaultData {
   version: string;
   vaultId: string;
   lastModified: string;
   classes: LocalClassroom[];
+  recycleBin: {
+    classes: DeletedClassItem[];
+    students: DeletedStudentItem[];
+  };
 }
 
 const STORAGE_KEY = "openmathforge_local_vault_v1";
+const SNAPSHOTS_KEY = "openmathforge_vault_snapshots_v1";
+const MAX_SNAPSHOTS = 12;
 
 const DEFAULT_VAULT: LocalVaultData = {
   version: "1.0",
@@ -54,6 +81,10 @@ const DEFAULT_VAULT: LocalVaultData = {
       ],
     },
   ],
+  recycleBin: {
+    classes: [],
+    students: [],
+  },
 };
 
 /**
@@ -67,23 +98,199 @@ export function loadVaultFromLocalStorage(): LocalVaultData {
       saveVaultToLocalStorage(DEFAULT_VAULT);
       return DEFAULT_VAULT;
     }
-    return JSON.parse(raw) as LocalVaultData;
+    const parsed = JSON.parse(raw) as LocalVaultData;
+    if (!parsed.recycleBin) {
+      parsed.recycleBin = { classes: [], students: [] };
+    }
+    return parsed;
   } catch {
     return DEFAULT_VAULT;
   }
 }
 
 /**
- * Persist vault data into browser local storage
+ * Persist vault data into browser local storage and auto-capture rolling restore points
  */
-export function saveVaultToLocalStorage(data: LocalVaultData): void {
+export function saveVaultToLocalStorage(data: LocalVaultData, snapshotLabel?: string): void {
   if (typeof window === "undefined") return;
   try {
     data.lastModified = new Date().toISOString();
+    if (!data.recycleBin) {
+      data.recycleBin = { classes: [], students: [] };
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+    // Automatically capture a restore point if label is given
+    if (snapshotLabel) {
+      recordVaultSnapshot(data, snapshotLabel);
+    }
   } catch (err) {
     console.warn("Failed to persist local vault to localStorage:", err);
   }
+}
+
+/**
+ * Record a recovery snapshot / restore point
+ */
+export function recordVaultSnapshot(data: LocalVaultData, label: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const snapshots = getVaultSnapshots();
+    const totalStudents = data.classes.reduce((sum, c) => sum + (c.students?.length || 0), 0);
+    const newSnapshot: VaultSnapshot = {
+      id: `snap_${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      label,
+      classesCount: data.classes.length,
+      totalStudents,
+      data: JSON.parse(JSON.stringify(data)),
+    };
+    const updated = [newSnapshot, ...snapshots].slice(0, MAX_SNAPSHOTS);
+    localStorage.setItem(SNAPSHOTS_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.warn("Failed to record vault snapshot:", err);
+  }
+}
+
+/**
+ * Retrieve all local recovery snapshots
+ */
+export function getVaultSnapshots(): VaultSnapshot[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(SNAPSHOTS_KEY);
+    return raw ? (JSON.parse(raw) as VaultSnapshot[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Soft-delete a classroom (moves to Recycle Bin + captures snapshot)
+ */
+export function softDeleteClassroom(vault: LocalVaultData, classId: string): LocalVaultData {
+  const targetClass = vault.classes.find((c) => c.id === classId);
+  if (!targetClass) return vault;
+
+  // Record a restore point before deleting
+  recordVaultSnapshot(vault, `Before deleting class "${targetClass.name}"`);
+
+  const updatedClasses = vault.classes.filter((c) => c.id !== classId);
+  const updatedRecycleClasses: DeletedClassItem[] = [
+    { classroom: targetClass, deletedAt: new Date().toISOString() },
+    ...(vault.recycleBin?.classes || []),
+  ];
+
+  const updated: LocalVaultData = {
+    ...vault,
+    classes: updatedClasses,
+    recycleBin: {
+      classes: updatedRecycleClasses,
+      students: vault.recycleBin?.students || [],
+    },
+  };
+  saveVaultToLocalStorage(updated);
+  return updated;
+}
+
+/**
+ * Restore a soft-deleted classroom from the Recycle Bin
+ */
+export function restoreClassroom(vault: LocalVaultData, classId: string): LocalVaultData {
+  const item = vault.recycleBin?.classes.find((c) => c.classroom.id === classId);
+  if (!item) return vault;
+
+  recordVaultSnapshot(vault, `Before restoring class "${item.classroom.name}"`);
+
+  const updatedRecycleClasses = vault.recycleBin.classes.filter((c) => c.classroom.id !== classId);
+  const updatedClasses = [...vault.classes, item.classroom];
+
+  const updated: LocalVaultData = {
+    ...vault,
+    classes: updatedClasses,
+    recycleBin: {
+      classes: updatedRecycleClasses,
+      students: vault.recycleBin.students,
+    },
+  };
+  saveVaultToLocalStorage(updated);
+  return updated;
+}
+
+/**
+ * Soft-delete a student from a classroom (moves to Recycle Bin)
+ */
+export function softDeleteStudent(vault: LocalVaultData, classId: string, studentId: string): LocalVaultData {
+  const targetClass = vault.classes.find((c) => c.id === classId);
+  if (!targetClass) return vault;
+
+  const targetStudent = targetClass.students.find((s) => s.id === studentId);
+  if (!targetStudent) return vault;
+
+  const updatedClasses = vault.classes.map((c) => {
+    if (c.id === classId) {
+      return {
+        ...c,
+        students: c.students.filter((s) => s.id !== studentId),
+      };
+    }
+    return c;
+  });
+
+  const updatedRecycleStudents: DeletedStudentItem[] = [
+    {
+      student: targetStudent,
+      classId,
+      className: targetClass.name,
+      deletedAt: new Date().toISOString(),
+    },
+    ...(vault.recycleBin?.students || []),
+  ];
+
+  const updated: LocalVaultData = {
+    ...vault,
+    classes: updatedClasses,
+    recycleBin: {
+      classes: vault.recycleBin?.classes || [],
+      students: updatedRecycleStudents,
+    },
+  };
+  saveVaultToLocalStorage(updated, `Deleted student ${targetStudent.name}`);
+  return updated;
+}
+
+/**
+ * Restore a soft-deleted student from the Recycle Bin
+ */
+export function restoreStudent(vault: LocalVaultData, studentId: string): LocalVaultData {
+  const item = vault.recycleBin?.students.find((s) => s.student.id === studentId);
+  if (!item) return vault;
+
+  const targetClass = vault.classes.find((c) => c.id === item.classId) || vault.classes[0];
+  if (!targetClass) return vault;
+
+  const updatedClasses = vault.classes.map((c) => {
+    if (c.id === targetClass.id) {
+      return {
+        ...c,
+        students: [...c.students, item.student],
+      };
+    }
+    return c;
+  });
+
+  const updatedRecycleStudents = vault.recycleBin.students.filter((s) => s.student.id !== studentId);
+
+  const updated: LocalVaultData = {
+    ...vault,
+    classes: updatedClasses,
+    recycleBin: {
+      classes: vault.recycleBin.classes,
+      students: updatedRecycleStudents,
+    },
+  };
+  saveVaultToLocalStorage(updated, `Restored student ${item.student.name}`);
+  return updated;
 }
 
 /**
@@ -110,7 +317,7 @@ export async function saveVaultToDisk(data: LocalVaultData): Promise<boolean> {
       await writable.close();
       return true;
     } catch (err: any) {
-      if (err.name === "AbortError") return false; // user cancelled
+      if (err.name === "AbortError") return false;
     }
   }
 
@@ -139,7 +346,10 @@ export async function loadVaultFromDiskFile(file: File): Promise<LocalVaultData 
     const text = await file.text();
     const parsed = JSON.parse(text);
     if (parsed && Array.isArray(parsed.classes)) {
-      saveVaultToLocalStorage(parsed);
+      if (!parsed.recycleBin) {
+        parsed.recycleBin = { classes: [], students: [] };
+      }
+      saveVaultToLocalStorage(parsed, `Imported vault from file ${file.name}`);
       return parsed;
     }
     return null;
@@ -192,7 +402,6 @@ export function parseCsvToClassroom(
   const students: LocalStudent[] = [];
 
   for (let i = 0; i < lines.length; i++) {
-    // Skip likely header
     if (i === 0 && (lines[i].toLowerCase().includes("name") || lines[i].toLowerCase().includes("student"))) {
       continue;
     }
@@ -220,9 +429,6 @@ export function parseCsvToClassroom(
 
 /**
  * Client-Side Pseudonymization Engine
- * 
- * Maps student ID to an opaque cryptographic token sent to cloud endpoints.
- * The cloud only ever receives "omf_st_c93a8" and never sees student PII.
  */
 export function createPseudonymToken(studentId: string, salt: string = "omf_local_secret"): string {
   let hash = 0;
@@ -235,4 +441,3 @@ export function createPseudonymToken(studentId: string, salt: string = "omf_loca
   const hex = Math.abs(hash).toString(16).padStart(8, "0");
   return `omf_st_${hex}`;
 }
-

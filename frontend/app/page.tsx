@@ -31,6 +31,9 @@ import {
   FolderOpen,
   HardDrive,
   Sparkles,
+  RotateCcw,
+  History,
+  Undo2,
 } from "lucide-react";
 import katex from "katex";
 import {
@@ -52,6 +55,12 @@ import {
   exportClassroomToCsv,
   parseCsvToClassroom,
   createPseudonymToken,
+  softDeleteClassroom,
+  restoreClassroom,
+  softDeleteStudent,
+  restoreStudent,
+  getVaultSnapshots,
+  VaultSnapshot,
 } from "../lib/localPiiVault";
 
 interface AssignmentItem {
@@ -225,6 +234,10 @@ export default function OpenMathForgeApp() {
   const [vaultNotification, setVaultNotification] = useState<string | null>(null);
   const vaultFileInputRef = useRef<HTMLInputElement | null>(null);
   const [isNewClassModalOpen, setIsNewClassModalOpen] = useState<boolean>(false);
+  const [classToDelete, setClassToDelete] = useState<LocalClassroom | null>(null);
+  const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState<boolean>(false);
+  const [recoveryTab, setRecoveryTab] = useState<"recycle" | "snapshots">("recycle");
+  const [vaultSnapshots, setVaultSnapshots] = useState<VaultSnapshot[]>([]);
   const [newClassName, setNewClassName] = useState<string>("");
   const [newClassPeriod, setNewClassPeriod] = useState<string>("1");
   const [newClassSubject, setNewClassSubject] = useState<string>("Algebra 1");
@@ -757,18 +770,60 @@ export default function OpenMathForgeApp() {
   };
 
   const handleDeleteStudentLocally = (studentId: string) => {
-    const updatedClasses = localVault.classes.map((c) => {
-      if (c.id === selectedClassId || c.id === localVault.classes[0]?.id) {
-        return {
-          ...c,
-          students: c.students.filter((s) => s.id !== studentId),
-        };
-      }
-      return c;
-    });
-    const updated = { ...localVault, classes: updatedClasses };
+    const updated = softDeleteStudent(localVault, selectedClassId, studentId);
     setLocalVault(updated);
-    saveVaultToLocalStorage(updated);
+    setVaultNotification("Moved student to Local Recycle Bin (can be recovered anytime)");
+    setTimeout(() => setVaultNotification(null), 4000);
+  };
+
+  const handleConfirmDeleteClass = () => {
+    if (!classToDelete) return;
+    const updated = softDeleteClassroom(localVault, classToDelete.id);
+    setLocalVault(updated);
+    if (selectedClassId === classToDelete.id) {
+      setSelectedClassId(updated.classes[0]?.id || "");
+    }
+    setVaultNotification(
+      `Moved class "${classToDelete.name}" to Recycle Bin. You can restore it anytime.`
+    );
+    setClassToDelete(null);
+    setTimeout(() => setVaultNotification(null), 4000);
+  };
+
+  const handleRestoreClass = (classId: string) => {
+    const updated = restoreClassroom(localVault, classId);
+    setLocalVault(updated);
+    setSelectedClassId(classId);
+    setVaultNotification("Class successfully restored from Recycle Bin!");
+    setTimeout(() => setVaultNotification(null), 4000);
+  };
+
+  const handleRestoreStudent = (studentId: string) => {
+    const updated = restoreStudent(localVault, studentId);
+    setLocalVault(updated);
+    setVaultNotification("Student restored back to roster!");
+    setTimeout(() => setVaultNotification(null), 4000);
+  };
+
+  const handleRollbackSnapshot = (snapshot: VaultSnapshot) => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        `Are you sure you want to rollback to: "${snapshot.label}" (${new Date(
+          snapshot.timestamp
+        ).toLocaleTimeString()})?`
+      )
+    ) {
+      return;
+    }
+    setLocalVault(snapshot.data);
+    saveVaultToLocalStorage(snapshot.data, `Restored from snapshot ${snapshot.id}`);
+    if (snapshot.data.classes.length > 0) {
+      setSelectedClassId(snapshot.data.classes[0].id);
+    }
+    setVaultNotification(`Vault successfully rolled back to "${snapshot.label}"!`);
+    setIsRecoveryModalOpen(false);
+    setTimeout(() => setVaultNotification(null), 4000);
   };
 
   // Roster Import Upload (Parses Locally to Preserve Zero-PII Guarantee)
@@ -1587,6 +1642,22 @@ export default function OpenMathForgeApp() {
                   ))}
                 </select>
 
+                {/* Delete Class Button (triggers warning modal) */}
+                <button
+                  onClick={() => {
+                    const target =
+                      localVault.classes.find((c) => c.id === selectedClassId) ||
+                      localVault.classes[0];
+                    if (target) setClassToDelete(target);
+                  }}
+                  disabled={localVault.classes.length === 0}
+                  className="px-2.5 py-2 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 disabled:opacity-40 rounded-lg text-xs font-semibold flex items-center space-x-1 transition shadow-2xs"
+                  title="Delete current class (can be recovered from Recycle Bin)"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Delete Class</span>
+                </button>
+
                 {/* New Class Button */}
                 <button
                   onClick={() => setIsNewClassModalOpen(true)}
@@ -1615,6 +1686,24 @@ export default function OpenMathForgeApp() {
                 >
                   <FolderOpen className="w-3.5 h-3.5" />
                   <span>Open from PC</span>
+                </button>
+
+                {/* Recovery & History Button */}
+                <button
+                  onClick={() => {
+                    setVaultSnapshots(getVaultSnapshots());
+                    setIsRecoveryModalOpen(true);
+                  }}
+                  className="px-3 py-2 bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition shadow-2xs relative"
+                  title="Recover deleted classes or students and restore snapshots"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Recovery & History</span>
+                  {((localVault.recycleBin?.classes?.length || 0) +
+                    (localVault.recycleBin?.students?.length || 0)) >
+                    0 && (
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                  )}
                 </button>
 
                 {/* Import Roster CSV */}
@@ -2522,6 +2611,238 @@ export default function OpenMathForgeApp() {
                   Create Class
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Class Confirmation Warning Modal */}
+      {classToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-rose-200 w-full max-w-md overflow-hidden flex flex-col">
+            <div className="px-6 py-4 bg-rose-600 text-white flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-rose-100" />
+                <h3 className="font-bold text-sm">Delete Classroom Warning</h3>
+              </div>
+              <button
+                onClick={() => setClassToDelete(null)}
+                className="text-rose-200 hover:text-white text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-slate-900">
+                  Are you sure you want to delete &ldquo;{classToDelete.name}&rdquo;?
+                </p>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  This will remove the classroom and its{" "}
+                  <strong>{classToDelete.students.length} enrolled student(s)</strong> from your active roster.
+                </p>
+              </div>
+
+              {/* Recovery Assurance Box */}
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 flex items-start space-x-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold block">Safe Recovery Available</span>
+                  This class will be safely moved to your <strong>Local Recycle Bin</strong>. You can restore it with all student data and scores at any time from the &ldquo;Recovery & History&rdquo; menu.
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setClassToDelete(null)}
+                  className="px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDeleteClass}
+                  className="px-4 py-2 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white shadow-sm flex items-center space-x-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Class (Move to Recycle Bin)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recovery & Recycle Bin Modal */}
+      {isRecoveryModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <RotateCcw className="w-4 h-4 text-amber-400" />
+                <h3 className="font-bold text-sm">Vault Recovery, Recycle Bin & Snapshots</h3>
+              </div>
+              <button
+                onClick={() => setIsRecoveryModalOpen(false)}
+                className="text-slate-400 hover:text-white text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Tabs */}
+            <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 space-x-4">
+              <button
+                onClick={() => setRecoveryTab("recycle")}
+                className={`pb-2.5 text-xs font-bold flex items-center space-x-1.5 border-b-2 transition ${
+                  recoveryTab === "recycle"
+                    ? "border-amber-600 text-amber-800"
+                    : "border-transparent text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>
+                  Recycle Bin ({ (localVault.recycleBin?.classes?.length || 0) + (localVault.recycleBin?.students?.length || 0) })
+                </span>
+              </button>
+              <button
+                onClick={() => setRecoveryTab("snapshots")}
+                className={`pb-2.5 text-xs font-bold flex items-center space-x-1.5 border-b-2 transition ${
+                  recoveryTab === "snapshots"
+                    ? "border-indigo-600 text-indigo-800"
+                    : "border-transparent text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>Auto-Snapshots & Restore Points ({vaultSnapshots.length})</span>
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 flex-1">
+              {recoveryTab === "recycle" ? (
+                <div className="space-y-4">
+                  {/* Deleted Classes Section */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 mb-2 flex items-center space-x-1.5">
+                      <Users className="w-3.5 h-3.5 text-slate-600" />
+                      <span>Deleted Classes ({localVault.recycleBin?.classes?.length || 0})</span>
+                    </h4>
+                    {(!localVault.recycleBin?.classes || localVault.recycleBin.classes.length === 0) ? (
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl text-center text-xs text-slate-400">
+                        No deleted classes in Recycle Bin.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {localVault.recycleBin.classes.map((item) => (
+                          <div
+                            key={item.classroom.id}
+                            className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs hover:border-slate-300"
+                          >
+                            <div>
+                              <div className="font-bold text-slate-800">{item.classroom.name}</div>
+                              <div className="text-[11px] text-slate-400">
+                                {item.classroom.students.length} students • Deleted: {new Date(item.deletedAt).toLocaleString()}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleRestoreClass(item.classroom.id)}
+                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-bold flex items-center space-x-1 transition"
+                            >
+                              <Undo2 className="w-3 h-3" />
+                              <span>Restore Class</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Deleted Students Section */}
+                  <div className="pt-2 border-t border-slate-100">
+                    <h4 className="text-xs font-bold text-slate-800 mb-2 flex items-center space-x-1.5">
+                      <Users className="w-3.5 h-3.5 text-slate-600" />
+                      <span>Deleted Students ({localVault.recycleBin?.students?.length || 0})</span>
+                    </h4>
+                    {(!localVault.recycleBin?.students || localVault.recycleBin.students.length === 0) ? (
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl text-center text-xs text-slate-400">
+                        No individual deleted students in Recycle Bin.
+                      </div>
+                    ) : (
+                      <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        {localVault.recycleBin.students.map((item) => (
+                          <div
+                            key={item.student.id}
+                            className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs hover:border-slate-300"
+                          >
+                            <div>
+                              <div className="font-bold text-slate-800">{item.student.name}</div>
+                              <div className="text-[11px] text-slate-400">
+                                From: {item.className} • Deleted: {new Date(item.deletedAt).toLocaleString()}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleRestoreStudent(item.student.id)}
+                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-bold flex items-center space-x-1 transition"
+                            >
+                              <Undo2 className="w-3 h-3" />
+                              <span>Restore Student</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* Auto-Snapshots Tab */
+                <div className="space-y-3">
+                  <p className="text-xs text-slate-600">
+                    OpenMathForge automatically captures local snapshots of your vault before deletions and modifications. You can roll back to any point in time:
+                  </p>
+                  {vaultSnapshots.length === 0 ? (
+                    <div className="p-6 bg-slate-50 border border-slate-100 rounded-xl text-center text-xs text-slate-400">
+                      No snapshots recorded yet. Snapshots are created automatically as you work.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {vaultSnapshots.map((snap) => (
+                        <div
+                          key={snap.id}
+                          className="p-3.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs hover:border-indigo-300 transition"
+                        >
+                          <div>
+                            <div className="font-bold text-slate-800 flex items-center space-x-1.5">
+                              <History className="w-3.5 h-3.5 text-indigo-600" />
+                              <span>{snap.label}</span>
+                            </div>
+                            <div className="text-[11px] text-slate-400 mt-0.5">
+                              {new Date(snap.timestamp).toLocaleString()} • {snap.classesCount} class(es) • {snap.totalStudents} student(s)
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleRollbackSnapshot(snap)}
+                            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 rounded-lg text-xs font-bold flex items-center space-x-1 transition"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Rollback to This Point</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-3 bg-slate-100 border-t border-slate-200 flex justify-end">
+              <button
+                onClick={() => setIsRecoveryModalOpen(false)}
+                className="px-4 py-1.5 text-xs font-semibold rounded text-slate-600 hover:bg-slate-200"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
