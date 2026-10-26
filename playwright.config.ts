@@ -1,3 +1,4 @@
+// OpenMathForge End-to-End Test Suite Configuration
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({

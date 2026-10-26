@@ -1,6 +1,6 @@
 ---
 trigger: alwaysOn
-description: Invariants and system standards for OpenMathForge development
+description: Invariants and system standards for OpenMathForge engineering
 ---
 
 # OpenMathForge System Invariants & Architecture Rules

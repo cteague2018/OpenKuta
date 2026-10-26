@@ -1,4 +1,4 @@
-# OpenMathForge Production Dockerfile
+# OpenMathForge Production Application Container
 FROM python:3.11-slim
 
 WORKDIR /app

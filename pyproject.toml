@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "openmathforge"
 version = "0.1.0"
-description = "Deterministic math worksheet generation and CV grading engine"
+description = "Deterministic algorithmic math worksheet engine and CV grading suite"
 authors = [{ name = "OpenMathForge Team" }]
 readme = "README.md"
 requires-python = ">=3.10"

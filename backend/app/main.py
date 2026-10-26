@@ -10,11 +10,11 @@ from backend.app.api.routes import router
 
 app = FastAPI(
     title="OpenMathForge Math Assessment Engine",
+    version="0.1.1",
     description=(
         "Deterministic math worksheet generator, Typst typesetting engine, "
         "and OpenCV/SymPy grading pipeline"
     ),
-    version="0.1.0",
 )
 
 # Configure CORS for Next.js development and production
