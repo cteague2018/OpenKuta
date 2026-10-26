@@ -2,7 +2,9 @@
 const backendUrl =
   process.env.BACKEND_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  "http://127.0.0.1:8000";
+  (process.env.VERCEL
+    ? "https://openmathforge.onrender.com"
+    : "http://127.0.0.1:8000");
 
 const nextConfig = {
   reactStrictMode: true,
