@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import {
   Download,
   FileCheck,
@@ -24,7 +25,12 @@ import {
   Upload,
   FileSpreadsheet,
   Camera,
-  Clock,
+  LogIn,
+  LogOut,
+  Save,
+  FolderOpen,
+  HardDrive,
+  Sparkles,
 } from "lucide-react";
 import katex from "katex";
 import {
@@ -35,6 +41,18 @@ import {
   Course,
   Problem,
 } from "./catalogData";
+import {
+  LocalStudent,
+  LocalClassroom,
+  LocalVaultData,
+  loadVaultFromLocalStorage,
+  saveVaultToLocalStorage,
+  saveVaultToDisk,
+  loadVaultFromDiskFile,
+  exportClassroomToCsv,
+  parseCsvToClassroom,
+  createPseudonymToken,
+} from "../lib/localPiiVault";
 
 interface AssignmentItem {
   id: string;
@@ -52,27 +70,6 @@ interface ClassroomSummary {
   period: string;
   teacher_name: string;
   student_count: number;
-}
-
-interface StudentRecord {
-  id: string;
-  student_id: string;
-  first_name: string;
-  last_name: string;
-  email?: string;
-  period?: string;
-}
-
-interface GradebookEntry {
-  student_id: string;
-  name: string;
-  email?: string;
-  status: "graded" | "pending";
-  score_percentage?: number;
-  correct_count?: number;
-  total_problems?: number;
-  error_types?: string[];
-  submitted_at?: string;
 }
 
 function typstToLatex(raw: string): string {
@@ -216,6 +213,24 @@ export default function OpenMathForgeApp() {
     return isMultiStep ? "min-h-[190px]" : "min-h-[160px]";
   }, [worksheetProblems.length, isMultiStep, showAnswerKey]);
 
+  // NextAuth Session & Authentication State
+  const { data: session } = useSession();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [authEmail, setAuthEmail] = useState<string>("");
+  const [authName, setAuthName] = useState<string>("");
+  const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
+
+  // Zero-PII Local PC Vault State
+  const [localVault, setLocalVault] = useState<LocalVaultData>(() => loadVaultFromLocalStorage());
+  const [vaultNotification, setVaultNotification] = useState<string | null>(null);
+  const vaultFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isNewClassModalOpen, setIsNewClassModalOpen] = useState<boolean>(false);
+  const [newClassName, setNewClassName] = useState<string>("");
+  const [newClassPeriod, setNewClassPeriod] = useState<string>("1");
+  const [newClassSubject, setNewClassSubject] = useState<string>("Algebra 1");
+  const [newStudentName, setNewStudentName] = useState<string>("");
+  const [newStudentNumber, setNewStudentNumber] = useState<string>("");
+
   // Classroom Management State
   const [classesList, setClassesList] = useState<ClassroomSummary[]>(() =>
     DEFAULT_CLASSROOMS.map(({ id, name, subject, period, teacher_name, student_count }) => ({
@@ -227,13 +242,7 @@ export default function OpenMathForgeApp() {
       student_count,
     }))
   );
-  const [selectedClassId, setSelectedClassId] = useState<string>("cls_alg1_p3");
-  const [currentClassStudents, setCurrentClassStudents] = useState<StudentRecord[]>(
-    DEFAULT_CLASSROOMS[0].students
-  );
-  const [gradebookEntries, setGradebookEntries] = useState<GradebookEntry[]>(
-    DEFAULT_CLASSROOMS[0].gradebook as GradebookEntry[]
-  );
+  const [selectedClassId, setSelectedClassId] = useState<string>("class_local_alg1_p2");
   const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
   const [isBatchGenerating, setIsBatchGenerating] = useState<boolean>(false);
 
@@ -297,37 +306,6 @@ export default function OpenMathForgeApp() {
   useEffect(() => {
     loadClasses();
   }, []);
-
-  // Load Selected Class Students & Gradebook
-  useEffect(() => {
-    if (!selectedClassId) return;
-
-    fetch(`/api/classroom/classes/${selectedClassId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("No backend");
-        return res.json();
-      })
-      .then((data) => {
-        if (data.students) setCurrentClassStudents(data.students);
-      })
-      .catch(() => {
-        const found = DEFAULT_CLASSROOMS.find((c) => c.id === selectedClassId);
-        if (found) setCurrentClassStudents(found.students);
-      });
-
-    fetch(`/api/classroom/gradebook/${selectedClassId}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("No backend");
-        return res.json();
-      })
-      .then((data) => {
-        if (data.entries) setGradebookEntries(data.entries);
-      })
-      .catch(() => {
-        const found = DEFAULT_CLASSROOMS.find((c) => c.id === selectedClassId);
-        if (found) setGradebookEntries(found.gradebook as GradebookEntry[]);
-      });
-  }, [selectedClassId]);
 
   // Refresh live worksheet preview
   const refreshWorksheet = async () => {
@@ -687,47 +665,148 @@ export default function OpenMathForgeApp() {
     }
   };
 
-  // Roster Import Upload
-  const handleRosterFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !selectedClassId) return;
-
-    const formData = new FormData();
-    formData.append("class_id", selectedClassId);
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/classroom/import-roster", {
-        method: "POST",
-        body: formData,
-      });
-      if (res.ok) {
-        const data = await res.json();
-        alert(`Successfully imported ${data.imported_count} students via ${data.detected_format}!`);
-        setIsImportModalOpen(false);
-        loadClasses();
-        fetch(`/api/classroom/classes/${selectedClassId}`)
-          .then((r) => r.json())
-          .then((d) => setCurrentClassStudents(d.students || []));
-      } else {
-        alert("Roster import failed. Please check the CSV headers.");
-      }
-    } catch (err) {
-      console.error(err);
+  // Local PC Vault Handlers
+  const handleSaveVaultToDisk = async () => {
+    const success = await saveVaultToDisk(localVault);
+    if (success) {
+      setVaultNotification("Vault successfully saved to your PC (.omf)!");
+      setTimeout(() => setVaultNotification(null), 4000);
     }
   };
 
-  // Export Gradebook CSV
-  const handleExportGradebookCSV = async (format: "canvas" | "google") => {
-    if (!selectedClassId) return;
-    const res = await fetch(`/api/classroom/export-gradebook-csv/${selectedClassId}?format=${format}`);
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Gradebook_${format.toUpperCase()}_Export.csv`;
-      a.click();
+  const handleDiskFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const loaded = await loadVaultFromDiskFile(file);
+    if (loaded) {
+      setLocalVault(loaded);
+      if (loaded.classes.length > 0) {
+        setSelectedClassId(loaded.classes[0].id);
+      }
+      setVaultNotification(`Loaded ${loaded.classes.length} class(es) from ${file.name}`);
+      setTimeout(() => setVaultNotification(null), 4000);
+    } else {
+      alert("Invalid .omf or JSON file. Please select a valid OpenMathForge vault file.");
+    }
+  };
+
+  const handleExportCurrentClassCsv = () => {
+    const currentLocalClass =
+      localVault.classes.find((c) => c.id === selectedClassId) || localVault.classes[0];
+    if (currentLocalClass) {
+      exportClassroomToCsv(currentLocalClass);
+      setVaultNotification(`Exported ${currentLocalClass.name} roster to CSV`);
+      setTimeout(() => setVaultNotification(null), 4000);
+    }
+  };
+
+  const handleCreateNewClass = () => {
+    if (!newClassName.trim()) return;
+    const newClass: LocalClassroom = {
+      id: `class_${Date.now()}`,
+      name: newClassName.trim(),
+      subject: newClassSubject,
+      period: newClassPeriod,
+      teacherName: session?.user?.name || "Teacher",
+      createdAt: new Date().toISOString(),
+      students: [],
+    };
+    const updated = {
+      ...localVault,
+      classes: [...localVault.classes, newClass],
+    };
+    setLocalVault(updated);
+    saveVaultToLocalStorage(updated);
+    setSelectedClassId(newClass.id);
+    setIsNewClassModalOpen(false);
+    setNewClassName("");
+    setVaultNotification(`Created class "${newClass.name}" locally on PC`);
+    setTimeout(() => setVaultNotification(null), 4000);
+  };
+
+  const handleAddStudentLocally = () => {
+    if (!newStudentName.trim()) return;
+    const currentLocalClass =
+      localVault.classes.find((c) => c.id === selectedClassId) || localVault.classes[0];
+    if (!currentLocalClass) return;
+
+    const newStudent: LocalStudent = {
+      id: `st_${Date.now()}`,
+      name: newStudentName.trim(),
+      studentNumber: newStudentNumber.trim() || `ID-${Math.floor(1000 + Math.random() * 9000)}`,
+      scores: {},
+    };
+
+    const updatedClasses = localVault.classes.map((c) => {
+      if (c.id === currentLocalClass.id) {
+        return {
+          ...c,
+          students: [...c.students, newStudent],
+        };
+      }
+      return c;
+    });
+
+    const updated = { ...localVault, classes: updatedClasses };
+    setLocalVault(updated);
+    saveVaultToLocalStorage(updated);
+    setNewStudentName("");
+    setNewStudentNumber("");
+    setVaultNotification(`Added ${newStudent.name} to local PC roster`);
+    setTimeout(() => setVaultNotification(null), 4000);
+  };
+
+  const handleDeleteStudentLocally = (studentId: string) => {
+    const updatedClasses = localVault.classes.map((c) => {
+      if (c.id === selectedClassId || c.id === localVault.classes[0]?.id) {
+        return {
+          ...c,
+          students: c.students.filter((s) => s.id !== studentId),
+        };
+      }
+      return c;
+    });
+    const updated = { ...localVault, classes: updatedClasses };
+    setLocalVault(updated);
+    saveVaultToLocalStorage(updated);
+  };
+
+  // Roster Import Upload (Parses Locally to Preserve Zero-PII Guarantee)
+  const handleRosterFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const csvText = await file.text();
+      const currentLocalClass =
+        localVault.classes.find((c) => c.id === selectedClassId) || localVault.classes[0];
+      const parsedClass = parseCsvToClassroom(
+        csvText,
+        currentLocalClass ? currentLocalClass.name : "Imported Class",
+        currentLocalClass ? currentLocalClass.subject : "Mathematics",
+        currentLocalClass ? currentLocalClass.period : "1",
+        session?.user?.name || "Teacher"
+      );
+
+      const updatedClasses = localVault.classes.map((c) => {
+        if (c.id === currentLocalClass?.id) {
+          return {
+            ...c,
+            students: [...c.students, ...parsedClass.students],
+          };
+        }
+        return c;
+      });
+
+      const updated = { ...localVault, classes: updatedClasses };
+      setLocalVault(updated);
+      saveVaultToLocalStorage(updated);
+      setIsImportModalOpen(false);
+      setVaultNotification(`Imported ${parsedClass.students.length} students into local PC vault`);
+      setTimeout(() => setVaultNotification(null), 4000);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to parse CSV file. Please check format.");
     }
   };
 
@@ -948,40 +1027,87 @@ export default function OpenMathForgeApp() {
             </div>
           </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="flex items-center space-x-1 bg-slate-800/60 p-1 rounded-md border border-slate-700">
-            <button
-              onClick={() => setActiveTab("studio")}
-              className={`px-3 py-1 rounded text-xs font-bold transition ${
-                activeTab === "studio"
-                  ? "bg-indigo-600 text-white shadow"
-                  : "text-slate-300 hover:text-white"
-              }`}
-            >
-              Worksheet Studio
-            </button>
-            <button
-              onClick={() => setActiveTab("classroom")}
-              className={`px-3 py-1 rounded text-xs font-bold transition flex items-center space-x-1.5 ${
-                activeTab === "classroom"
-                  ? "bg-indigo-600 text-white shadow"
-                  : "text-slate-300 hover:text-white"
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>Classroom & Rosters</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("grader")}
-              className={`px-3 py-1 rounded text-xs font-bold transition flex items-center space-x-1.5 ${
-                activeTab === "grader"
-                  ? "bg-indigo-600 text-white shadow"
-                  : "text-slate-300 hover:text-white"
-              }`}
-            >
-              <FileCheck className="w-3.5 h-3.5" />
-              <span>Vision & CAS Grader</span>
-            </button>
+          {/* Right Header Area: Mode Switcher Tabs + Auth */}
+          <div className="flex items-center space-x-3">
+            {/* Mode Switcher Tabs */}
+            <div className="flex items-center space-x-1 bg-slate-800/60 p-1 rounded-md border border-slate-700">
+              <button
+                onClick={() => setActiveTab("studio")}
+                className={`px-3 py-1 rounded text-xs font-bold transition ${
+                  activeTab === "studio"
+                    ? "bg-indigo-600 text-white shadow"
+                    : "text-slate-300 hover:text-white"
+                }`}
+              >
+                Worksheet Studio
+              </button>
+              <button
+                onClick={() => setActiveTab("classroom")}
+                className={`px-3 py-1 rounded text-xs font-bold transition flex items-center space-x-1.5 ${
+                  activeTab === "classroom"
+                    ? "bg-indigo-600 text-white shadow"
+                    : "text-slate-300 hover:text-white"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Classroom & Rosters</span>
+                {!session?.user && (
+                  <span className="text-[9px] bg-slate-700 text-slate-300 px-1 py-0.2 rounded font-mono font-normal">
+                    PRO
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab("grader")}
+                className={`px-3 py-1 rounded text-xs font-bold transition flex items-center space-x-1.5 ${
+                  activeTab === "grader"
+                    ? "bg-indigo-600 text-white shadow"
+                    : "text-slate-300 hover:text-white"
+                }`}
+              >
+                <FileCheck className="w-3.5 h-3.5" />
+                <span>Vision & CAS Grader</span>
+                {!session?.user && (
+                  <span className="text-[9px] bg-slate-700 text-slate-300 px-1 py-0.2 rounded font-mono font-normal">
+                    PRO
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Teacher Authentication / User Profile */}
+            <div className="flex items-center">
+              {session?.user ? (
+                <div className="flex items-center space-x-2 bg-slate-800/80 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-[11px] shadow-sm">
+                    {session.user.name ? session.user.name.charAt(0).toUpperCase() : "T"}
+                  </div>
+                  <div className="hidden md:block text-left">
+                    <div className="font-semibold text-slate-100 flex items-center space-x-1">
+                      <span className="truncate max-w-[120px]">{session.user.name || "Teacher"}</span>
+                      <span className="text-[9px] bg-indigo-500/30 text-indigo-300 font-bold px-1.5 py-0.2 rounded border border-indigo-400/40">
+                        TEACHER
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => signOut({ redirect: false })}
+                    title="Sign Out"
+                    className="text-slate-400 hover:text-rose-400 p-1 transition rounded hover:bg-slate-700/50"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsAuthModalOpen(true)}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg px-3 py-1.5 flex items-center space-x-1.5 transition shadow-sm"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Teacher Sign In</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -1362,159 +1488,342 @@ export default function OpenMathForgeApp() {
           </section>
         </div>
       ) : activeTab === "classroom" ? (
-        /* Classroom & Rosters Tab */
-        <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-1 w-full">
-          {/* Class Header & Controls */}
-          <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        !session?.user ? (
+          /* Gated Classroom Screen when Not Signed In */
+          <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-6 flex-1 flex flex-col justify-center">
+            <div className="w-16 h-16 bg-indigo-50 border border-indigo-200 rounded-2xl flex items-center justify-center mx-auto text-indigo-600 shadow-sm">
+              <Users className="w-8 h-8" />
+            </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-indigo-600" />
-                <h2 className="text-lg font-bold text-slate-900">Classroom Management & Rosters</h2>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Manage student rosters and generate personalized worksheets with individual QR tracking.
+              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                Teacher Sign-In Required for Classroom Rosters
+              </h2>
+              <p className="text-xs text-slate-600 max-w-md mx-auto mt-2 leading-relaxed">
+                Classroom rosters, personalized QR tracking, and local gradebooks require an authenticated teacher session.
               </p>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <select
-                value={selectedClassId}
-                onChange={(e) => setSelectedClassId(e.target.value)}
-                className="text-xs font-semibold rounded-lg border border-slate-300 px-3 py-2 bg-white text-slate-700 shadow-2xs"
-              >
-                {classesList.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.student_count} students)
-                  </option>
-                ))}
-              </select>
+            {/* Zero-PII Cloud Guarantee Box */}
+            <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 max-w-lg mx-auto text-left flex items-start space-x-3 shadow-xs">
+              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="text-xs text-emerald-950 space-y-1">
+                <div className="font-bold flex items-center space-x-1.5">
+                  <span>Zero-PII Cloud Guarantee</span>
+                  <span className="text-[10px] bg-emerald-200/60 text-emerald-800 font-mono px-1.5 py-0.2 rounded font-semibold">
+                    FERPA & COPPA
+                  </span>
+                </div>
+                <div className="text-emerald-800 leading-relaxed text-[11px]">
+                  All student names, student IDs, and assessment records are saved strictly on <strong>your computer’s local drive</strong>. Identifiable student data is never transmitted to or stored on our cloud servers.
+                </div>
+              </div>
+            </div>
 
+            <div>
               <button
-                onClick={() => setIsImportModalOpen(true)}
-                className="px-3 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg text-xs font-bold flex items-center space-x-1.5 hover:bg-indigo-100 transition shadow-2xs"
+                onClick={() => setIsAuthModalOpen(true)}
+                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center space-x-2 mx-auto"
               >
-                <Upload className="w-3.5 h-3.5" />
-                <span>Import Roster CSV</span>
-              </button>
-
-              <button
-                onClick={handlePrintClassBatchPDF}
-                disabled={isBatchGenerating}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-sm transition"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>{isBatchGenerating ? "Compiling..." : "Print Class Set (with QR Codes)"}</span>
+                <LogIn className="w-4 h-4" />
+                <span>Sign In with School Account</span>
               </button>
             </div>
           </div>
+        ) : (
+          /* Classroom & Rosters Tab (Authenticated) */
+          <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-1 w-full">
+            {/* Hidden file input for loading local .omf vault files */}
+            <input
+              type="file"
+              ref={vaultFileInputRef}
+              accept=".omf,.json"
+              onChange={handleDiskFileSelected}
+              className="hidden"
+            />
 
-          {/* Roster & Live Gradebook Table */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Student Roster List */}
-            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-                <h3 className="text-sm font-bold text-slate-800">
-                  Enrolled Students ({currentClassStudents.length})
-                </h3>
-                <span className="text-[11px] font-semibold text-slate-400">
-                  Individual QR Enabled
-                </span>
+            {/* Vault Notification Banner */}
+            {vaultNotification && (
+              <div className="bg-indigo-50 border border-indigo-200 text-indigo-900 px-4 py-2.5 rounded-xl text-xs flex items-center justify-between shadow-2xs">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span className="font-semibold">{vaultNotification}</span>
+                </div>
+                <button
+                  onClick={() => setVaultNotification(null)}
+                  className="text-indigo-400 hover:text-indigo-600 font-bold text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Class Header & Controls */}
+            <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <Users className="w-5 h-5 text-indigo-600" />
+                  <h2 className="text-lg font-bold text-slate-900">Classroom Management & Rosters</h2>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300 flex items-center space-x-1">
+                    <HardDrive className="w-3 h-3 mr-0.5" />
+                    <span>Local PC Storage</span>
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Saved on your PC • Student PII is never transmitted to the cloud.
+                </p>
               </div>
 
-              <div className="max-h-96 overflow-y-auto space-y-2 pr-1">
-                {currentClassStudents.map((stu) => (
-                  <div
-                    key={stu.id}
-                    className="p-2.5 rounded-lg border border-slate-100 bg-slate-50 flex items-center justify-between text-xs"
-                  >
-                    <div>
-                      <div className="font-bold text-slate-800">
-                        {stu.first_name} {stu.last_name}
-                      </div>
-                      <div className="text-[11px] text-slate-400 font-mono">
-                        ID: {stu.student_id} • Period: {stu.period || "1"}
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      QR Ready
-                    </span>
-                  </div>
-                ))}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Class Selector Dropdown */}
+                <select
+                  value={selectedClassId}
+                  onChange={(e) => setSelectedClassId(e.target.value)}
+                  className="text-xs font-semibold rounded-lg border border-slate-300 px-3 py-2 bg-white text-slate-700 shadow-2xs focus:ring-1 focus:ring-indigo-500"
+                >
+                  {localVault.classes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.students.length} students)
+                    </option>
+                  ))}
+                </select>
+
+                {/* New Class Button */}
+                <button
+                  onClick={() => setIsNewClassModalOpen(true)}
+                  className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1 transition shadow-2xs"
+                  title="Create new class stored locally"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>New Class</span>
+                </button>
+
+                {/* Save Vault to PC */}
+                <button
+                  onClick={handleSaveVaultToDisk}
+                  className="px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition shadow-2xs"
+                  title="Save current roster and grades as .omf file directly to your PC drive"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Save to PC (.omf)</span>
+                </button>
+
+                {/* Open Vault from PC */}
+                <button
+                  onClick={() => vaultFileInputRef.current?.click()}
+                  className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1 transition shadow-2xs"
+                  title="Load saved .omf file from your PC"
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  <span>Open from PC</span>
+                </button>
+
+                {/* Import Roster CSV */}
+                <button
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="px-3 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg text-xs font-bold flex items-center space-x-1.5 hover:bg-indigo-100 transition shadow-2xs"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Import CSV</span>
+                </button>
+
+                {/* Print Class Set */}
+                <button
+                  onClick={handlePrintClassBatchPDF}
+                  disabled={isBatchGenerating}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-sm transition"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>{isBatchGenerating ? "Compiling..." : "Print Class Set"}</span>
+                </button>
               </div>
             </div>
 
-            {/* Assessment Gradebook Table */}
-            <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
-                <h3 className="text-sm font-bold text-slate-800">
-                  Verified Gradebook
-                </h3>
-                <div className="flex items-center space-x-2">
+            {/* Roster & Live Gradebook Table */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Student Roster List */}
+              <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                    <h3 className="text-sm font-bold text-slate-800">
+                      Enrolled Students (
+                      {(
+                        localVault.classes.find((c) => c.id === selectedClassId) ||
+                        localVault.classes[0]
+                      )?.students.length || 0}
+                      )
+                    </h3>
+                    <span className="text-[11px] font-semibold text-emerald-600 flex items-center">
+                      <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Zero-PII Cloud
+                    </span>
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto space-y-2 pr-1">
+                    {(
+                      localVault.classes.find((c) => c.id === selectedClassId) ||
+                      localVault.classes[0]
+                    )?.students.map((stu) => (
+                      <div
+                        key={stu.id}
+                        className="p-2.5 rounded-lg border border-slate-100 bg-slate-50 flex items-center justify-between text-xs"
+                      >
+                        <div>
+                          <div className="font-bold text-slate-800">{stu.name}</div>
+                          <div className="text-[11px] text-slate-400 font-mono flex items-center space-x-2 mt-0.5">
+                            <span>ID: {stu.studentNumber || stu.id}</span>
+                            <span className="text-slate-300">•</span>
+                            <span
+                              className="text-indigo-600 font-mono text-[10px]"
+                              title="Opaque cryptographic token used on worksheets and grading; real identity stays strictly on your PC."
+                            >
+                              Token: {createPseudonymToken(stu.id)}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteStudentLocally(stu.id)}
+                          title="Remove student from local roster"
+                          className="text-slate-300 hover:text-rose-500 p-1 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add Student Locally Form */}
+                <div className="pt-4 border-t border-slate-100 mt-4 space-y-2">
+                  <div className="text-xs font-bold text-slate-700 flex items-center space-x-1">
+                    <Plus className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Add Student Locally</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Student Full Name"
+                      value={newStudentName}
+                      onChange={(e) => setNewStudentName(e.target.value)}
+                      className="text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Student ID (Optional)"
+                      value={newStudentNumber}
+                      onChange={(e) => setNewStudentNumber(e.target.value)}
+                      className="text-xs px-2.5 py-1.5 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
                   <button
-                    onClick={() => handleExportGradebookCSV("canvas")}
-                    className="text-xs text-indigo-600 hover:underline font-semibold flex items-center space-x-1"
+                    onClick={handleAddStudentLocally}
+                    className="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-lg transition"
                   >
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>Canvas SIS Export</span>
+                    Add to Local PC Roster
                   </button>
-                  <span className="text-slate-300">•</span>
-                  <button
-                    onClick={() => handleExportGradebookCSV("google")}
-                    className="text-xs text-indigo-600 hover:underline font-semibold flex items-center space-x-1"
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>Google CSV</span>
-                  </button>
+                  <p className="text-[10px] text-slate-400 text-center">
+                    Saved directly to your browser & PC. 0 bytes sent to server.
+                  </p>
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50">
-                      <th className="py-2 px-3">Student Name</th>
-                      <th className="py-2 px-3">Student ID</th>
-                      <th className="py-2 px-3">Status</th>
-                      <th className="py-2 px-3 text-right">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {gradebookEntries.map((entry) => (
-                      <tr key={entry.student_id} className="hover:bg-slate-50/50">
-                        <td className="py-2.5 px-3 font-semibold text-slate-800">
-                          {entry.name}
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-slate-500">
-                          {entry.student_id}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          {entry.status === "graded" ? (
-                            <span className="inline-flex items-center text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              Auto-Graded
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
-                              <Clock className="w-3 h-3 mr-1" />
-                              Awaiting Scan
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-bold">
-                          {entry.score_percentage !== null && entry.score_percentage !== undefined ? (
-                            <span className="text-indigo-600 font-mono">
-                              {Math.round(entry.score_percentage)}%
-                            </span>
-                          ) : (
-                            <span className="text-slate-300">—</span>
-                          )}
-                        </td>
+              {/* Assessment Gradebook Table */}
+              <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                  <h3 className="text-sm font-bold text-slate-800">Local Verified Gradebook</h3>
+                  <button
+                    onClick={handleExportCurrentClassCsv}
+                    className="text-xs text-indigo-600 hover:underline font-semibold flex items-center space-x-1"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>Export Roster CSV</span>
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-500 font-semibold bg-slate-50">
+                        <th className="py-2 px-3">Student Name</th>
+                        <th className="py-2 px-3">Student ID</th>
+                        <th className="py-2 px-3">Cloud Pseudonym Token</th>
+                        <th className="py-2 px-3 text-right">Score</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {(
+                        localVault.classes.find((c) => c.id === selectedClassId) ||
+                        localVault.classes[0]
+                      )?.students.map((stu) => {
+                        const scores = Object.values(stu.scores || {});
+                        const avgScore =
+                          scores.length > 0
+                            ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+                            : null;
+                        return (
+                          <tr key={stu.id} className="hover:bg-slate-50/50">
+                            <td className="py-2.5 px-3 font-semibold text-slate-800">
+                              {stu.name}
+                            </td>
+                            <td className="py-2.5 px-3 font-mono text-slate-500">
+                              {stu.studentNumber || stu.id}
+                            </td>
+                            <td className="py-2.5 px-3 font-mono text-[10px] text-indigo-600">
+                              {createPseudonymToken(stu.id)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right font-bold">
+                              {avgScore !== null ? (
+                                <span className="text-indigo-600 font-mono">{avgScore}%</span>
+                              ) : (
+                                <span className="text-slate-300">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
+          </div>
+        )
+      ) : !session?.user ? (
+        /* Gated Vision Grader Screen when Not Signed In */
+        <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-6 flex-1 flex flex-col justify-center">
+          <div className="w-16 h-16 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-center mx-auto text-amber-600 shadow-sm">
+            <FileCheck className="w-8 h-8" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              Teacher Sign-In Required for Vision & CAS Grader
+            </h2>
+            <p className="text-xs text-slate-600 max-w-md mx-auto mt-2 leading-relaxed">
+              Automated line-by-line handwritten math verification, 4-corner ArUco deskewing, and local gradebook sync require a verified educator session.
+            </p>
+          </div>
+
+          <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-4 max-w-lg mx-auto text-left flex items-start space-x-3 shadow-xs">
+            <Sparkles className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-950 space-y-1">
+              <div className="font-bold flex items-center space-x-1.5">
+                <span>Vision & CAS Grader</span>
+                <span className="text-[10px] bg-amber-200/60 text-amber-800 font-mono px-1.5 py-0.2 rounded font-semibold">
+                  PRO TIER
+                </span>
+              </div>
+              <div className="text-amber-800 leading-relaxed text-[11px]">
+                Sign in with your district Google Workspace, Microsoft 365, or educator account to access automatic handwriting step verification.
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center space-x-2 mx-auto"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Sign In to Access Vision Grader</span>
+            </button>
           </div>
         </div>
       ) : (
@@ -1993,6 +2302,226 @@ export default function OpenMathForgeApp() {
               >
                 OK (Add to Worksheet)
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Teacher Authentication Modal */}
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-md overflow-hidden flex flex-col">
+            <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex justify-between items-center">
+              <div className="flex items-center space-x-2">
+                <div className="w-7 h-7 bg-indigo-500 rounded flex items-center justify-center font-black text-white text-sm shadow-inner">
+                  M
+                </div>
+                <h3 className="font-bold text-sm">Teacher Sign In</h3>
+              </div>
+              <button
+                onClick={() => setIsAuthModalOpen(false)}
+                className="text-slate-400 hover:text-white text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="text-center space-y-1">
+                <h4 className="text-base font-bold text-slate-800">Welcome to OpenMathForge</h4>
+                <p className="text-xs text-slate-500">
+                  Sign in with your school district account to access Classroom Management and Vision Grading.
+                </p>
+              </div>
+
+              {/* Zero-PII Guarantee Badge */}
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-left flex items-start space-x-2.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="text-[11px] text-emerald-900 leading-relaxed">
+                  <span className="font-bold block">100% Zero-PII Cloud Guarantee</span>
+                  Student rosters and grades are saved on your local PC. No student personal data is ever stored in the cloud.
+                </div>
+              </div>
+
+              {/* Federated SSO Buttons */}
+              <div className="space-y-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => signIn("google")}
+                  className="w-full py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 transition shadow-xs"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                  </svg>
+                  <span>Sign in with Google Workspace</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => signIn("azure-ad")}
+                  className="w-full py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 transition shadow-xs"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 23 23">
+                    <path fill="#f35325" d="M1 1h10v10H1z"/>
+                    <path fill="#81bc06" d="M12 1h10v10H12z"/>
+                    <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+                    <path fill="#ffba08" d="M12 12h10v10H12z"/>
+                  </svg>
+                  <span>Sign in with Microsoft 365 (Entra ID)</span>
+                </button>
+              </div>
+
+              <div className="relative flex items-center justify-center my-2">
+                <div className="border-t border-slate-200 w-full"></div>
+                <span className="bg-white px-2 text-[10px] text-slate-400 uppercase font-semibold">Or Instant Access</span>
+                <div className="border-t border-slate-200 w-full"></div>
+              </div>
+
+              {/* Instant School Demo Button */}
+              <button
+                type="button"
+                disabled={isSigningIn}
+                onClick={async () => {
+                  setIsSigningIn(true);
+                  await signIn("demo-teacher", {
+                    email: "educator@openmathforge.org",
+                    name: "Demo Math Educator",
+                    redirect: false,
+                  });
+                  setIsSigningIn(false);
+                  setIsAuthModalOpen(false);
+                }}
+                className="w-full py-2.5 px-4 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 transition shadow-xs"
+              >
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+                <span>Launch Demo Educator Session (1-Click)</span>
+              </button>
+
+              {/* Custom Email Form */}
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!authEmail.trim()) return;
+                  setIsSigningIn(true);
+                  await signIn("demo-teacher", {
+                    email: authEmail.trim(),
+                    name: authName.trim() || authEmail.split("@")[0],
+                    redirect: false,
+                  });
+                  setIsSigningIn(false);
+                  setIsAuthModalOpen(false);
+                }}
+                className="space-y-2 pt-2 border-t border-slate-100"
+              >
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                    School / District Email:
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="teacher@district.k12.us"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-slate-600 block mb-1">
+                    Your Name (Optional):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Ms. Alvarez"
+                    value={authName}
+                    onChange={(e) => setAuthName(e.target.value)}
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSigningIn}
+                  className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition shadow-xs"
+                >
+                  {isSigningIn ? "Signing In..." : "Continue with Email"}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Classroom Modal */}
+      {isNewClassModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-300 w-full max-w-md overflow-hidden flex flex-col">
+            <div className="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+              <h3 className="font-bold text-sm flex items-center space-x-2">
+                <Users className="w-4 h-4 text-indigo-400" />
+                <span>Create New Class (Saved Locally on PC)</span>
+              </h3>
+              <button
+                onClick={() => setIsNewClassModalOpen(false)}
+                className="text-slate-400 hover:text-white text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Class Name:</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Geometry Honors"
+                  value={newClassName}
+                  onChange={(e) => setNewClassName(e.target.value)}
+                  className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Subject:</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Geometry"
+                    value={newClassSubject}
+                    onChange={(e) => setNewClassSubject(e.target.value)}
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Period:</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 4"
+                    value={newClassPeriod}
+                    onChange={(e) => setNewClassPeriod(e.target.value)}
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-1 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 italic">
+                This class and its student roster will be stored exclusively on your PC.
+              </p>
+              <div className="pt-2 flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={() => setIsNewClassModalOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold rounded-lg text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCreateNewClass}
+                  className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                >
+                  Create Class
+                </button>
+              </div>
             </div>
           </div>
         </div>

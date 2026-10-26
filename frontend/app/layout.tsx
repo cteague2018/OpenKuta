@@ -1,5 +1,6 @@
 import "./globals.css";
 import React from "react";
+import { Providers } from "./providers";
 
 export const metadata = {
   title: "OpenMathForge - Deterministic CAS Assessment & Vision Grader",
@@ -20,7 +21,9 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className="antialiased font-sans">{children}</body>
+      <body className="antialiased font-sans">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
