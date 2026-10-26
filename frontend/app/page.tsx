@@ -1159,8 +1159,8 @@ export default function OpenMathForgeApp() {
                 <FileCheck className="w-3.5 h-3.5" />
                 <span>Vision & CAS Grader</span>
                 {!isUserPro && (
-                  <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1 py-0.2 rounded font-mono font-bold">
-                    PRO
+                  <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded font-mono font-bold tracking-tight">
+                    COMING SOON
                   </span>
                 )}
               </button>
@@ -1935,12 +1935,12 @@ export default function OpenMathForgeApp() {
             <div className="text-xs text-amber-950 space-y-1">
               <div className="font-bold flex items-center space-x-1.5">
                 <span>Vision & CAS Grader</span>
-                <span className="text-[10px] bg-amber-200/60 text-amber-800 font-mono px-1.5 py-0.2 rounded font-semibold">
-                  PRO SERVICE
+                <span className="text-[10px] bg-purple-100 text-purple-800 border border-purple-300 font-mono px-1.5 py-0.2 rounded font-bold">
+                  COMING SOON • PRO
                 </span>
               </div>
               <div className="text-amber-800 leading-relaxed text-[11px]">
-                Sign in with your educator account to view your subscription status or enter your school district license key.
+                Sign in with your educator account to view your subscription status or enter an institutional early access beta key.
               </div>
             </div>
           </div>
@@ -1959,20 +1959,25 @@ export default function OpenMathForgeApp() {
         /* Pro License Gatekeeper when in Demo / Community Tier */
         <div className="max-w-3xl mx-auto px-4 py-10 space-y-6 flex-1 flex flex-col justify-center">
           <div className="text-center space-y-3">
-            <div className="w-16 h-16 bg-gradient-to-tr from-amber-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md">
+            <div className="w-16 h-16 bg-gradient-to-tr from-amber-500 via-indigo-600 to-purple-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md">
               <Sparkles className="w-8 h-8" />
             </div>
-            <div className="inline-flex items-center space-x-2 px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-full text-xs font-bold">
-              <span>Account: {session.user.name || "Demo Educator"}</span>
-              <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.2 rounded uppercase tracking-wider font-mono">
-                Community / Demo
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <span className="inline-flex items-center space-x-1 px-3 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full text-[10px] font-extrabold tracking-wider uppercase shadow-xs">
+                <span>🚀 COMING SOON • IN DEVELOPMENT</span>
+              </span>
+              <span className="inline-flex items-center space-x-1.5 px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-full text-xs font-semibold">
+                <span>Account: {session.user.name || "Demo Educator"}</span>
+                <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.2 rounded uppercase font-mono font-bold">
+                  COMMUNITY
+                </span>
               </span>
             </div>
             <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-              Vision & CAS Grader is a Pro Cloud Compute Service
+              Vision & CAS Grader is Coming Soon
             </h2>
             <p className="text-xs text-slate-600 max-w-xl mx-auto leading-relaxed">
-              OpenMathForge Worksheet Studio and Classroom Management are 100% free and open-source. Automated computer vision deskewing, handwriting extraction, and symbolic step verification require high-compute cloud infrastructure and are reserved for Pro subscribers and licensed school districts.
+              Worksheet Studio and Classroom Management are 100% free and open-source. Automated computer vision deskewing, handwriting extraction, and symbolic step verification require high-compute cloud infrastructure and will launch soon for licensed school districts and Pro educators.
             </p>
           </div>
 
@@ -1991,10 +1996,10 @@ export default function OpenMathForgeApp() {
               </ul>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-50/60 to-purple-50/60 border-2 border-indigo-200 rounded-xl p-5 shadow-xs relative overflow-hidden">
+            <div className="bg-gradient-to-br from-indigo-50/60 via-purple-50/60 to-pink-50/40 border-2 border-indigo-200 rounded-xl p-5 shadow-xs relative overflow-hidden">
               <div className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-2 flex items-center justify-between">
                 <span>Pro Cloud Compute</span>
-                <span className="text-[10px] text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded font-bold border border-indigo-300">Paid Service</span>
+                <span className="text-[10px] text-purple-700 bg-purple-100 px-2 py-0.5 rounded font-bold border border-purple-300">Coming Soon</span>
               </div>
               <ul className="text-xs space-y-2 text-slate-700">
                 <li className="flex items-center"><Sparkles className="w-4 h-4 text-indigo-600 mr-2 shrink-0" /> OpenCV 4-Corner ArUco Deskewing</li>
@@ -2009,12 +2014,15 @@ export default function OpenMathForgeApp() {
           <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
             <h3 className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
               <Key className="w-4 h-4 text-indigo-600" />
-              <span>Have a School District License Key or Pro Voucher?</span>
+              <span>School District Beta Voucher or Early Access Code?</span>
             </h3>
+            <p className="text-[11px] text-slate-500">
+              Have an early access invitation from your district pilot? Enter your key below to unlock the experimental beta scanner.
+            </p>
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
-                placeholder="Enter License Key (e.g. OMF-PRO-DISTRICT)"
+                placeholder="Enter Beta Invitation Key (e.g. OMF-BETA-DISTRICT)"
                 value={proLicenseInput}
                 onChange={(e) => setProLicenseInput(e.target.value)}
                 className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
@@ -2023,7 +2031,7 @@ export default function OpenMathForgeApp() {
                 onClick={() => handleActivateLicense()}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition shadow-xs whitespace-nowrap"
               >
-                Activate Pro License
+                Unlock Early Beta
               </button>
             </div>
             {licenseStatusMessage && (
