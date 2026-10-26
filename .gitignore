@@ -4,10 +4,11 @@ frontend/node_modules/
 .next/
 frontend/.next/
 out/
+*.egg-info/
+dist/
 build/
 *.tsbuildinfo
-
-# Python
+*.pdf
 __pycache__/
 */__pycache__/
 */*/__pycache__/
