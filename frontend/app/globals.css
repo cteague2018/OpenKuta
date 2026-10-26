@@ -19,3 +19,55 @@ body {
   min-height: 100vh;
 }
 
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide interactive web UI controls when printing */
+  nav,
+  header,
+  aside,
+  button,
+  .no-print,
+  [data-testid="sidebar"],
+  [data-testid="top-nav"] {
+    display: none !important;
+  }
+
+  .worksheet-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  /* Force every worksheet page to render at strict US Letter 8.5" x 11" dimensions */
+  .worksheet-sheet {
+    width: 8.5in !important;
+    height: 11in !important;
+    min-height: 11in !important;
+    max-height: 11in !important;
+    margin: 0 !important;
+    padding: 0.42in !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    transform: none !important;
+    overflow: hidden !important;
+  }
+}
+
+

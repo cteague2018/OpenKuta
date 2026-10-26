@@ -37,6 +37,7 @@ import {
   Key,
   Pencil,
   BookOpen,
+  Printer,
 } from "lucide-react";
 import katex from "katex";
 import {
@@ -327,16 +328,30 @@ export default function OpenMathForgeApp() {
   const [worksheetProblems, setWorksheetProblems] = useState<Problem[]>(DEFAULT_SAMPLE_PROBLEMS);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  // Dynamic Pagination & Page Workspace Bounds (guarantees student handwriting space)
+  // Dynamic Pagination & Page Workspace Bounds (guarantees standard 8.5x11 geometry and student handwriting/answer space)
   const paginatedPages = useMemo(() => {
     if (worksheetProblems.length === 0) return [];
     const pages: Problem[][] = [];
-    const pageSize = maxProblemsPerPage;
-    for (let i = 0; i < worksheetProblems.length; i += pageSize) {
-      pages.push(worksheetProblems.slice(i, i + pageSize));
+
+    // When Answer Key view is active, ensure visual graphs and multi-step solutions
+    // are paginated cleanly into standard 8.5" x 11" pages without vertical overflow
+    let effectivePageSize = maxProblemsPerPage;
+    if (showAnswerKey) {
+      const hasVisualsOrLongSteps = worksheetProblems.some(
+        (p) => Boolean(p.answer_svg) || Boolean(p.steps_typst && p.steps_typst.length > 2)
+      );
+      if (hasVisualsOrLongSteps) {
+        effectivePageSize = Math.min(maxProblemsPerPage, columns === 1 ? 2 : 4);
+      } else {
+        effectivePageSize = Math.min(maxProblemsPerPage, columns === 1 ? 4 : 6);
+      }
+    }
+
+    for (let i = 0; i < worksheetProblems.length; i += effectivePageSize) {
+      pages.push(worksheetProblems.slice(i, i + effectivePageSize));
     }
     return pages;
-  }, [worksheetProblems, maxProblemsPerPage]);
+  }, [worksheetProblems, maxProblemsPerPage, showAnswerKey, columns]);
 
   // NextAuth Session & Authentication State
   const { data: session } = useSession();
@@ -1678,6 +1693,16 @@ export default function OpenMathForgeApp() {
                   </button>
 
                   <button
+                    onClick={() => window.print()}
+                    data-testid="print-worksheet"
+                    className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded text-xs font-semibold flex items-center space-x-1 shadow-xs"
+                    title="Print worksheet or answer key to printer / PDF"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Print</span>
+                  </button>
+
+                  <button
                     onClick={handleScrambleMultiForm}
                     className="px-3 py-1 bg-slate-900 hover:bg-black text-white rounded text-xs font-bold flex items-center space-x-1.5 shadow-sm"
                     title="Generate Forms A, B, C, D with companion Master Matrix"
@@ -1698,17 +1723,20 @@ export default function OpenMathForgeApp() {
               </div>
             </div>
 
-            {/* US-Letter WYSIWYG Sheet Workspace (Auto-fitted to maximize surface area) */}
-            <div className="flex-1 overflow-y-auto p-8 flex flex-col items-center gap-8">
+            {/* US-Letter WYSIWYG Sheet Workspace (Strict 8.5" x 11" Bounds) */}
+            <div className="worksheet-container flex-1 overflow-y-auto p-8 flex flex-col items-center gap-8">
               {paginatedPages.length === 0 || worksheetProblems.length === 0 ? (
                 <div
                   style={{
                     width: "816px",
                     height: "1056px",
+                    minHeight: "1056px",
+                    maxHeight: "1056px",
+                    overflow: "hidden",
                     transform: `scale(${zoomLevel / 100})`,
                     transformOrigin: "top center",
                   }}
-                  className="bg-white shadow-2xl rounded-xs p-10 relative flex flex-col justify-between border-2 border-dashed border-slate-300 shrink-0 select-text"
+                  className="worksheet-sheet bg-white shadow-2xl rounded-xs p-10 relative flex flex-col justify-between border-2 border-dashed border-slate-300 shrink-0 select-text"
                 >
                   {/* 4 Corner ArUco Fiducials */}
                   <div className="absolute top-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
@@ -1765,12 +1793,14 @@ export default function OpenMathForgeApp() {
                       key={pageIdx}
                       style={{
                         width: "816px",
+                        height: "1056px",
                         minHeight: "1056px",
-                        height: showAnswerKey ? "auto" : "1056px",
+                        maxHeight: "1056px",
+                        overflow: "hidden",
                         transform: `scale(${zoomLevel / 100})`,
                         transformOrigin: "top center",
                       }}
-                      className="bg-white shadow-2xl rounded-xs p-10 relative flex flex-col justify-between border border-slate-300 shrink-0 select-text"
+                      className="worksheet-sheet bg-white shadow-2xl rounded-xs p-10 relative flex flex-col justify-between border border-slate-300 shrink-0 select-text"
                     >
                       {/* 4 Corner ArUco Fiducials */}
                       <div className="absolute top-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
@@ -1855,28 +1885,29 @@ export default function OpenMathForgeApp() {
                         </div>
                       )}
 
-                      {/* Auto-Fitting Problem Grid: Fills 100% available vertical height to eliminate blank voids & maximize handwriting area */}
+                      {/* Auto-Fitting Problem Grid: Fills 100% available vertical height within strict 8.5" x 11" bounds */}
                       <div className="flex-1 my-3 flex flex-col min-h-0">
                         <div
-                          className="grid gap-4 flex-1 h-full"
+                          className="grid gap-3 flex-1 h-full"
                           style={{
                             gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-                            gridTemplateRows: showAnswerKey ? "auto" : `repeat(${pageRowCount}, minmax(0, 1fr))`,
+                            gridTemplateRows: `repeat(${pageRowCount}, minmax(0, 1fr))`,
                           }}
                         >
                           {pageProblems.map((prob, pIdx) => {
-                            const globalIdx = pageIdx * maxProblemsPerPage + pIdx;
+                            const globalIdx = worksheetProblems.findIndex((p) => p.id === prob.id);
+                            const displayIdx = globalIdx !== -1 ? globalIdx : pageIdx * maxProblemsPerPage + pIdx;
                             return (
                               <div
-                                key={`${prob.id}_${globalIdx}`}
-                                className="border border-slate-300 rounded p-3.5 flex flex-col justify-between bg-white relative h-full transition-all duration-150"
+                                key={`${prob.id}_${displayIdx}`}
+                                className="border border-slate-300 rounded p-3 flex flex-col justify-between bg-white relative h-full transition-all duration-150 overflow-hidden"
                               >
                                 <div>
-                                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                                  <div className="flex items-start justify-between gap-2 mb-1">
                                     <div className="flex items-center space-x-1.5 shrink-0">
-                                      <span className="font-bold text-slate-900">{globalIdx + 1})</span>
+                                      <span className="font-bold text-slate-900">{displayIdx + 1})</span>
                                       <button
-                                        onClick={() => handleRegenerateSingleProblem(globalIdx)}
+                                        onClick={() => handleRegenerateSingleProblem(displayIdx)}
                                         data-testid="regenerate-single-problem"
                                         title="Regenerate Single Problem"
                                         aria-label="Regenerate Single Problem"
@@ -1890,26 +1921,26 @@ export default function OpenMathForgeApp() {
                                     </div>
                                   </div>
 
-                                  <div className="py-2 text-center text-sm font-medium text-slate-900">
+                                  <div className="py-1 text-center text-sm font-medium text-slate-900">
                                     <ProblemEquation raw={prob.equation_typst} />
                                   </div>
 
                                   {prob.diagram_svg && !showAnswerKey && (
                                     <div
-                                      className="my-1.5 flex justify-center items-center [&>svg]:max-h-40 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                      className="my-1 flex justify-center items-center [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
                                       dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
                                     />
                                   )}
                                   {prob.diagram_svg && showAnswerKey && !prob.answer_svg && (
                                     <div
-                                      className="my-1.5 flex justify-center items-center [&>svg]:max-h-40 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                      className="my-1 flex justify-center items-center [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
                                       dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
                                     />
                                   )}
 
                                   {/* Multiple Choice Options Grid */}
                                   {prob.choices && prob.choices.length >= 4 && (
-                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2.5 pt-2 border-t border-slate-100 text-xs">
+                                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-slate-100 text-xs">
                                       {prob.choices.map((ch) => (
                                         <div key={ch.letter} className="flex items-center space-x-1.5">
                                           <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[10px] border border-slate-200">
@@ -1926,9 +1957,9 @@ export default function OpenMathForgeApp() {
 
                                 {/* Answer Key Overlay / Student Work Area */}
                                 {showAnswerKey ? (
-                                  <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-2">
-                                    <div className="font-bold flex items-center gap-1.5 text-sm pb-1 border-b border-amber-200/60">
-                                      <span className="text-amber-800 text-xs font-semibold">Ans:</span>
+                                  <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-1">
+                                    <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60">
+                                      <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
                                       {prob.correct_choice && (
                                         <span className="font-bold text-indigo-800 mr-1">
                                           {prob.correct_choice})
@@ -1936,28 +1967,56 @@ export default function OpenMathForgeApp() {
                                       )}
                                       <ProblemEquation raw={prob.answer_typst} inline />
                                     </div>
-                                    {prob.answer_svg && (
-                                      <div
-                                        className="my-1.5 flex justify-center items-center bg-white/95 rounded p-1.5 border border-amber-200/70 [&>svg]:max-h-44 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
-                                        dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
-                                      />
-                                    )}
-                                    {prob.steps_typst && prob.steps_typst.length > 0 && (
-                                      <div className="mt-1.5 space-y-1 text-[11px] text-amber-900">
-                                        <div className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
-                                          Solution Steps:
-                                        </div>
-                                        {prob.steps_typst.map((st, sIdx) => (
-                                          <div key={sIdx} className="flex items-start gap-1 leading-snug">
-                                            <span className="text-amber-600 font-mono text-[10px] font-semibold mt-0.5">
-                                              {sIdx + 1}.
-                                            </span>
-                                            <div>
-                                              <StepTextWithMath text={st} />
-                                            </div>
+
+                                    {/* Compact Side-by-Side Visual Layout for Graph + Steps */}
+                                    {prob.answer_svg && prob.steps_typst && prob.steps_typst.length > 0 ? (
+                                      <div className="mt-1.5 grid grid-cols-2 gap-2 items-center">
+                                        <div
+                                          className="flex justify-center items-center bg-white/95 rounded p-1 border border-amber-200/70 [&>svg]:max-h-32 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                          dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
+                                        />
+                                        <div className="space-y-0.5 text-[9.5px] leading-tight text-amber-900 overflow-hidden">
+                                          <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
+                                            Solution Steps:
                                           </div>
-                                        ))}
+                                          {prob.steps_typst.map((st, sIdx) => (
+                                            <div key={sIdx} className="flex items-start gap-1">
+                                              <span className="text-amber-600 font-mono text-[8.5px] font-semibold shrink-0 mt-0.5">
+                                                {sIdx + 1}.
+                                              </span>
+                                              <div className="min-w-0 break-words">
+                                                <StepTextWithMath text={st} />
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
                                       </div>
+                                    ) : (
+                                      <>
+                                        {prob.answer_svg && (
+                                          <div
+                                            className="my-1 flex justify-center items-center bg-white/95 rounded p-1 border border-amber-200/70 [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                            dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
+                                          />
+                                        )}
+                                        {prob.steps_typst && prob.steps_typst.length > 0 && (
+                                          <div className="mt-1 space-y-0.5 text-[10px] leading-tight text-amber-900">
+                                            <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
+                                              Solution Steps:
+                                            </div>
+                                            {prob.steps_typst.map((st, sIdx) => (
+                                              <div key={sIdx} className="flex items-start gap-1">
+                                                <span className="text-amber-600 font-mono text-[9px] font-semibold shrink-0 mt-0.5">
+                                                  {sIdx + 1}.
+                                                </span>
+                                                <div className="min-w-0 break-words">
+                                                  <StepTextWithMath text={st} />
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 ) : (
