@@ -94,14 +94,17 @@ class TypstCompiler:
             "multi" in (p.prompt_text or "").lower() or len(p.steps_typst) >= 4
             for p in problems
         )
+        # Auto-fit workspace height to maximize surface area and ensure ample room for student handwriting
         total_rows = max(1, (len(problems) + columns - 1) // columns)
-        if has_multistep or total_rows <= 3:
-            effective_rows = min(total_rows, 3)
-            box_height_pt = max(
-                150, min(270, int(580 / max(1, effective_rows)))
-            )
+        effective_rows = min(3, total_rows)
+        if effective_rows == 1:
+            box_height_pt = 490
+        elif effective_rows == 2:
+            box_height_pt = 275
+        elif effective_rows == 3:
+            box_height_pt = 185
         else:
-            box_height_pt = max(110, min(240, int(580 / max(1, total_rows))))
+            box_height_pt = max(120, min(180, int(580 / max(1, total_rows))))
 
         context = {
             "title": title,

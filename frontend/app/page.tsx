@@ -35,6 +35,7 @@ import {
   History,
   Undo2,
   Key,
+  Pencil,
 } from "lucide-react";
 import katex from "katex";
 import {
@@ -190,38 +191,27 @@ export default function OpenMathForgeApp() {
 
   // Modal / Configurator State
   const [configTopic, setConfigTopic] = useState<Topic | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [modalCount, setModalCount] = useState<number>(4);
   const [modalDifficulty, setModalDifficulty] = useState<"mild" | "medium" | "spicy">("medium");
   const [modalQuestionType, setModalQuestionType] = useState<"free_response" | "multiple_choice">("free_response");
   const [modalSampleProblems, setModalSampleProblems] = useState<Problem[]>([]);
   const [isModalLoading, setIsModalLoading] = useState<boolean>(false);
+  const [maxProblemsPerPage, setMaxProblemsPerPage] = useState<number>(6);
 
   // Live Worksheet Generated Problems
   const [worksheetProblems, setWorksheetProblems] = useState<Problem[]>(DEFAULT_SAMPLE_PROBLEMS);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  // Dynamic Workspace Box Sizing based on Multi-Step complexity and page clearance
-  const isMultiStep = useMemo(() => {
-    return worksheetProblems.some(
-      (p) =>
-        (p.prompt_text || "").toLowerCase().includes("multi-step") ||
-        (p.steps_typst && p.steps_typst.length >= 4)
-    );
-  }, [worksheetProblems]);
-
-  const workspaceBoxClasses = useMemo(() => {
-    const count = worksheetProblems.length;
-    if (showAnswerKey) {
-      return "min-h-[240px]";
+  // Dynamic Pagination & Page Workspace Bounds (guarantees student handwriting space)
+  const paginatedPages = useMemo(() => {
+    const pages: Problem[][] = [];
+    const pageSize = maxProblemsPerPage;
+    for (let i = 0; i < worksheetProblems.length; i += pageSize) {
+      pages.push(worksheetProblems.slice(i, i + pageSize));
     }
-    if (count <= 4) {
-      return isMultiStep ? "min-h-[280px]" : "min-h-[240px]";
-    }
-    if (count <= 6) {
-      return isMultiStep ? "min-h-[220px]" : "min-h-[195px]";
-    }
-    return isMultiStep ? "min-h-[190px]" : "min-h-[160px]";
-  }, [worksheetProblems.length, isMultiStep, showAnswerKey]);
+    return pages.length > 0 ? pages : [[]];
+  }, [worksheetProblems, maxProblemsPerPage]);
 
   // NextAuth Session & Authentication State
   const { data: session } = useSession();
@@ -446,6 +436,7 @@ export default function OpenMathForgeApp() {
   };
 
   const openQuestionConfigurator = (topic: Topic) => {
+    setEditingItemId(null);
     setConfigTopic(topic);
     setModalCount(4);
     setModalDifficulty("medium");
@@ -453,17 +444,65 @@ export default function OpenMathForgeApp() {
     fetchModalSample(topic.generator_id, 4, "medium");
   };
 
+  const handleEditAssignmentItem = (item: AssignmentItem) => {
+    let matchingTopic: Topic | null = null;
+    const currentCourse = coursesCatalog[selectedCourseKey];
+    if (currentCourse?.categories) {
+      for (const cat of currentCourse.categories) {
+        const found = cat.topics?.find(
+          (t) => t.generator_id === item.generatorId || t.name === item.topicName
+        );
+        if (found) {
+          matchingTopic = found;
+          break;
+        }
+      }
+    }
+    if (!matchingTopic) {
+      matchingTopic = {
+        id: item.generatorId,
+        name: item.topicName,
+        generator_id: item.generatorId,
+        available: true,
+      };
+    }
+    setEditingItemId(item.id);
+    setConfigTopic(matchingTopic);
+    setModalCount(item.count);
+    setModalDifficulty(item.difficulty);
+    setModalQuestionType(item.questionType);
+    fetchModalSample(item.generatorId, item.count, item.difficulty);
+  };
+
   const handleAddConfiguredTopic = () => {
     if (!configTopic) return;
-    const newItem: AssignmentItem = {
-      id: `item_${Date.now()}`,
-      topicName: configTopic.name,
-      generatorId: configTopic.generator_id,
-      count: modalCount,
-      difficulty: modalDifficulty,
-      questionType: modalQuestionType,
-    };
-    setAssignmentItems((prev) => [...prev, newItem]);
+    if (editingItemId) {
+      setAssignmentItems((prev) =>
+        prev.map((item) =>
+          item.id === editingItemId
+            ? {
+                ...item,
+                topicName: configTopic.name,
+                generatorId: configTopic.generator_id,
+                count: modalCount,
+                difficulty: modalDifficulty,
+                questionType: modalQuestionType,
+              }
+            : item
+        )
+      );
+      setEditingItemId(null);
+    } else {
+      const newItem: AssignmentItem = {
+        id: `item_${Date.now()}`,
+        topicName: configTopic.name,
+        generatorId: configTopic.generator_id,
+        count: modalCount,
+        difficulty: modalDifficulty,
+        questionType: modalQuestionType,
+      };
+      setAssignmentItems((prev) => [...prev, newItem]);
+    }
     setConfigTopic(null);
   };
 
@@ -1070,7 +1109,7 @@ export default function OpenMathForgeApp() {
   }, [activeCourse, searchTerm]);
 
   const totalProblemCount = worksheetProblems.length;
-  const estimatedPages = Math.max(1, Math.ceil(totalProblemCount / (columns * 3)));
+  const estimatedPages = paginatedPages.length;
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans">
@@ -1285,19 +1324,47 @@ export default function OpenMathForgeApp() {
                 {assignmentItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between bg-white px-2 py-1.5 rounded border border-slate-200 text-xs shadow-2xs"
+                    onClick={() => handleEditAssignmentItem(item)}
+                    className="group flex items-center justify-between bg-white hover:bg-indigo-50/60 hover:border-indigo-300 px-2 py-1.5 rounded border border-slate-200 text-xs shadow-2xs cursor-pointer transition-colors"
+                    title="Click to edit problem count, difficulty, and question type"
                   >
-                    <div className="truncate pr-2">
-                      <span className="font-semibold text-slate-800">{item.count}× </span>
-                      <span className="text-slate-600">{item.topicName}</span>
+                    <div className="truncate pr-2 flex items-center space-x-1.5">
+                      <span className="font-bold text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-100">{item.count}×</span>
+                      <span className="font-medium text-slate-800 truncate">{item.topicName}</span>
+                      <span className={`text-[9px] px-1 py-0.2 rounded font-semibold uppercase ${
+                        item.difficulty === "spicy"
+                          ? "bg-rose-100 text-rose-700"
+                          : item.difficulty === "medium"
+                          ? "bg-amber-100 text-amber-700"
+                          : "bg-cyan-100 text-cyan-700"
+                      }`}>
+                        {item.difficulty}
+                      </span>
                     </div>
-                    <button
-                      onClick={() => handleRemoveItem(item.id)}
-                      className="text-slate-400 hover:text-rose-600"
-                      title="Remove from worksheet"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex items-center space-x-1 opacity-70 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditAssignmentItem(item);
+                        }}
+                        className="p-1 text-slate-400 hover:text-indigo-600 rounded hover:bg-slate-100"
+                        title="Edit question settings"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveItem(item.id);
+                        }}
+                        className="p-1 text-slate-400 hover:text-rose-600 rounded hover:bg-slate-100"
+                        title="Remove from worksheet"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1323,7 +1390,7 @@ export default function OpenMathForgeApp() {
               </div>
 
               {/* View & Layout Controls */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3">
                 {/* Columns Switcher */}
                 <div className="flex items-center space-x-1 bg-slate-100 p-0.5 rounded border border-slate-300 text-xs font-semibold">
                   <span className="px-1 text-slate-500">Cols:</span>
@@ -1333,6 +1400,22 @@ export default function OpenMathForgeApp() {
                       onClick={() => setColumns(num)}
                       className={`px-2 py-0.5 rounded ${
                         columns === num ? "bg-indigo-600 text-white" : "text-slate-700 hover:bg-slate-200"
+                      }`}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Per Page Limit (Handwriting workspace control) */}
+                <div className="flex items-center space-x-1 bg-slate-100 p-0.5 rounded border border-slate-300 text-xs font-semibold" title="Maximum questions per page to guarantee student handwriting space">
+                  <span className="px-1 text-slate-500">Per Page:</span>
+                  {[4, 6, 8].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => setMaxProblemsPerPage(num)}
+                      className={`px-2 py-0.5 rounded ${
+                        maxProblemsPerPage === num ? "bg-indigo-600 text-white" : "text-slate-700 hover:bg-slate-200"
                       }`}
                     >
                       {num}
@@ -1434,151 +1517,187 @@ export default function OpenMathForgeApp() {
               </div>
             </div>
 
-            {/* US-Letter WYSIWYG Sheet Workspace */}
-            <div className="flex-1 overflow-y-auto p-8 flex justify-center">
-              <div
-                style={{
-                  width: "816px",
-                  minHeight: "1056px",
-                  transform: `scale(${zoomLevel / 100})`,
-                  transformOrigin: "top center",
-                }}
-                className="bg-white shadow-2xl rounded-xs p-10 relative flex flex-col justify-between border border-slate-300"
-              >
-                {/* 4 Corner ArUco Fiducials */}
-                <div className="absolute top-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
-                  AR 0
-                </div>
-                <div className="absolute top-2 right-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
-                  AR 1
-                </div>
-                <div className="absolute bottom-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
-                  AR 3
-                </div>
-                <div className="absolute bottom-2 right-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
-                  AR 2
-                </div>
-
-                {/* Worksheet Header */}
-                <div>
-                  <div className="flex justify-between items-start pb-2 border-b border-slate-900">
-                    <div>
-                      <h1 className="text-xl font-bold tracking-tight text-slate-900">
-                        {worksheetTitle}
-                      </h1>
-                      <div className="text-xs text-slate-600 mt-2 space-x-4">
-                        <span>Name: ______________________</span>
-                        <span>Date: _________</span>
-                        <span>Period: _____</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3 text-right">
-                      <div>
-                        <div className="text-xs font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-2.5 py-0.5 rounded inline-block">
-                          Form A
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                          ID: {worksheetId}
-                        </div>
-                      </div>
-                      <div className="w-14 h-14 border border-slate-300 rounded-lg flex items-center justify-center bg-white p-1 shadow-sm relative group" title="Scannable Assignment QR Code">
-                        <img
-                          src={`/api/qr/render?w=${encodeURIComponent(worksheetId)}&f=A&s=${baseSeed}&c=${totalProblemCount}&fmt=svg`}
-                          alt={`QR ${worksheetId}`}
-                          className="w-full h-full object-contain"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                            const fallback = e.currentTarget.parentElement?.querySelector(".qr-fallback");
-                            if (fallback) (fallback as HTMLElement).style.display = "flex";
-                          }}
-                        />
-                        <div className="qr-fallback hidden items-center justify-center w-full h-full">
-                          <QrCode className="w-9 h-9 text-slate-800" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Problem Grid */}
+            {/* US-Letter WYSIWYG Sheet Workspace (Auto-fitted to maximize surface area) */}
+            <div className="flex-1 overflow-y-auto p-8 flex flex-col items-center gap-8">
+              {paginatedPages.map((pageProblems, pageIdx) => {
+                const pageRowCount = Math.max(1, Math.ceil(pageProblems.length / columns));
+                return (
                   <div
-                    className={`mt-6 grid gap-4 ${
-                      columns === 1
-                        ? "grid-cols-1"
-                        : columns === 3
-                        ? "grid-cols-3"
-                        : "grid-cols-2"
-                    }`}
+                    key={pageIdx}
+                    style={{
+                      width: "816px",
+                      height: "1056px",
+                      transform: `scale(${zoomLevel / 100})`,
+                      transformOrigin: "top center",
+                    }}
+                    className="bg-white shadow-2xl rounded-xs p-10 relative flex flex-col justify-between border border-slate-300 shrink-0 select-text"
                   >
-                    {worksheetProblems.map((prob, idx) => (
-                      <div
-                        key={`${prob.id}_${idx}`}
-                        className={`border border-slate-300 rounded p-3.5 ${workspaceBoxClasses} flex flex-col justify-between bg-white relative transition-all duration-150`}
-                      >
-                        <div>
-                          <div className="flex justify-between items-center text-xs text-slate-600 mb-2">
-                            <div className="flex items-center space-x-1.5">
-                              <span className="font-bold text-slate-900">{idx + 1})</span>
-                              <button
-                                onClick={() => handleRegenerateSingleProblem(idx)}
-                                data-testid="regenerate-single-problem"
-                                title="Regenerate Single Problem"
-                                aria-label="Regenerate Single Problem"
-                                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
-                              >
-                                <RefreshCw className="w-3 h-3" />
-                              </button>
+                    {/* 4 Corner ArUco Fiducials */}
+                    <div className="absolute top-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                      AR 0
+                    </div>
+                    <div className="absolute top-2 right-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                      AR 1
+                    </div>
+                    <div className="absolute bottom-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                      AR 3
+                    </div>
+                    <div className="absolute bottom-2 right-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                      AR 2
+                    </div>
+
+                    {/* Worksheet Header: Full header on Page 1, Running header on subsequent pages */}
+                    {pageIdx === 0 ? (
+                      <div>
+                        <div className="flex justify-between items-start pb-2 border-b border-slate-900">
+                          <div>
+                            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                              {worksheetTitle}
+                            </h1>
+                            <div className="text-xs text-slate-600 mt-2 space-x-4">
+                              <span>Name: ______________________</span>
+                              <span>Date: _________</span>
+                              <span>Period: _____</span>
                             </div>
-                            <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
-                              {prob.prompt_text}
+                          </div>
+
+                          <div className="flex items-center space-x-3 text-right">
+                            <div>
+                              <div className="text-xs font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-2.5 py-0.5 rounded inline-block">
+                                Form A
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                ID: {worksheetId}
+                              </div>
+                            </div>
+                            <div
+                              className="w-14 h-14 border border-slate-300 rounded-lg flex items-center justify-center bg-white p-1 shadow-sm relative group"
+                              title="Scannable Assignment QR Code"
+                            >
+                              <img
+                                src={`/api/qr/render?w=${encodeURIComponent(worksheetId)}&f=A&s=${baseSeed}&c=${totalProblemCount}&fmt=svg`}
+                                alt={`QR ${worksheetId}`}
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                  const fallback = e.currentTarget.parentElement?.querySelector(".qr-fallback");
+                                  if (fallback) (fallback as HTMLElement).style.display = "flex";
+                                }}
+                              />
+                              <div className="qr-fallback hidden items-center justify-center w-full h-full">
+                                <QrCode className="w-9 h-9 text-slate-800" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-900">
+                          <div>
+                            <h2 className="text-base font-bold tracking-tight text-slate-900">
+                              {worksheetTitle} <span className="text-xs font-normal text-slate-500">(Continued)</span>
+                            </h2>
+                            <div className="text-xs text-slate-600 mt-1 space-x-4">
+                              <span>Name: ______________________</span>
+                              <span>Period: _____</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3 text-right">
+                            <span className="text-xs font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-2.5 py-0.5 rounded">
+                              Form A
+                            </span>
+                            <span className="text-xs text-slate-500 font-mono">
+                              Page {pageIdx + 1} of {paginatedPages.length}
                             </span>
                           </div>
-
-                          <div className="py-2 text-center text-sm font-medium text-slate-900">
-                            <KaTeXInline math={prob.equation_typst} />
-                          </div>
                         </div>
-
-                        {/* Answer Key Overlay */}
-                        {showAnswerKey ? (
-                          <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-2">
-                            <div className="font-bold flex items-center gap-1.5 text-sm pb-1 border-b border-amber-200/60">
-                              <span className="text-amber-800 text-xs font-semibold">Ans:</span>
-                              <KaTeXInline math={prob.answer_typst} />
-                            </div>
-                            {prob.steps_typst && prob.steps_typst.length > 0 && (
-                              <div className="mt-1.5 space-y-1 text-[11px] text-amber-900">
-                                <div className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
-                                  Solution Steps:
-                                </div>
-                                {prob.steps_typst.map((st, sIdx) => (
-                                  <div key={sIdx} className="flex items-start gap-1 leading-snug">
-                                    <span className="text-amber-600 font-mono text-[10px] font-semibold mt-0.5">
-                                      {sIdx + 1}.
-                                    </span>
-                                    <div>
-                                      <StepTextWithMath text={st} />
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded">
-                            Ans:
-                          </div>
-                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    )}
 
-                {/* Footer */}
-                <div className="text-center text-[10px] text-slate-400 border-t border-slate-200 pt-2">
-                  Generated procedurally by OpenMathForge CAS • Seed: {baseSeed} • Page 1 of {estimatedPages}
-                </div>
-              </div>
+                    {/* Auto-Fitting Problem Grid: Fills 100% available vertical height to eliminate blank voids & maximize handwriting area */}
+                    <div className="flex-1 my-3 flex flex-col min-h-0">
+                      <div
+                        className="grid gap-4 flex-1 h-full"
+                        style={{
+                          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                          gridTemplateRows: `repeat(${pageRowCount}, minmax(0, 1fr))`,
+                        }}
+                      >
+                        {pageProblems.map((prob, pIdx) => {
+                          const globalIdx = pageIdx * maxProblemsPerPage + pIdx;
+                          return (
+                            <div
+                              key={`${prob.id}_${globalIdx}`}
+                              className="border border-slate-300 rounded p-3.5 flex flex-col justify-between bg-white relative h-full transition-all duration-150"
+                            >
+                              <div>
+                                <div className="flex justify-between items-center text-xs text-slate-600 mb-2">
+                                  <div className="flex items-center space-x-1.5">
+                                    <span className="font-bold text-slate-900">{globalIdx + 1})</span>
+                                    <button
+                                      onClick={() => handleRegenerateSingleProblem(globalIdx)}
+                                      data-testid="regenerate-single-problem"
+                                      title="Regenerate Single Problem"
+                                      aria-label="Regenerate Single Problem"
+                                      className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
+                                    >
+                                      <RefreshCw className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
+                                    {prob.prompt_text}
+                                  </span>
+                                </div>
+
+                                <div className="py-2 text-center text-sm font-medium text-slate-900">
+                                  <KaTeXInline math={prob.equation_typst} />
+                                </div>
+                              </div>
+
+                              {/* Answer Key Overlay / Student Work Area */}
+                              {showAnswerKey ? (
+                                <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-2">
+                                  <div className="font-bold flex items-center gap-1.5 text-sm pb-1 border-b border-amber-200/60">
+                                    <span className="text-amber-800 text-xs font-semibold">Ans:</span>
+                                    <KaTeXInline math={prob.answer_typst} />
+                                  </div>
+                                  {prob.steps_typst && prob.steps_typst.length > 0 && (
+                                    <div className="mt-1.5 space-y-1 text-[11px] text-amber-900">
+                                      <div className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
+                                        Solution Steps:
+                                      </div>
+                                      {prob.steps_typst.map((st, sIdx) => (
+                                        <div key={sIdx} className="flex items-start gap-1 leading-snug">
+                                          <span className="text-amber-600 font-mono text-[10px] font-semibold mt-0.5">
+                                            {sIdx + 1}.
+                                          </span>
+                                          <div>
+                                            <StepTextWithMath text={st} />
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded">
+                                  Ans:
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Page Footer */}
+                    <div className="text-center text-[10px] text-slate-400 border-t border-slate-200 pt-2 shrink-0">
+                      Generated procedurally by OpenMathForge CAS • Seed: {baseSeed} • Page {pageIdx + 1} of {paginatedPages.length}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </section>
         </div>
@@ -2446,10 +2565,13 @@ export default function OpenMathForgeApp() {
             <div className="px-5 py-3 bg-slate-900 text-white flex justify-between items-center">
               <h3 className="font-bold text-sm flex items-center">
                 <Settings2 className="w-4 h-4 mr-2 text-indigo-400" />
-                {configTopic.name}
+                {editingItemId ? `Edit Topic: ${configTopic.name}` : configTopic.name}
               </h3>
               <button
-                onClick={() => setConfigTopic(null)}
+                onClick={() => {
+                  setConfigTopic(null);
+                  setEditingItemId(null);
+                }}
                 className="text-slate-400 hover:text-white text-sm font-bold"
               >
                 ✕
@@ -2574,7 +2696,10 @@ export default function OpenMathForgeApp() {
 
             <div className="px-5 py-3 bg-slate-100 border-t border-slate-200 flex justify-end space-x-2">
               <button
-                onClick={() => setConfigTopic(null)}
+                onClick={() => {
+                  setConfigTopic(null);
+                  setEditingItemId(null);
+                }}
                 className="px-4 py-1.5 text-xs font-semibold rounded text-slate-600 hover:bg-slate-200"
               >
                 Cancel
@@ -2583,7 +2708,7 @@ export default function OpenMathForgeApp() {
                 onClick={handleAddConfiguredTopic}
                 className="px-4 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
               >
-                OK (Add to Worksheet)
+                {editingItemId ? "Save Topic Changes" : "OK (Add to Worksheet)"}
               </button>
             </div>
           </div>
