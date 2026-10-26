@@ -254,8 +254,8 @@ def svg_coordinate_plane(
     ox, oy = to_px(0, 0)
     ox_clamped = min(max(ox, pad), width - pad)
     oy_clamped = min(max(oy, pad), height - pad)
-    parts.append(f'<line x1="{pad}" y1="{oy_clamped}" x2="{width - pad}" y2="{oy_clamped}" stroke="#334155" stroke-width="1.3"/>')
-    parts.append(f'<line x1="{ox_clamped}" y1="{pad}" x2="{ox_clamped}" y2="{height - pad}" stroke="#334155" stroke-width="1.3"/>')
+    parts.append(f'<line x1="{pad}" y1="{oy_clamped}" x2="{width - pad}" y2="{oy_clamped}" stroke="#0f172a" stroke-width="1.8"/>')
+    parts.append(f'<line x1="{ox_clamped}" y1="{pad}" x2="{ox_clamped}" y2="{height - pad}" stroke="#0f172a" stroke-width="1.8"/>')
 
     # Tick labels (every 2 units or adaptive)
     label_step_x = grid_step_x * 2 if dx >= 10 else grid_step_x
@@ -265,17 +265,17 @@ def svg_coordinate_plane(
             continue
         px, _ = to_px(gx, 0)
         if pad + 8 <= px <= width - pad - 8:
-            parts.append(f'<text x="{px}" y="{min(oy_clamped + 10, height - 6)}" font-family="sans-serif" font-size="7" fill="#475569" text-anchor="middle">{gx}</text>')
+            parts.append(f'<text x="{px}" y="{min(oy_clamped + 11, height - 5)}" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#1e293b" text-anchor="middle">{gx}</text>')
     for gy in range(int(math.ceil(y_min)), int(math.floor(y_max)) + 1):
         if gy == 0 or gy % label_step_y != 0:
             continue
         _, py = to_px(0, gy)
         if pad + 6 <= py <= height - pad - 6:
-            parts.append(f'<text x="{max(ox_clamped - 4, pad + 10)}" y="{py + 2.5}" font-family="sans-serif" font-size="7" fill="#475569" text-anchor="end">{gy}</text>')
+            parts.append(f'<text x="{max(ox_clamped - 4, pad + 10)}" y="{py + 3}" font-family="sans-serif" font-size="8.5" font-weight="600" fill="#1e293b" text-anchor="end">{gy}</text>')
 
     # Axis names
-    parts.append(f'<text x="{width - pad + 4}" y="{oy_clamped + 3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">{_esc(axis_labels[0])}</text>')
-    parts.append(f'<text x="{ox_clamped}" y="{pad - 6}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(axis_labels[1])}</text>')
+    parts.append(f'<text x="{width - pad + 5}" y="{oy_clamped + 3.5}" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0f172a">{_esc(axis_labels[0])}</text>')
+    parts.append(f'<text x="{ox_clamped}" y="{pad - 6}" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0f172a" text-anchor="middle">{_esc(axis_labels[1])}</text>')
 
     # Slope field
     if slope_field is not None:
@@ -300,19 +300,19 @@ def svg_coordinate_plane(
     # Asymptotes
     if asymptotes:
         for asym in asymptotes:
-            color = asym.get("color", "#94a3b8")
+            color = asym.get("color", "#475569")
             if asym.get("x") is not None:
                 px, _ = to_px(float(asym["x"]), 0)
-                parts.append(f'<line x1="{px}" y1="{pad}" x2="{px}" y2="{height - pad}" stroke="{color}" stroke-width="1.2" stroke-dasharray="4,3" clip-path="url(#plot-clip)"/>')
+                parts.append(f'<line x1="{px}" y1="{pad}" x2="{px}" y2="{height - pad}" stroke="{color}" stroke-width="1.6" stroke-dasharray="5,3" clip-path="url(#plot-clip)"/>')
             if asym.get("y") is not None:
                 _, py = to_px(0, float(asym["y"]))
-                parts.append(f'<line x1="{pad}" y1="{py}" x2="{width - pad}" y2="{py}" stroke="{color}" stroke-width="1.2" stroke-dasharray="4,3" clip-path="url(#plot-clip)"/>')
+                parts.append(f'<line x1="{pad}" y1="{py}" x2="{width - pad}" y2="{py}" stroke="{color}" stroke-width="1.6" stroke-dasharray="5,3" clip-path="url(#plot-clip)"/>')
             if asym.get("m") is not None and asym.get("b") is not None:
                 m_a = float(asym["m"])
                 b_a = float(asym["b"])
                 x1, y1 = to_px(x_min, m_a * x_min + b_a)
                 x2, y2 = to_px(x_max, m_a * x_max + b_a)
-                parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="1.2" stroke-dasharray="4,3" clip-path="url(#plot-clip)"/>')
+                parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="1.6" stroke-dasharray="5,3" clip-path="url(#plot-clip)"/>')
 
     # Polygons
     if polygons:
@@ -365,7 +365,7 @@ def svg_coordinate_plane(
                 x1, y1 = to_px(x_min, m_val * x_min + b_val)
                 x2, y2 = to_px(x_max, m_val * x_max + b_val)
             parts.append(
-                f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="1.8"{dash} clip-path="url(#plot-clip)"/>'
+                f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="2.2"{dash} clip-path="url(#plot-clip)"/>'
             )
 
     # Continuous functions
@@ -388,24 +388,24 @@ def svg_coordinate_plane(
                         yv = fn(xv)
                         if yv is None or isinstance(yv, complex) or math.isnan(yv) or math.isinf(yv):
                             if len(segment) >= 2:
-                                parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="1.8"{dash} clip-path="url(#plot-clip)"/>')
+                                parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="2.2"{dash} clip-path="url(#plot-clip)"/>')
                             segment = []
                             prev_y = None
                             continue
                         if abs(yv) > max(abs(y_min), abs(y_max)) * 6 or (prev_y is not None and abs(yv - prev_y) > dy * 1.5):
                             if len(segment) >= 2:
-                                parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="1.8"{dash} clip-path="url(#plot-clip)"/>')
+                                parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="2.2"{dash} clip-path="url(#plot-clip)"/>')
                             segment = []
                         px, py = to_px(xv, yv)
                         segment.append(f"{px},{py}")
                         prev_y = yv
                     except Exception:
                         if len(segment) >= 2:
-                            parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="1.8"{dash} clip-path="url(#plot-clip)"/>')
+                            parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="2.2"{dash} clip-path="url(#plot-clip)"/>')
                         segment = []
                         prev_y = None
                 if len(segment) >= 2:
-                    parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="1.8"{dash} clip-path="url(#plot-clip)"/>')
+                    parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="2.2"{dash} clip-path="url(#plot-clip)"/>')
 
     # Vectors
     if vectors:
@@ -454,12 +454,12 @@ def svg_coordinate_plane(
                 is_open = bool(pt.get("open", False))
                 lbl = str(pt.get("label", ""))
             fill = "#ffffff" if is_open else color
-            parts.append(f'<circle cx="{px}" cy="{py}" r="3.2" fill="{fill}" stroke="{color}" stroke-width="1.6"/>')
+            parts.append(f'<circle cx="{px}" cy="{py}" r="4.0" fill="{fill}" stroke="{color}" stroke-width="1.8"/>')
             if lbl:
                 anchor = "end" if px > width - pad - 36 else "start"
                 lx = round(px - 5, 2) if anchor == "end" else round(px + 5, 2)
                 ly = round(py + 11, 2) if py < pad + 14 else round(py - 5, 2)
-                parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(lbl)}</text>')
+                parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="9" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(lbl)}</text>')
 
     parts.append("</svg>")
     return "".join(parts)

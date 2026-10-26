@@ -1924,9 +1924,9 @@ export default function OpenMathForgeApp() {
                                 className="border border-slate-300 rounded p-3 flex flex-col justify-between bg-white relative h-full transition-all duration-150 overflow-hidden"
                               >
                                 {isOneColVisual ? (
-                                  /* 1-Column Horizontal Split Layout: Maximizes 736px width for graphs & scratchwork */
+                                  /* 1-Column Horizontal Split Layout: Maximizes 736px width for large graphs & scratchwork */
                                   <div className="flex flex-col justify-between h-full">
-                                    <div className="flex items-start justify-between gap-2 mb-1.5 pb-1 border-b border-slate-100">
+                                    <div className="flex items-start justify-between gap-2 mb-1.5 pb-1 border-b border-slate-100 shrink-0">
                                       <div className="flex items-center space-x-1.5 shrink-0">
                                         <span className="font-bold text-slate-900">{displayIdx + 1})</span>
                                         <button
@@ -1969,33 +1969,35 @@ export default function OpenMathForgeApp() {
                                         </div>
 
                                         {showAnswerKey ? (
-                                          <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-2">
-                                            <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60">
-                                              <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
-                                              {prob.correct_choice && (
-                                                <span className="font-bold text-indigo-800 mr-1">
-                                                  {prob.correct_choice})
-                                                </span>
-                                              )}
-                                              <ProblemEquation raw={prob.answer_typst} inline />
-                                            </div>
-                                            {prob.steps_typst && prob.steps_typst.length > 0 && (
-                                              <div className="mt-1.5 space-y-0.5 text-[10px] leading-tight text-amber-900">
-                                                <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
-                                                  Solution Steps:
-                                                </div>
-                                                {prob.steps_typst.map((st, sIdx) => (
-                                                  <div key={sIdx} className="flex items-start gap-1">
-                                                    <span className="text-amber-600 font-mono text-[9px] font-semibold shrink-0 mt-0.5">
-                                                      {sIdx + 1}.
-                                                    </span>
-                                                    <div className="min-w-0 break-words">
-                                                      <StepTextWithMath text={st} />
-                                                    </div>
-                                                  </div>
-                                                ))}
+                                          <div className="bg-amber-50/90 border border-amber-200 rounded p-2.5 text-xs text-amber-950 mt-2 flex-1 flex flex-col justify-between">
+                                            <div>
+                                              <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60">
+                                                <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
+                                                {prob.correct_choice && (
+                                                  <span className="font-bold text-indigo-800 mr-1">
+                                                    {prob.correct_choice})
+                                                  </span>
+                                                )}
+                                                <ProblemEquation raw={prob.answer_typst} inline />
                                               </div>
-                                            )}
+                                              {prob.steps_typst && prob.steps_typst.length > 0 && (
+                                                <div className="mt-2 space-y-1 text-[10.5px] leading-relaxed text-amber-900">
+                                                  <div className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
+                                                    Solution Steps:
+                                                  </div>
+                                                  {prob.steps_typst.map((st, sIdx) => (
+                                                    <div key={sIdx} className="flex items-start gap-1.5">
+                                                      <span className="text-amber-600 font-mono text-[9.5px] font-semibold shrink-0 mt-0.5">
+                                                        {sIdx + 1}.
+                                                      </span>
+                                                      <div className="min-w-0 break-words">
+                                                        <StepTextWithMath text={st} />
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              )}
+                                            </div>
                                           </div>
                                         ) : (
                                           <div className="mt-auto pt-2 flex justify-between items-end">
@@ -2007,16 +2009,16 @@ export default function OpenMathForgeApp() {
                                         )}
                                       </div>
 
-                                      {/* Right Column: Coordinate Plane Graph */}
-                                      <div className="w-[280px] shrink-0 border-l border-slate-200 pl-3 flex items-center justify-center">
+                                      {/* Right Column: High-Legibility Coordinate Plane Graph */}
+                                      <div className="w-[320px] shrink-0 border-l border-slate-200 pl-3 flex items-center justify-center">
                                         {showAnswerKey && prob.answer_svg ? (
                                           <div
-                                            className="flex justify-center items-center bg-white/95 rounded p-1 border border-amber-200/70 [&>svg]:max-h-48 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                            className="flex justify-center items-center bg-white rounded p-1.5 border border-amber-200/80 shadow-xs [&>svg]:max-h-60 [&>svg]:h-56 [&>svg]:w-auto [&>svg]:max-w-[300px]"
                                             dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
                                           />
                                         ) : prob.diagram_svg ? (
                                           <div
-                                            className="flex justify-center items-center bg-white rounded p-1 border border-slate-200/60 [&>svg]:max-h-48 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                            className="flex justify-center items-center bg-white rounded p-1.5 border border-slate-200/80 shadow-xs [&>svg]:max-h-60 [&>svg]:h-56 [&>svg]:w-auto [&>svg]:max-w-[300px]"
                                             dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
                                           />
                                         ) : null}
@@ -2024,9 +2026,9 @@ export default function OpenMathForgeApp() {
                                     </div>
                                   </div>
                                 ) : (
-                                  /* Multi-Column or Non-Visual Layout */
-                                  <>
-                                    <div>
+                                  /* Multi-Column Layout: Fills Vertical Real Estate with Prominent, Crisp Graphs */
+                                  <div className="flex flex-col justify-between h-full">
+                                    <div className="shrink-0">
                                       <div className="flex items-start justify-between gap-2 mb-1">
                                         <div className="flex items-center space-x-1.5 shrink-0">
                                           <span className="font-bold text-slate-900">{displayIdx + 1})</span>
@@ -2049,15 +2051,16 @@ export default function OpenMathForgeApp() {
                                         <ProblemEquation raw={prob.equation_typst} />
                                       </div>
 
+                                      {/* Student View Diagram: Large, readable coordinate plane */}
                                       {prob.diagram_svg && !showAnswerKey && (
                                         <div
-                                          className="my-1 flex justify-center items-center [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                          className="my-2 flex justify-center items-center [&>svg]:max-h-52 [&>svg]:h-44 [&>svg]:w-auto [&>svg]:max-w-[240px]"
                                           dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
                                         />
                                       )}
                                       {prob.diagram_svg && showAnswerKey && !prob.answer_svg && (
                                         <div
-                                          className="my-1 flex justify-center items-center [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                          className="my-2 flex justify-center items-center [&>svg]:max-h-52 [&>svg]:h-44 [&>svg]:w-auto [&>svg]:max-w-[240px]"
                                           dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
                                         />
                                       )}
@@ -2079,10 +2082,10 @@ export default function OpenMathForgeApp() {
                                       )}
                                     </div>
 
-                                    {/* Answer Key Overlay / Student Work Area */}
+                                    {/* Answer Key Overlay: Expands to Fill Real Estate with Large, Crisp Graph & Clear Steps */}
                                     {showAnswerKey ? (
-                                      <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-1">
-                                        <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60">
+                                      <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-1.5 flex-1 flex flex-col justify-between min-h-0">
+                                        <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60 shrink-0">
                                           <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
                                           {prob.correct_choice && (
                                             <span className="font-bold text-indigo-800 mr-1">
@@ -2092,63 +2095,39 @@ export default function OpenMathForgeApp() {
                                           <ProblemEquation raw={prob.answer_typst} inline />
                                         </div>
 
-                                        {/* Compact Side-by-Side Visual Layout for Graph + Steps */}
-                                        {prob.answer_svg && prob.steps_typst && prob.steps_typst.length > 0 ? (
-                                          <div className="mt-1.5 grid grid-cols-2 gap-2 items-center">
-                                            <div
-                                              className="flex justify-center items-center bg-white/95 rounded p-1 border border-amber-200/70 [&>svg]:max-h-32 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
-                                              dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
-                                            />
-                                            <div className="space-y-0.5 text-[9.5px] leading-tight text-amber-900 overflow-hidden">
-                                              <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
-                                                Solution Steps:
-                                              </div>
-                                              {prob.steps_typst.map((st, sIdx) => (
-                                                <div key={sIdx} className="flex items-start gap-1">
-                                                  <span className="text-amber-600 font-mono text-[8.5px] font-semibold shrink-0 mt-0.5">
-                                                    {sIdx + 1}.
-                                                  </span>
-                                                  <div className="min-w-0 break-words">
-                                                    <StepTextWithMath text={st} />
-                                                  </div>
-                                                </div>
-                                              ))}
+                                        {/* Large Centered Graph: Crisp, high-visibility plot with no squishing */}
+                                        {prob.answer_svg && (
+                                          <div
+                                            className="my-1.5 flex justify-center items-center bg-white rounded p-1 border border-amber-200/80 shadow-xs [&>svg]:max-h-48 [&>svg]:h-44 [&>svg]:w-auto [&>svg]:max-w-[240px]"
+                                            dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
+                                          />
+                                        )}
+
+                                        {/* Solution Steps: Cleanly formatted at bottom of answer card */}
+                                        {prob.steps_typst && prob.steps_typst.length > 0 && (
+                                          <div className={`mt-1 space-y-0.5 text-[9.5px] leading-snug text-amber-950 ${prob.answer_svg ? "border-t border-amber-200/60 pt-1" : ""}`}>
+                                            <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
+                                              Solution Steps:
                                             </div>
-                                          </div>
-                                        ) : (
-                                          <>
-                                            {prob.answer_svg && (
-                                              <div
-                                                className="my-1 flex justify-center items-center bg-white/95 rounded p-1 border border-amber-200/70 [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
-                                                dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
-                                              />
-                                            )}
-                                            {prob.steps_typst && prob.steps_typst.length > 0 && (
-                                              <div className="mt-1 space-y-0.5 text-[10px] leading-tight text-amber-900">
-                                                <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
-                                                  Solution Steps:
+                                            {prob.steps_typst.map((st, sIdx) => (
+                                              <div key={sIdx} className="flex items-start gap-1">
+                                                <span className="text-amber-600 font-mono text-[9px] font-semibold shrink-0 mt-0.5">
+                                                  {sIdx + 1}.
+                                                </span>
+                                                <div className="min-w-0 break-words">
+                                                  <StepTextWithMath text={st} />
                                                 </div>
-                                                {prob.steps_typst.map((st, sIdx) => (
-                                                  <div key={sIdx} className="flex items-start gap-1">
-                                                    <span className="text-amber-600 font-mono text-[9px] font-semibold shrink-0 mt-0.5">
-                                                      {sIdx + 1}.
-                                                    </span>
-                                                    <div className="min-w-0 break-words">
-                                                      <StepTextWithMath text={st} />
-                                                    </div>
-                                                  </div>
-                                                ))}
                                               </div>
-                                            )}
-                                          </>
+                                            ))}
+                                          </div>
                                         )}
                                       </div>
                                     ) : (
-                                      <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded">
+                                      <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded mt-2">
                                         Ans:
                                       </div>
                                     )}
-                                  </>
+                                  </div>
                                 )}
                               </div>
                             );
