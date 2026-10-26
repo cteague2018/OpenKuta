@@ -47,6 +47,7 @@ class GeneratePDFRequest(BaseModel):
     allow_negatives: bool = Field(default=True)
     columns: int = Field(default=2, ge=1, le=3)
     show_answers: bool = Field(default=False)
+    question_type: str = Field(default="free_response")
     topics: Optional[List[Dict[str, Any]]] = None
     student_name: Optional[str] = None
     student_id: Optional[str] = None
@@ -119,6 +120,7 @@ def preview_problems(req: GeneratePDFRequest) -> Dict[str, Any]:
             t_gen = get_generator(t.get("generator_id", req.generator_id))
             t_count = t.get("count", 4)
             t_diff = t.get("difficulty", "medium")
+            t_qtype = t.get("question_type", req.question_type)
             diff_dist = {
                 ProblemDifficulty.MILD: 1.0 if t_diff == "mild" else 0.0,
                 ProblemDifficulty.MEDIUM: 1.0 if t_diff == "medium" else 0.0,
@@ -129,6 +131,7 @@ def preview_problems(req: GeneratePDFRequest) -> Dict[str, Any]:
                 seed=item_seed,
                 difficulty_distribution=diff_dist,
                 allow_negatives=req.allow_negatives,
+                question_type=t_qtype,
             )
             problems.extend(t_gen.generate(cfg))
             item_seed += 113
@@ -147,6 +150,7 @@ def preview_problems(req: GeneratePDFRequest) -> Dict[str, Any]:
             seed=active_seed,
             difficulty_distribution=diff_dist,
             allow_negatives=req.allow_negatives,
+            question_type=req.question_type,
         )
         problems = gen.generate(cfg)
     return {
@@ -170,6 +174,7 @@ def generate_pdf(req: GeneratePDFRequest) -> Response:
             t_gen = get_generator(t.get("generator_id", req.generator_id))
             t_count = t.get("count", 4)
             t_diff = t.get("difficulty", "medium")
+            t_qtype = t.get("question_type", req.question_type)
             diff_dist = {
                 ProblemDifficulty.MILD: 1.0 if t_diff == "mild" else 0.0,
                 ProblemDifficulty.MEDIUM: 1.0 if t_diff == "medium" else 0.0,
@@ -180,6 +185,7 @@ def generate_pdf(req: GeneratePDFRequest) -> Response:
                 seed=item_seed,
                 difficulty_distribution=diff_dist,
                 allow_negatives=req.allow_negatives,
+                question_type=t_qtype,
             )
             probs = t_gen.generate(cfg)
             problems.extend(probs)
@@ -199,6 +205,7 @@ def generate_pdf(req: GeneratePDFRequest) -> Response:
             seed=active_seed,
             difficulty_distribution=diff_dist,
             allow_negatives=req.allow_negatives,
+            question_type=req.question_type,
         )
         problems = gen.generate(cfg)
 

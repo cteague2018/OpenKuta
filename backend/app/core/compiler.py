@@ -78,6 +78,7 @@ class TypstCompiler:
         marker_filenames: Dict[int, str],
         qr_filename: str,
         columns: int = 2,
+        show_answers: bool = False,
         student_name: Optional[str] = None,
         student_id: Optional[str] = None,
         student_period: Optional[str] = None,
@@ -125,6 +126,7 @@ class TypstCompiler:
             "student_name": student_name,
             "student_id": student_id,
             "student_period": student_period,
+            "show_answers": show_answers,
         }
         return template.render(context)
 
@@ -225,6 +227,7 @@ class TypstCompiler:
                 marker_filenames=marker_filenames,
                 qr_filename=qr_filename,
                 columns=columns,
+                show_answers=show_answers,
                 student_name=student_name,
                 student_id=student_id,
                 student_period=student_period,

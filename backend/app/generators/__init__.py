@@ -33,6 +33,21 @@ from backend.app.generators.algebra_1.systems import (
 from backend.app.generators.algebra_1.two_step_equations import (
     TwoStepEquationsGenerator,
 )
+from backend.app.generators.algebra_1.verbal_expressions import (
+    VerbalExpressionsGenerator,
+)
+from backend.app.generators.algebra_1.absolute_value import (
+    AbsoluteValueEquationsGenerator,
+)
+from backend.app.generators.algebra_1.distributive_property import (
+    DistributivePropertyGenerator,
+)
+from backend.app.generators.algebra_1.literal_equations import (
+    LiteralEquationsGenerator,
+)
+from backend.app.generators.algebra_1.word_problems import (
+    Algebra1WordProblemsGenerator,
+)
 
 # Algebra 2 Generators
 from backend.app.generators.algebra_2.complex_numbers import (
@@ -46,6 +61,12 @@ from backend.app.generators.algebra_2.logarithms import (
 )
 from backend.app.generators.algebra_2.polynomial_division import (
     PolynomialDivisionGenerator,
+)
+from backend.app.generators.algebra_2.general_functions import (
+    GeneralFunctionsGenerator,
+)
+from backend.app.generators.algebra_2.probability_statistics import (
+    ProbabilityStatisticsGenerator,
 )
 from backend.app.generators.algebra_2.radicals import (
     Algebra2RadicalsGenerator,
@@ -159,6 +180,13 @@ GENERATOR_REGISTRY: Dict[str, Type[BaseGenerator]] = {
     PolynomialFactoringGenerator.generator_id: PolynomialFactoringGenerator,
     LinearInequalitiesGenerator.generator_id: LinearInequalitiesGenerator,
     ExponentRulesGenerator.generator_id: ExponentRulesGenerator,
+    VerbalExpressionsGenerator.generator_id: VerbalExpressionsGenerator,
+    AbsoluteValueEquationsGenerator.generator_id: (
+        AbsoluteValueEquationsGenerator
+    ),
+    DistributivePropertyGenerator.generator_id: DistributivePropertyGenerator,
+    LiteralEquationsGenerator.generator_id: LiteralEquationsGenerator,
+    Algebra1WordProblemsGenerator.generator_id: Algebra1WordProblemsGenerator,
 
     # Geometry
     PythagoreanTheoremGenerator.generator_id: PythagoreanTheoremGenerator,
@@ -181,6 +209,10 @@ GENERATOR_REGISTRY: Dict[str, Type[BaseGenerator]] = {
     Algebra2RadicalsGenerator.generator_id: Algebra2RadicalsGenerator,
     LogPropertiesGenerator.generator_id: LogPropertiesGenerator,
     PolynomialDivisionGenerator.generator_id: PolynomialDivisionGenerator,
+    GeneralFunctionsGenerator.generator_id: GeneralFunctionsGenerator,
+    ProbabilityStatisticsGenerator.generator_id: (
+        ProbabilityStatisticsGenerator
+    ),
 
     # Precalculus
     PrecalcVectorsGenerator.generator_id: PrecalcVectorsGenerator,

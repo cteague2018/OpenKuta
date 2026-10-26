@@ -28,6 +28,9 @@ class BaseProblem(BaseModel):
     answer_typst: str = Field(..., description="Final simplified answer in Typst syntax")
     steps_typst: List[str] = Field(default_factory=list, description="Step-by-step solution steps")
     distractors: List[str] = Field(default_factory=list, description="Common misconception-based distractors")
+    choices: List[Dict[str, str]] = Field(default_factory=list, description="Multiple-choice options A, B, C, D with letter and text")
+    correct_choice: Optional[str] = Field(default=None, description="Letter of correct multiple-choice option (A, B, C, D)")
+    question_type: str = Field(default="free_response", description="free_response or multiple_choice")
     difficulty: ProblemDifficulty = Field(default=ProblemDifficulty.MILD, description="Difficulty tier")
     bounding_box: Optional[BoundingBox] = Field(default=None, description="Pre-computed workspace bounding box")
     standards: List[str] = Field(default_factory=list, description="Curriculum standard codes (e.g., CCSS.MATH.CONTENT.HSA.REI.B.4)")
@@ -61,6 +64,7 @@ class GeneratorConfig(BaseModel):
     allow_negatives: bool = Field(default=True, description="Allow negative integer coefficients/constants")
     seed: Optional[int] = Field(default=None, description="Explicit deterministic pseudo-random seed")
     form_ids: List[str] = Field(default_factory=lambda: ["A", "B", "C", "D"], description="Variant form identifiers")
+    question_type: str = Field(default="free_response", description="Question type: free_response or multiple_choice")
 
 
 class BaseGenerator(ABC):
@@ -112,7 +116,53 @@ class BaseGenerator(ABC):
                 problem_idx=idx,
                 allow_negatives=config.allow_negatives
             )
+            prob.question_type = config.question_type
+            if config.question_type == "multiple_choice":
+                self._populate_multiple_choice_choices(prob, rng)
             problems.append(prob)
 
         return problems
+
+    def _populate_multiple_choice_choices(self, prob: BaseProblem, rng: random.Random) -> None:
+        """Construct deterministic A, B, C, D multiple-choice options from answer and distractors."""
+        clean_ans = prob.answer_typst.strip()
+        distractors = [d.strip() for d in prob.distractors if d.strip() and d.strip() != clean_ans]
+
+        # Deduplicate while preserving order
+        seen = {clean_ans}
+        unique_distractors = []
+        for d in distractors:
+            if d not in seen:
+                seen.add(d)
+                unique_distractors.append(d)
+
+        # Synthesize fallback distractors if fewer than 3 are available
+        offset = 1
+        while len(unique_distractors) < 3:
+            if clean_ans.startswith("$") and clean_ans.endswith("$"):
+                inner = clean_ans[1:-1].strip()
+                fallback = f"$ {inner} + {offset} $"
+            else:
+                fallback = f"{clean_ans} + {offset}"
+            if fallback not in seen:
+                seen.add(fallback)
+                unique_distractors.append(fallback)
+            offset += 1
+            if offset > 10:
+                break
+
+        options = [clean_ans] + unique_distractors[:3]
+        rng.shuffle(options)
+
+        letters = ["A", "B", "C", "D"]
+        choices = []
+        correct_letter = "A"
+        for i, opt in enumerate(options[:4]):
+            let = letters[i]
+            if opt == clean_ans:
+                correct_letter = let
+            choices.append({"letter": let, "text": opt})
+
+        prob.choices = choices
+        prob.correct_choice = correct_letter
 

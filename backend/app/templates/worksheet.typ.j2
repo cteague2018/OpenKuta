@@ -108,9 +108,21 @@
         #text(size: 11pt)[{{ prob.equation_typst }}]
       ]
 
+      {% if prob.choices and prob.choices|length >= 4 %}
+      #v(6pt)
+      #grid(
+        columns: (1fr, 1fr),
+        row-gutter: 6pt,
+        column-gutter: 10pt,
+        {% for ch in prob.choices %}
+        [ #text(size: 8.5pt, weight: "bold")[{{ ch.letter }})] #text(size: 8.5pt)[{{ ch.text }}] ],
+        {% endfor %}
+      )
+      {% endif %}
+
       #align(bottom + right)[
         #rect(stroke: 0.5pt + luma(200), radius: 2pt, inset: (x: 10pt, y: 4pt))[
-          #text(size: 7.5pt, fill: luma(140))[Ans: ]
+          #text(size: 7.5pt, fill: luma(140))[Ans: {% if show_answers %}{{ prob.correct_choice + ") " if prob.correct_choice else "" }}{{ prob.answer_typst }}{% endif %}]
         ]
       ]
     ]

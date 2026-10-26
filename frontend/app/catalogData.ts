@@ -16,6 +16,11 @@ export interface Course {
   categories: Category[];
 }
 
+export interface Choice {
+  letter: string;
+  text: string;
+}
+
 export interface Problem {
   id: string;
   prompt_text: string;
@@ -23,6 +28,9 @@ export interface Problem {
   answer_typst: string;
   steps_typst: string[];
   distractors: string[];
+  choices?: Choice[];
+  correct_choice?: string;
+  question_type?: "free_response" | "multiple_choice";
   difficulty: "mild" | "medium" | "spicy";
   standards: string[];
 }
@@ -38,7 +46,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.beginning_algeb.verbal_expressions",
             "name": "Verbal expressions",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.verbal_expressions",
             "available": true
           },
           {
@@ -74,7 +82,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.beginning_algeb.the_distributive_property",
             "name": "The Distributive Property",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.distributive_property",
             "available": true
           }
         ]
@@ -85,7 +93,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.equations.one_step_equations",
             "name": "One-step equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "grade_6.one_step",
             "available": true
           },
           {
@@ -103,31 +111,31 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.equations.absolute_value_equations",
             "name": "Absolute value equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.absolute_value",
             "available": true
           },
           {
             "id": "algebra_1.equations.mixture_word_problems",
             "name": "Mixture word problems",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_1.word_problems",
             "available": true
           },
           {
             "id": "algebra_1.equations.distance_rate_time_word_p",
             "name": "Distance, rate, time word problems",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_1.word_problems",
             "available": true
           },
           {
             "id": "algebra_1.equations.work_word_problems",
             "name": "Work word problems",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_1.word_problems",
             "available": true
           },
           {
             "id": "algebra_1.equations.literal_equations",
             "name": "Literal equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.literal_equations",
             "available": true
           }
         ]
@@ -168,7 +176,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.inequalities.absolute_value_inequaliti",
             "name": "Absolute value inequalities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           }
         ]
@@ -179,19 +187,19 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.proportions_and.solving_proportions",
             "name": "Solving proportions",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "grade_6.ratios_rates",
             "available": true
           },
           {
             "id": "algebra_1.proportions_and.percents",
             "name": "Percents",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "grade_6.percents",
             "available": true
           },
           {
             "id": "algebra_1.proportions_and.percent_of_change",
             "name": "Percent of change",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "grade_6.percents",
             "available": true
           }
         ]
@@ -214,7 +222,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.relations_and_i.evaluating_and_graphing_f",
             "name": "Evaluating and graphing functions",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.general_functions",
             "available": true
           }
         ]
@@ -255,7 +263,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.linear_equation.graphing_absolute_value_e",
             "name": "Graphing absolute value equations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.absolute_value",
             "available": true
           },
           {
@@ -599,31 +607,31 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "geometry.review_of_algeb.multi_step_equations",
             "name": "Multi-step equations",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_1.multi_step",
             "available": true
           },
           {
             "id": "geometry.review_of_algeb.simplifying_square_roots",
             "name": "Simplifying square roots",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.radicals",
             "available": true
           },
           {
             "id": "geometry.review_of_algeb.adding_and_subtracting_sq",
             "name": "Adding and subtracting square roots",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.radicals",
             "available": true
           },
           {
             "id": "geometry.review_of_algeb.multiplying_square_roots",
             "name": "Multiplying square roots",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.radicals",
             "available": true
           },
           {
             "id": "geometry.review_of_algeb.dividing_square_roots",
             "name": "Dividing square roots",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.radicals",
             "available": true
           }
         ]
@@ -875,7 +883,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "geometry.similarity.solving_proportions",
             "name": "Solving proportions",
-            "generator_id": "geometry.triangles",
+            "generator_id": "grade_6.ratios_rates",
             "available": true
           },
           {
@@ -1085,55 +1093,55 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "geometry.probability_and.sample_spaces_and_the_fun",
             "name": "Sample spaces and the Fundamental Counting Principle",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "geometry.probability_and.probability_of_independen",
             "name": "Probability of independent and dependent events, word problems",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "geometry.probability_and.probability_of_independen",
             "name": "Probability of independent and dependent events",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "geometry.probability_and.probability_of_mutually_e",
             "name": "Probability of mutually exclusive events, word problems",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "geometry.probability_and.probability_of_mutually_e",
             "name": "Probability of mutually exclusive events",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "geometry.probability_and.permutations",
             "name": "Permutations",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "geometry.probability_and.combinations",
             "name": "Combinations",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "geometry.probability_and.permutations_vs_combinati",
             "name": "Permutations vs combinations",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "geometry.probability_and.probability_with_permutat",
             "name": "Probability with permutations and combinations",
-            "generator_id": "geometry.triangles",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           }
         ]
@@ -1226,25 +1234,25 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.equations_and_i.work_word_problems",
             "name": "Work word problems",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_1.word_problems",
             "available": true
           },
           {
             "id": "algebra_2.equations_and_i.distance_rate_time_word_p",
             "name": "Distance, rate, time word problems",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_1.word_problems",
             "available": true
           },
           {
             "id": "algebra_2.equations_and_i.mixture_word_problems",
             "name": "Mixture word problems",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_1.word_problems",
             "available": true
           },
           {
             "id": "algebra_2.equations_and_i.absolute_value_equations",
             "name": "Absolute value equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.absolute_value",
             "available": true
           },
           {
@@ -1262,7 +1270,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.equations_and_i.absolute_value_inequaliti",
             "name": "Absolute value inequalities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           }
         ]
@@ -1285,7 +1293,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.relations_and_i.evaluating_and_graphing_f",
             "name": "Evaluating and graphing functions",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.general_functions",
             "available": true
           }
         ]
@@ -1308,7 +1316,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.linear_relation.graphing_absolute_value_e",
             "name": "Graphing absolute value equations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.absolute_value",
             "available": true
           },
           {
@@ -1384,37 +1392,37 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.matrices.operations",
             "name": "Operations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.matrices",
             "available": true
           },
           {
             "id": "algebra_2.matrices.determinants",
             "name": "Determinants",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.matrices",
             "available": true
           },
           {
             "id": "algebra_2.matrices.inverses",
             "name": "Inverses",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.matrices",
             "available": true
           },
           {
             "id": "algebra_2.matrices.cramer_s_rule",
             "name": "Cramer's Rule",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.matrices",
             "available": true
           },
           {
             "id": "algebra_2.matrices.equations",
             "name": "Equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.matrices",
             "available": true
           },
           {
             "id": "algebra_2.matrices.geometric_transformations",
             "name": "Geometric transformations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.matrices",
             "available": true
           }
         ]
@@ -1644,19 +1652,19 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.general_functio.evaluating",
             "name": "Evaluating",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.general_functions",
             "available": true
           },
           {
             "id": "algebra_2.general_functio.operations",
             "name": "Operations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.general_functions",
             "available": true
           },
           {
             "id": "algebra_2.general_functio.inverses",
             "name": "Inverses",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.general_functions",
             "available": true
           }
         ]
@@ -1738,61 +1746,61 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.conic_sections.parabolas_graphing_proper",
             "name": "Parabolas, graphing & properties",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
             "id": "algebra_2.conic_sections.parabolas_writing_equatio",
             "name": "Parabolas, writing equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
             "id": "algebra_2.conic_sections.circles_graphing_properti",
             "name": "Circles, graphing & properties",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "geometry.circles",
             "available": true
           },
           {
             "id": "algebra_2.conic_sections.circles_writing_equations",
             "name": "Circles, writing equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "geometry.circles",
             "available": true
           },
           {
             "id": "algebra_2.conic_sections.ellipses_graphing_propert",
             "name": "Ellipses, graphing & properties",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
             "id": "algebra_2.conic_sections.ellipses_writing_equation",
             "name": "Ellipses, writing equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
             "id": "algebra_2.conic_sections.hyperbolas_graphing_prope",
             "name": "Hyperbolas, graphing & properties",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
             "id": "algebra_2.conic_sections.hyperbolas_writing_equati",
             "name": "Hyperbolas, writing equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
             "id": "algebra_2.conic_sections.classifying",
             "name": "Classifying",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
             "id": "algebra_2.conic_sections.systems_of_quadratic_equa",
             "name": "Systems of quadratic equations",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           }
         ]
@@ -1933,43 +1941,43 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.sequences_and_s.general_sequences",
             "name": "General sequences",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.sequences",
             "available": true
           },
           {
             "id": "algebra_2.sequences_and_s.arithmetic_sequences",
             "name": "Arithmetic sequences",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.sequences",
             "available": true
           },
           {
             "id": "algebra_2.sequences_and_s.geometric_sequences",
             "name": "Geometric sequences",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.sequences",
             "available": true
           },
           {
             "id": "algebra_2.sequences_and_s.arithmetic_and_geometric_",
             "name": "Arithmetic and geometric mean",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.sequences",
             "available": true
           },
           {
             "id": "algebra_2.sequences_and_s.general_series",
             "name": "General series",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.sequences",
             "available": true
           },
           {
             "id": "algebra_2.sequences_and_s.arithmetic_series",
             "name": "Arithmetic series",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.sequences",
             "available": true
           },
           {
             "id": "algebra_2.sequences_and_s.geometric_series",
             "name": "Geometric series",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.sequences",
             "available": true
           }
         ]
@@ -1980,97 +1988,97 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.trigonometry.angles_and_angle_measure",
             "name": "Angles and angle measure",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.radians_and_degrees",
             "name": "Radians and degrees",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.degrees_and_degrees_minut",
             "name": "Degrees and degrees-minutes-seconds",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.coterminal_angles",
             "name": "Coterminal angles",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.arc_length_and_sector_are",
             "name": "Arc length and sector area",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.right_triangle_trig_findi",
             "name": "Right triangle trig: Finding ratios",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "geometry.trigonometry",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.right_triangle_trig_findi",
             "name": "Right triangle trig: Finding angle measures",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "geometry.trigonometry",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.right_triangle_trig_findi",
             "name": "Right triangle trig: Finding angles and sides",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "geometry.trigonometry",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.trig_functions_of_any_ang",
             "name": "Trig functions of any angle",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.the_law_of_sines",
             "name": "The Law of Sines",
-            "generator_id": "precalculus.triangle_trig",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.the_law_of_cosines",
             "name": "The Law of Cosines",
-            "generator_id": "precalculus.triangle_trig",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.area_and_laws_of_sines_an",
             "name": "Area and Laws of Sines and Cosines",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.graphing_trig_functions",
             "name": "Graphing trig functions",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.angle_sum_difference_iden",
             "name": "Angle sum/difference identities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.double_angle_half_angle_i",
             "name": "Double-angle/half-angle identities",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           },
           {
             "id": "algebra_2.trigonometry.equations",
             "name": "Equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "precalculus.trig",
             "available": true
           }
         ]
@@ -2081,55 +2089,55 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.probability_and.sample_spaces_and_the_fun",
             "name": "Sample spaces and the Fundamental Counting Principle",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "algebra_2.probability_and.probability_of_independen",
             "name": "Probability of independent and dependent events, word problems",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "algebra_2.probability_and.probability_of_independen",
             "name": "Probability of independent and dependent events",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "algebra_2.probability_and.probability_of_mutually_e",
             "name": "Probability of mutually exclusive events, word problems",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "algebra_2.probability_and.probability_of_mutually_e",
             "name": "Probability of mutually exclusive events",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "algebra_2.probability_and.permutations",
             "name": "Permutations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "algebra_2.probability_and.combinations",
             "name": "Combinations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "algebra_2.probability_and.permutations_vs_combinati",
             "name": "Permutations vs combinations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "algebra_2.probability_and.probability_with_permutat",
             "name": "Probability with permutations and combinations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           }
         ]
@@ -2611,13 +2619,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.conic_sections.circles_graphing_properti",
             "name": "Circles, graphing & properties",
-            "generator_id": "precalculus.polar_conics",
+            "generator_id": "geometry.circles",
             "available": true
           },
           {
             "id": "precalculus.conic_sections.circles_writing_equations",
             "name": "Circles, writing equations",
-            "generator_id": "precalculus.polar_conics",
+            "generator_id": "geometry.circles",
             "available": true
           },
           {
@@ -2699,31 +2707,31 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.probability.independent_and_dependent",
             "name": "Independent and dependent events, word problems",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "precalculus.probability.independent_and_dependent",
             "name": "Independent and dependent events",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "precalculus.probability.mutually_exclusive_events",
             "name": "Mutually exclusive events, word problems",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "precalculus.probability.mutually_exclusive_events",
             "name": "Mutually exclusive events",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "precalculus.probability.with_permutations_and_com",
             "name": "With permutations and combinations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           }
         ]
@@ -3628,13 +3636,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "grade_6.numeric_express.distributive_property_wit",
             "name": "Distributive property with area diagrams, numeric",
-            "generator_id": "grade_6.ratios_rates",
+            "generator_id": "algebra_1.distributive_property",
             "available": true
           },
           {
             "id": "grade_6.numeric_express.distributive_property_num",
             "name": "Distributive property, numeric",
-            "generator_id": "grade_6.ratios_rates",
+            "generator_id": "algebra_1.distributive_property",
             "available": true
           }
         ]
@@ -3668,13 +3676,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "grade_6.equivalent_expr.distributive_property_wit",
             "name": "Distributive property with area diagrams, algebraic",
-            "generator_id": "geometry.area_volume",
+            "generator_id": "algebra_1.distributive_property",
             "available": true
           },
           {
             "id": "grade_6.equivalent_expr.distributive_property_alg",
             "name": "Distributive property, algebraic",
-            "generator_id": "grade_6.one_step",
+            "generator_id": "algebra_1.distributive_property",
             "available": true
           }
         ]
@@ -3978,7 +3986,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "pre_algebra.arithmetic_numb.the_distributive_property",
             "name": "The Distributive Property",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.distributive_property",
             "available": true
           }
         ]
@@ -3989,7 +3997,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "pre_algebra.equations.one_step_equations",
             "name": "One-step equations",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "grade_6.one_step",
             "available": true
           },
           {
@@ -4094,19 +4102,19 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "pre_algebra.geometry_founda.area_and_perimeter_of_rec",
             "name": "Area and perimeter of rectangles and triangles",
-            "generator_id": "geometry.pythagorean",
+            "generator_id": "geometry.area_volume",
             "available": true
           },
           {
             "id": "pre_algebra.geometry_founda.volume_of_rectangular_pri",
             "name": "Volume of rectangular prisms",
-            "generator_id": "geometry.pythagorean",
+            "generator_id": "geometry.area_volume",
             "available": true
           },
           {
             "id": "pre_algebra.geometry_founda.angles_and_triangles",
             "name": "Angles and triangles",
-            "generator_id": "geometry.pythagorean",
+            "generator_id": "geometry.area_volume",
             "available": true
           }
         ]

@@ -36,6 +36,7 @@ import {
   Undo2,
   Key,
   Pencil,
+  BookOpen,
 } from "lucide-react";
 import katex from "katex";
 import {
@@ -205,12 +206,13 @@ export default function OpenMathForgeApp() {
 
   // Dynamic Pagination & Page Workspace Bounds (guarantees student handwriting space)
   const paginatedPages = useMemo(() => {
+    if (worksheetProblems.length === 0) return [];
     const pages: Problem[][] = [];
     const pageSize = maxProblemsPerPage;
     for (let i = 0; i < worksheetProblems.length; i += pageSize) {
       pages.push(worksheetProblems.slice(i, i + pageSize));
     }
-    return pages.length > 0 ? pages : [[]];
+    return pages;
   }, [worksheetProblems, maxProblemsPerPage]);
 
   // NextAuth Session & Authentication State
@@ -350,6 +352,12 @@ export default function OpenMathForgeApp() {
   const refreshWorksheet = async () => {
     setIsGenerating(true);
     try {
+      if (assignmentItems.length === 0) {
+        setWorksheetProblems([]);
+        setWorksheetId(`WS-${String(baseSeed % 10000).padStart(4, "0")}`);
+        return;
+      }
+
       const allProblems: Problem[] = [];
       let itemSeed = baseSeed;
 
@@ -370,6 +378,7 @@ export default function OpenMathForgeApp() {
               seed: itemSeed,
               difficulty_distribution: diffMap,
               allow_negatives: true,
+              question_type: item.questionType,
             }),
           });
 
@@ -386,13 +395,13 @@ export default function OpenMathForgeApp() {
       if (allProblems.length > 0) {
         setWorksheetProblems(allProblems);
       } else {
-        // Fallback to sample problems so preview is always filled
+        // Fallback to sample problems only if assignment had items but backend was unreachable
         setWorksheetProblems(DEFAULT_SAMPLE_PROBLEMS);
       }
       setWorksheetId(`WS-${String(baseSeed % 10000).padStart(4, "0")}`);
     } catch (e) {
       console.error("Preview generation error:", e);
-      setWorksheetProblems(DEFAULT_SAMPLE_PROBLEMS);
+      setWorksheetProblems([]);
     } finally {
       setIsGenerating(false);
     }
@@ -403,7 +412,12 @@ export default function OpenMathForgeApp() {
   }, [assignmentItems, baseSeed]);
 
   // Fetch samples for Modal Configurator
-  const fetchModalSample = async (genId: string, count: number, diff: "mild" | "medium" | "spicy") => {
+  const fetchModalSample = async (
+    genId: string,
+    count: number,
+    diff: "mild" | "medium" | "spicy",
+    qType: "free_response" | "multiple_choice" = modalQuestionType
+  ) => {
     setIsModalLoading(true);
     try {
       const diffMap = {
@@ -420,6 +434,7 @@ export default function OpenMathForgeApp() {
           problem_count: count,
           seed: Math.floor(Math.random() * 9999),
           difficulty_distribution: diffMap,
+          question_type: qType,
         }),
       });
       if (res.ok) {
@@ -441,7 +456,7 @@ export default function OpenMathForgeApp() {
     setModalCount(4);
     setModalDifficulty("medium");
     setModalQuestionType("free_response");
-    fetchModalSample(topic.generator_id, 4, "medium");
+    fetchModalSample(topic.generator_id, 4, "medium", "free_response");
   };
 
   const handleEditAssignmentItem = (item: AssignmentItem) => {
@@ -471,7 +486,7 @@ export default function OpenMathForgeApp() {
     setModalCount(item.count);
     setModalDifficulty(item.difficulty);
     setModalQuestionType(item.questionType);
-    fetchModalSample(item.generatorId, item.count, item.difficulty);
+    fetchModalSample(item.generatorId, item.count, item.difficulty, item.questionType);
   };
 
   const handleAddConfiguredTopic = () => {
@@ -1519,185 +1534,265 @@ export default function OpenMathForgeApp() {
 
             {/* US-Letter WYSIWYG Sheet Workspace (Auto-fitted to maximize surface area) */}
             <div className="flex-1 overflow-y-auto p-8 flex flex-col items-center gap-8">
-              {paginatedPages.map((pageProblems, pageIdx) => {
-                const pageRowCount = Math.max(1, Math.ceil(pageProblems.length / columns));
-                return (
-                  <div
-                    key={pageIdx}
-                    style={{
-                      width: "816px",
-                      height: "1056px",
-                      transform: `scale(${zoomLevel / 100})`,
-                      transformOrigin: "top center",
-                    }}
-                    className="bg-white shadow-2xl rounded-xs p-10 relative flex flex-col justify-between border border-slate-300 shrink-0 select-text"
-                  >
-                    {/* 4 Corner ArUco Fiducials */}
-                    <div className="absolute top-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
-                      AR 0
-                    </div>
-                    <div className="absolute top-2 right-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
-                      AR 1
-                    </div>
-                    <div className="absolute bottom-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
-                      AR 3
-                    </div>
-                    <div className="absolute bottom-2 right-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
-                      AR 2
-                    </div>
+              {paginatedPages.length === 0 || worksheetProblems.length === 0 ? (
+                <div
+                  style={{
+                    width: "816px",
+                    height: "1056px",
+                    transform: `scale(${zoomLevel / 100})`,
+                    transformOrigin: "top center",
+                  }}
+                  className="bg-white shadow-2xl rounded-xs p-10 relative flex flex-col justify-between border-2 border-dashed border-slate-300 shrink-0 select-text"
+                >
+                  {/* 4 Corner ArUco Fiducials */}
+                  <div className="absolute top-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                    AR 0
+                  </div>
+                  <div className="absolute top-2 right-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                    AR 1
+                  </div>
+                  <div className="absolute bottom-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                    AR 3
+                  </div>
+                  <div className="absolute bottom-2 right-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                    AR 2
+                  </div>
 
-                    {/* Worksheet Header: Full header on Page 1, Running header on subsequent pages */}
-                    {pageIdx === 0 ? (
-                      <div>
-                        <div className="flex justify-between items-start pb-2 border-b border-slate-900">
-                          <div>
-                            <h1 className="text-xl font-bold tracking-tight text-slate-900">
-                              {worksheetTitle}
-                            </h1>
-                            <div className="text-xs text-slate-600 mt-2 space-x-4">
-                              <span>Name: ______________________</span>
-                              <span>Date: _________</span>
-                              <span>Period: _____</span>
-                            </div>
-                          </div>
+                  {/* Empty Worksheet Header */}
+                  <div className="flex justify-between items-start pb-2 border-b border-slate-300">
+                    <div>
+                      <h1 className="text-xl font-bold tracking-tight text-slate-800">
+                        {worksheetTitle}
+                      </h1>
+                      <div className="text-xs text-slate-400 mt-2 space-x-4">
+                        <span>Name: ______________________</span>
+                        <span>Date: _________</span>
+                        <span>Period: _____</span>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded border border-slate-200">
+                      Empty Worksheet
+                    </span>
+                  </div>
 
-                          <div className="flex items-center space-x-3 text-right">
+                  {/* Empty State Banner */}
+                  <div className="my-auto text-center py-16 px-8 max-w-md mx-auto space-y-3">
+                    <div className="w-14 h-14 bg-indigo-50 border border-indigo-200 rounded-2xl flex items-center justify-center mx-auto text-indigo-600 shadow-xs">
+                      <BookOpen className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-base font-bold text-slate-800">No Topics in Current Assignment</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      Select any topic from the curriculum bank on the left sidebar to configure problem count, difficulty, and multiple-choice options.
+                    </p>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="text-center text-[10px] text-slate-400 border-t border-slate-200 pt-2 shrink-0">
+                    OpenMathForge Studio • 0 problems • Page 1 of 1
+                  </div>
+                </div>
+              ) : (
+                paginatedPages.map((pageProblems, pageIdx) => {
+                  const pageRowCount = Math.max(1, Math.ceil(pageProblems.length / columns));
+                  return (
+                    <div
+                      key={pageIdx}
+                      style={{
+                        width: "816px",
+                        height: "1056px",
+                        transform: `scale(${zoomLevel / 100})`,
+                        transformOrigin: "top center",
+                      }}
+                      className="bg-white shadow-2xl rounded-xs p-10 relative flex flex-col justify-between border border-slate-300 shrink-0 select-text"
+                    >
+                      {/* 4 Corner ArUco Fiducials */}
+                      <div className="absolute top-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                        AR 0
+                      </div>
+                      <div className="absolute top-2 right-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                        AR 1
+                      </div>
+                      <div className="absolute bottom-2 left-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                        AR 3
+                      </div>
+                      <div className="absolute bottom-2 right-2 w-7 h-7 bg-black flex items-center justify-center text-[7px] text-white font-mono font-bold">
+                        AR 2
+                      </div>
+
+                      {/* Worksheet Header: Full header on Page 1, Running header on subsequent pages */}
+                      {pageIdx === 0 ? (
+                        <div>
+                          <div className="flex justify-between items-start pb-2 border-b border-slate-900">
                             <div>
-                              <div className="text-xs font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-2.5 py-0.5 rounded inline-block">
-                                Form A
-                              </div>
-                              <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                                ID: {worksheetId}
-                              </div>
-                            </div>
-                            <div
-                              className="w-14 h-14 border border-slate-300 rounded-lg flex items-center justify-center bg-white p-1 shadow-sm relative group"
-                              title="Scannable Assignment QR Code"
-                            >
-                              <img
-                                src={`/api/qr/render?w=${encodeURIComponent(worksheetId)}&f=A&s=${baseSeed}&c=${totalProblemCount}&fmt=svg`}
-                                alt={`QR ${worksheetId}`}
-                                className="w-full h-full object-contain"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = "none";
-                                  const fallback = e.currentTarget.parentElement?.querySelector(".qr-fallback");
-                                  if (fallback) (fallback as HTMLElement).style.display = "flex";
-                                }}
-                              />
-                              <div className="qr-fallback hidden items-center justify-center w-full h-full">
-                                <QrCode className="w-9 h-9 text-slate-800" />
+                              <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                                {worksheetTitle}
+                              </h1>
+                              <div className="text-xs text-slate-600 mt-2 space-x-4">
+                                <span>Name: ______________________</span>
+                                <span>Date: _________</span>
+                                <span>Period: _____</span>
                               </div>
                             </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="flex justify-between items-center pb-2 border-b border-slate-900">
-                          <div>
-                            <h2 className="text-base font-bold tracking-tight text-slate-900">
-                              {worksheetTitle} <span className="text-xs font-normal text-slate-500">(Continued)</span>
-                            </h2>
-                            <div className="text-xs text-slate-600 mt-1 space-x-4">
-                              <span>Name: ______________________</span>
-                              <span>Period: _____</span>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3 text-right">
-                            <span className="text-xs font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-2.5 py-0.5 rounded">
-                              Form A
-                            </span>
-                            <span className="text-xs text-slate-500 font-mono">
-                              Page {pageIdx + 1} of {paginatedPages.length}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
-                    {/* Auto-Fitting Problem Grid: Fills 100% available vertical height to eliminate blank voids & maximize handwriting area */}
-                    <div className="flex-1 my-3 flex flex-col min-h-0">
-                      <div
-                        className="grid gap-4 flex-1 h-full"
-                        style={{
-                          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-                          gridTemplateRows: `repeat(${pageRowCount}, minmax(0, 1fr))`,
-                        }}
-                      >
-                        {pageProblems.map((prob, pIdx) => {
-                          const globalIdx = pageIdx * maxProblemsPerPage + pIdx;
-                          return (
-                            <div
-                              key={`${prob.id}_${globalIdx}`}
-                              className="border border-slate-300 rounded p-3.5 flex flex-col justify-between bg-white relative h-full transition-all duration-150"
-                            >
+                            <div className="flex items-center space-x-3 text-right">
                               <div>
-                                <div className="flex justify-between items-center text-xs text-slate-600 mb-2">
-                                  <div className="flex items-center space-x-1.5">
-                                    <span className="font-bold text-slate-900">{globalIdx + 1})</span>
-                                    <button
-                                      onClick={() => handleRegenerateSingleProblem(globalIdx)}
-                                      data-testid="regenerate-single-problem"
-                                      title="Regenerate Single Problem"
-                                      aria-label="Regenerate Single Problem"
-                                      className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
-                                    >
-                                      <RefreshCw className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                  <span className="text-[10px] text-slate-400 truncate max-w-[140px]">
-                                    {prob.prompt_text}
-                                  </span>
+                                <div className="text-xs font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-2.5 py-0.5 rounded inline-block">
+                                  Form A
                                 </div>
-
-                                <div className="py-2 text-center text-sm font-medium text-slate-900">
-                                  <KaTeXInline math={prob.equation_typst} />
+                                <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                  ID: {worksheetId}
                                 </div>
                               </div>
+                              <div
+                                className="w-14 h-14 border border-slate-300 rounded-lg flex items-center justify-center bg-white p-1 shadow-sm relative group"
+                                title="Scannable Assignment QR Code"
+                              >
+                                <img
+                                  src={`/api/qr/render?w=${encodeURIComponent(worksheetId)}&f=A&s=${baseSeed}&c=${totalProblemCount}&fmt=svg`}
+                                  alt={`QR ${worksheetId}`}
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = "none";
+                                    const fallback = e.currentTarget.parentElement?.querySelector(".qr-fallback");
+                                    if (fallback) (fallback as HTMLElement).style.display = "flex";
+                                  }}
+                                />
+                                <div className="qr-fallback hidden items-center justify-center w-full h-full">
+                                  <QrCode className="w-9 h-9 text-slate-800" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="flex justify-between items-center pb-2 border-b border-slate-900">
+                            <div>
+                              <h2 className="text-base font-bold tracking-tight text-slate-900">
+                                {worksheetTitle} <span className="text-xs font-normal text-slate-500">(Continued)</span>
+                              </h2>
+                              <div className="text-xs text-slate-600 mt-1 space-x-4">
+                                <span>Name: ______________________</span>
+                                <span>Period: _____</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-3 text-right">
+                              <span className="text-xs font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-2.5 py-0.5 rounded">
+                                Form A
+                              </span>
+                              <span className="text-xs text-slate-500 font-mono">
+                                Page {pageIdx + 1} of {paginatedPages.length}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                              {/* Answer Key Overlay / Student Work Area */}
-                              {showAnswerKey ? (
-                                <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-2">
-                                  <div className="font-bold flex items-center gap-1.5 text-sm pb-1 border-b border-amber-200/60">
-                                    <span className="text-amber-800 text-xs font-semibold">Ans:</span>
-                                    <KaTeXInline math={prob.answer_typst} />
+                      {/* Auto-Fitting Problem Grid: Fills 100% available vertical height to eliminate blank voids & maximize handwriting area */}
+                      <div className="flex-1 my-3 flex flex-col min-h-0">
+                        <div
+                          className="grid gap-4 flex-1 h-full"
+                          style={{
+                            gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                            gridTemplateRows: `repeat(${pageRowCount}, minmax(0, 1fr))`,
+                          }}
+                        >
+                          {pageProblems.map((prob, pIdx) => {
+                            const globalIdx = pageIdx * maxProblemsPerPage + pIdx;
+                            return (
+                              <div
+                                key={`${prob.id}_${globalIdx}`}
+                                className="border border-slate-300 rounded p-3.5 flex flex-col justify-between bg-white relative h-full transition-all duration-150"
+                              >
+                                <div>
+                                  <div className="flex items-start justify-between gap-2 mb-1.5">
+                                    <div className="flex items-center space-x-1.5 shrink-0">
+                                      <span className="font-bold text-slate-900">{globalIdx + 1})</span>
+                                      <button
+                                        onClick={() => handleRegenerateSingleProblem(globalIdx)}
+                                        data-testid="regenerate-single-problem"
+                                        title="Regenerate Single Problem"
+                                        aria-label="Regenerate Single Problem"
+                                        className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
+                                      >
+                                        <RefreshCw className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                    <div className="text-[11px] font-medium text-slate-600 italic text-right leading-tight">
+                                      {prob.prompt_text}
+                                    </div>
                                   </div>
-                                  {prob.steps_typst && prob.steps_typst.length > 0 && (
-                                    <div className="mt-1.5 space-y-1 text-[11px] text-amber-900">
-                                      <div className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
-                                        Solution Steps:
-                                      </div>
-                                      {prob.steps_typst.map((st, sIdx) => (
-                                        <div key={sIdx} className="flex items-start gap-1 leading-snug">
-                                          <span className="text-amber-600 font-mono text-[10px] font-semibold mt-0.5">
-                                            {sIdx + 1}.
+
+                                  <div className="py-2 text-center text-sm font-medium text-slate-900">
+                                    <KaTeXInline math={prob.equation_typst} />
+                                  </div>
+
+                                  {/* Multiple Choice Options Grid */}
+                                  {prob.choices && prob.choices.length >= 4 && (
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2.5 pt-2 border-t border-slate-100 text-xs">
+                                      {prob.choices.map((ch) => (
+                                        <div key={ch.letter} className="flex items-center space-x-1.5">
+                                          <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[10px] border border-slate-200">
+                                            {ch.letter})
                                           </span>
-                                          <div>
-                                            <StepTextWithMath text={st} />
-                                          </div>
+                                          <span className="text-slate-800">
+                                            <KaTeXInline math={ch.text} />
+                                          </span>
                                         </div>
                                       ))}
                                     </div>
                                   )}
                                 </div>
-                              ) : (
-                                <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded">
-                                  Ans:
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+
+                                {/* Answer Key Overlay / Student Work Area */}
+                                {showAnswerKey ? (
+                                  <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-2">
+                                    <div className="font-bold flex items-center gap-1.5 text-sm pb-1 border-b border-amber-200/60">
+                                      <span className="text-amber-800 text-xs font-semibold">Ans:</span>
+                                      {prob.correct_choice && (
+                                        <span className="font-bold text-indigo-800 mr-1">
+                                          {prob.correct_choice})
+                                        </span>
+                                      )}
+                                      <KaTeXInline math={prob.answer_typst} />
+                                    </div>
+                                    {prob.steps_typst && prob.steps_typst.length > 0 && (
+                                      <div className="mt-1.5 space-y-1 text-[11px] text-amber-900">
+                                        <div className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
+                                          Solution Steps:
+                                        </div>
+                                        {prob.steps_typst.map((st, sIdx) => (
+                                          <div key={sIdx} className="flex items-start gap-1 leading-snug">
+                                            <span className="text-amber-600 font-mono text-[10px] font-semibold mt-0.5">
+                                              {sIdx + 1}.
+                                            </span>
+                                            <div>
+                                              <StepTextWithMath text={st} />
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded">
+                                    Ans:
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Page Footer */}
+                      <div className="text-center text-[10px] text-slate-400 border-t border-slate-200 pt-2 shrink-0">
+                        Generated procedurally by OpenMathForge CAS • Seed: {baseSeed} • Page {pageIdx + 1} of {paginatedPages.length}
                       </div>
                     </div>
-
-                    {/* Page Footer */}
-                    <div className="text-center text-[10px] text-slate-400 border-t border-slate-200 pt-2 shrink-0">
-                      Generated procedurally by OpenMathForge CAS • Seed: {baseSeed} • Page {pageIdx + 1} of {paginatedPages.length}
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </section>
         </div>
@@ -2592,7 +2687,7 @@ export default function OpenMathForgeApp() {
                     onChange={(e) => {
                       const count = Number(e.target.value);
                       setModalCount(count);
-                      fetchModalSample(configTopic.generator_id, count, modalDifficulty);
+                      fetchModalSample(configTopic.generator_id, count, modalDifficulty, modalQuestionType);
                     }}
                     className="w-full text-sm font-bold border rounded p-1.5 border-slate-300"
                   />
@@ -2611,7 +2706,7 @@ export default function OpenMathForgeApp() {
                         title={diff}
                         onClick={() => {
                           setModalDifficulty(diff);
-                          fetchModalSample(configTopic.generator_id, modalCount, diff);
+                          fetchModalSample(configTopic.generator_id, modalCount, diff, modalQuestionType);
                         }}
                         className={`flex-1 py-1.5 text-xs font-bold rounded uppercase ${
                           modalDifficulty === diff
@@ -2640,7 +2735,10 @@ export default function OpenMathForgeApp() {
                       type="radio"
                       name="qtype"
                       checked={modalQuestionType === "free_response"}
-                      onChange={() => setModalQuestionType("free_response")}
+                      onChange={() => {
+                        setModalQuestionType("free_response");
+                        fetchModalSample(configTopic.generator_id, modalCount, modalDifficulty, "free_response");
+                      }}
                       className="accent-indigo-600"
                     />
                     <span>Free response</span>
@@ -2650,7 +2748,10 @@ export default function OpenMathForgeApp() {
                       type="radio"
                       name="qtype"
                       checked={modalQuestionType === "multiple_choice"}
-                      onChange={() => setModalQuestionType("multiple_choice")}
+                      onChange={() => {
+                        setModalQuestionType("multiple_choice");
+                        fetchModalSample(configTopic.generator_id, modalCount, modalDifficulty, "multiple_choice");
+                      }}
                       className="accent-indigo-600"
                     />
                     <span>Multiple choice (with misconception distractors)</span>
@@ -2665,7 +2766,7 @@ export default function OpenMathForgeApp() {
                   </label>
                   <button
                     onClick={() =>
-                      fetchModalSample(configTopic.generator_id, modalCount, modalDifficulty)
+                      fetchModalSample(configTopic.generator_id, modalCount, modalDifficulty, modalQuestionType)
                     }
                     className="text-xs text-indigo-600 hover:underline flex items-center space-x-1"
                   >
@@ -2679,14 +2780,32 @@ export default function OpenMathForgeApp() {
                     <div className="py-6 text-center text-slate-400">Loading samples...</div>
                   ) : (
                     modalSampleProblems.map((p, i) => (
-                      <div key={p.id} className="bg-white p-2 rounded border border-slate-200 flex justify-between">
-                        <div>
-                          <span className="font-bold mr-2">{i + 1})</span>
-                          <KaTeXInline math={p.equation_typst} />
+                      <div key={p.id} className="bg-white p-2.5 rounded border border-slate-200 space-y-1.5">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="font-bold mr-2 text-slate-800">{i + 1})</span>
+                            <KaTeXInline math={p.equation_typst} />
+                          </div>
+                          <div className="text-slate-500 font-mono text-xs shrink-0 ml-2">
+                            Ans: {modalQuestionType === "multiple_choice" && p.correct_choice ? `${p.correct_choice}) ` : ""}
+                            <KaTeXInline math={p.answer_typst} />
+                          </div>
                         </div>
-                        <div className="text-slate-400 font-mono">
-                          Ans: <KaTeXInline math={p.answer_typst} />
-                        </div>
+
+                        {modalQuestionType === "multiple_choice" && p.choices && p.choices.length >= 4 && (
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-1.5 border-t border-slate-100 text-[11px]">
+                            {p.choices.map((ch) => (
+                              <div key={ch.letter} className="flex items-center space-x-1">
+                                <span className="font-bold text-slate-700 bg-slate-100 px-1 rounded text-[10px] border border-slate-200">
+                                  {ch.letter})
+                                </span>
+                                <span className="text-slate-800">
+                                  <KaTeXInline math={ch.text} />
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
