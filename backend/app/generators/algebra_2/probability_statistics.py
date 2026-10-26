@@ -104,3 +104,4 @@ class ProbabilityStatisticsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"problem": q_str}
         )
+

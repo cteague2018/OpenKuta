@@ -95,3 +95,4 @@ class GeneralFunctionsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"problem": q_str}
         )
+

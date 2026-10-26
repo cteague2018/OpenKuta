@@ -93,6 +93,10 @@ class TestTopicProblemIntegrity:
             ("integrals", ["integral", "int", "dx"]),
             ("matrices", ["mat(", "[", "matrix"]),
             ("sequences", ["a_", "sequence", "series", "sum", "term"]),
+            ("scientific notation", ["10^", "scientific", "standard", "decimal"]),
+            ("exponential function", ["^", "growth", "decay", "initial", "f(t)"]),
+            ("word problem", ["mph", "miles", "liters", "hours", "chemist", "people", "population", "tickets", "sold", "years"]),
+            ("probability", ["probability", "ways", "committees", "meals", "p("]),
         ]
     )
     def test_topic_domain_invariants(self, topic_keyword, expected_substrs):
@@ -118,3 +122,4 @@ class TestTopicProblemIntegrity:
                 f"Topic '{name}' in '{course}' generated problems unrelated to '{topic_keyword}'.\n"
                 f"Corpus: {corpus[:200]}..."
             )
+

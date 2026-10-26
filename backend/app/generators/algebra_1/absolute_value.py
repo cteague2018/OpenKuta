@@ -111,3 +111,4 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"equation": eq_str}
         )
+

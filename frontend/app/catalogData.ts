@@ -58,7 +58,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.beginning_algeb.sets_of_numbers",
             "name": "Sets of numbers",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.scientific_notation",
             "available": true
           },
           {
@@ -304,7 +304,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.systems_of_equa.word_problems",
             "name": "Word problems",
-            "generator_id": "algebra_1.systems",
+            "generator_id": "algebra_1.word_problems",
             "available": true
           }
         ]
@@ -321,31 +321,31 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.exponents.graphing_exponential_func",
             "name": "Graphing exponential functions",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.exponential_functions",
             "available": true
           },
           {
             "id": "algebra_1.exponents.writing_scientific_notati",
             "name": "Writing scientific notation",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.scientific_notation",
             "available": true
           },
           {
             "id": "algebra_1.exponents.operations_and_scientific",
             "name": "Operations and scientific notation",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.scientific_notation",
             "available": true
           },
           {
             "id": "algebra_1.exponents.addition_subtraction_and_",
             "name": "Addition/Subtraction and scientific notation",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.scientific_notation",
             "available": true
           },
           {
             "id": "algebra_1.exponents.discrete_exponential_grow",
             "name": "Discrete exponential growth and decay word problems",
-            "generator_id": "algebra_1.multi_step",
+            "generator_id": "algebra_1.exponential_functions",
             "available": true
           }
         ]
@@ -719,19 +719,19 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "geometry.parallel_lines_.slope_and_lines",
             "name": "Slope and lines",
-            "generator_id": "geometry.angles_lines",
+            "generator_id": "algebra_1.linear_equations",
             "available": true
           },
           {
             "id": "geometry.parallel_lines_.graphing_linear_equations",
             "name": "Graphing linear equations",
-            "generator_id": "geometry.angles_lines",
+            "generator_id": "algebra_1.linear_equations",
             "available": true
           },
           {
             "id": "geometry.parallel_lines_.writing_linear_equations",
             "name": "Writing linear equations",
-            "generator_id": "geometry.angles_lines",
+            "generator_id": "algebra_1.linear_equations",
             "available": true
           }
         ]
@@ -860,7 +860,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "geometry.quadrilaterals_.area_of_triangles_and_qua",
             "name": "Area of triangles and quadrilaterals",
-            "generator_id": "geometry.triangles",
+            "generator_id": "geometry.area_volume",
             "available": true
           },
           {
@@ -872,7 +872,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "geometry.quadrilaterals_.area_of_regular_polygons",
             "name": "Area of regular polygons",
-            "generator_id": "geometry.triangles",
+            "generator_id": "geometry.area_volume",
             "available": true
           }
         ]
@@ -1047,13 +1047,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "geometry.circles.tangents",
             "name": "Tangents",
-            "generator_id": "geometry.trigonometry",
+            "generator_id": "geometry.circles",
             "available": true
           },
           {
             "id": "geometry.circles.secant_and_tangent_angles",
             "name": "Secant and tangent angles",
-            "generator_id": "geometry.trigonometry",
+            "generator_id": "geometry.circles",
             "available": true
           },
           {
@@ -1852,7 +1852,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.exponential_and.graphing_exponential_func",
             "name": "Graphing exponential functions",
-            "generator_id": "algebra_2.logarithms",
+            "generator_id": "algebra_1.exponential_functions",
             "available": true
           },
           {
@@ -1924,13 +1924,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.exponential_and.discrete_exponential_grow",
             "name": "Discrete exponential growth and decay word problems",
-            "generator_id": "algebra_2.logarithms",
+            "generator_id": "algebra_1.exponential_functions",
             "available": true
           },
           {
             "id": "algebra_2.exponential_and.continuous_exponential_gr",
             "name": "Continuous exponential growth and decay word problems",
-            "generator_id": "algebra_2.logarithms",
+            "generator_id": "algebra_1.exponential_functions",
             "available": true
           }
         ]
@@ -2154,13 +2154,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.functions.continuity",
             "name": "Continuity",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "calculus.limits",
             "available": true
           },
           {
             "id": "precalculus.functions.extrema_intervals_of_incr",
             "name": "Extrema, intervals of increase and decrease",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "calculus.derivatives",
             "available": true
           },
           {
@@ -2172,7 +2172,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.functions.average_rates_of_change",
             "name": "Average rates of change",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "calculus.derivatives",
             "available": true
           },
           {
@@ -2190,13 +2190,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.functions.operations",
             "name": "Operations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.general_functions",
             "available": true
           },
           {
             "id": "precalculus.functions.inverses",
             "name": "Inverses",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.general_functions",
             "available": true
           }
         ]
@@ -2243,19 +2243,19 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.power_polynomia.rational_equations",
             "name": "Rational equations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.rational_expressions",
             "available": true
           },
           {
             "id": "precalculus.power_polynomia.polynomial_inequalities",
             "name": "Polynomial inequalities",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           },
           {
             "id": "precalculus.power_polynomia.rational_inequalities",
             "name": "Rational inequalities",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           }
         ]
@@ -2266,7 +2266,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.exponential_and.graphing_exponential_func",
             "name": "Graphing exponential functions",
-            "generator_id": "algebra_2.logarithms",
+            "generator_id": "algebra_1.exponential_functions",
             "available": true
           },
           {
@@ -2666,25 +2666,25 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.discrete_mathem.sample_spaces_and_the_fun",
             "name": "Sample spaces and The Fundamental Counting Principle",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "precalculus.discrete_mathem.permutations",
             "name": "Permutations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "precalculus.discrete_mathem.combinations",
             "name": "Combinations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
             "id": "precalculus.discrete_mathem.permutations_vs_combinati",
             "name": "Permutations vs combinations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_2.probability_statistics",
             "available": true
           },
           {
@@ -2831,19 +2831,19 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.introduction_to.instantaneous_rates_of_ch",
             "name": "Instantaneous rates of change",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "calculus.derivatives",
             "available": true
           },
           {
             "id": "precalculus.introduction_to.power_rule_for_differenti",
             "name": "Power rule for differentiation",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "calculus.derivatives",
             "available": true
           },
           {
             "id": "precalculus.introduction_to.motion_along_a_line",
             "name": "Motion along a line",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "calculus.derivatives",
             "available": true
           },
           {
@@ -3126,55 +3126,55 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "calculus.indefinite_inte.power_rule",
             "name": "Power Rule",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.indefinite_inte.logarithmic_rule_and_expo",
             "name": "Logarithmic Rule and Exponentials",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.indefinite_inte.trigonometric",
             "name": "Trigonometric",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.indefinite_inte.inverse_trigonometric",
             "name": "Inverse trigonometric",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.indefinite_inte.power_rule_with_substitut",
             "name": "Power rule with substitution",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.indefinite_inte.logarithmic_rule_and_expo",
             "name": "Logarithmic rule and exponentials with subs.",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.indefinite_inte.trigonometric_with_substi",
             "name": "Trigonometric with substitution",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.indefinite_inte.inverse_trigonometric_wit",
             "name": "Inverse trigonometric with substitution",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.indefinite_inte.integration_by_parts",
             "name": "Integration by parts",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           }
         ]
@@ -3185,13 +3185,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "calculus.definite_integr.approximating_area_under_",
             "name": "Approximating area under a curve",
-            "generator_id": "calculus.riemann_sums",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.definite_integr.area_under_a_curve_by_lim",
             "name": "Area under a curve by limit of sums",
-            "generator_id": "calculus.riemann_sums",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
@@ -3203,25 +3203,25 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "calculus.definite_integr.first_fundamental_theorem",
             "name": "First Fundamental Theorem of Calculus",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.definite_integr.substitution_with_change_",
             "name": "Substitution with change of variables",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.definite_integr.mean_value_theorem",
             "name": "Mean Value Theorem",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.definite_integr.second_fundamental_theore",
             "name": "Second Fundamental Theorem of Calculus",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           }
         ]
@@ -3232,37 +3232,37 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "calculus.applications_of.area_under_a_curve",
             "name": "Area under a curve",
-            "generator_id": "calculus.riemann_sums",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.applications_of.area_between_curves",
             "name": "Area between curves",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.applications_of.volume_by_slicing_disks_a",
             "name": "Volume by slicing, disks and washers",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.applications_of.volume_by_cylinders",
             "name": "Volume by cylinders",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.applications_of.volume_of_solids_with_kno",
             "name": "Volume of solids with known cross sections",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           },
           {
             "id": "calculus.applications_of.motion_along_a_line_revis",
             "name": "Motion along a line revisited",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.integrals",
             "available": true
           }
         ]
@@ -4015,7 +4015,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "pre_algebra.equations.equations_with_variables_",
             "name": "Equations with variables on both sides",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.multi_step",
             "available": true
           },
           {
@@ -4050,7 +4050,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "pre_algebra.inequalities.graphing_inequalities_on_",
             "name": "Graphing inequalities on a number line",
-            "generator_id": "algebra_1.two_step",
+            "generator_id": "algebra_1.inequalities",
             "available": true
           }
         ]
@@ -4102,7 +4102,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "pre_algebra.geometry_founda.area_and_perimeter_of_rec",
             "name": "Area and perimeter of rectangles and triangles",
-            "generator_id": "geometry.area_volume",
+            "generator_id": "geometry.angles_lines",
             "available": true
           },
           {
@@ -4114,7 +4114,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "pre_algebra.geometry_founda.angles_and_triangles",
             "name": "Angles and triangles",
-            "generator_id": "geometry.area_volume",
+            "generator_id": "geometry.angles_lines",
             "available": true
           }
         ]

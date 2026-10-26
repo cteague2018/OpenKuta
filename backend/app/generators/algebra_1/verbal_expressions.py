@@ -106,3 +106,4 @@ class VerbalExpressionsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"phrase": phrase, "variable": var}
         )
+

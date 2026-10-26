@@ -119,3 +119,4 @@ class DistributivePropertyGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"expression": eq_str}
         )
+

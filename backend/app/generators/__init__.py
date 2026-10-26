@@ -48,6 +48,12 @@ from backend.app.generators.algebra_1.literal_equations import (
 from backend.app.generators.algebra_1.word_problems import (
     Algebra1WordProblemsGenerator,
 )
+from backend.app.generators.algebra_1.scientific_notation import (
+    ScientificNotationGenerator,
+)
+from backend.app.generators.algebra_1.exponential_functions import (
+    ExponentialFunctionsGenerator,
+)
 
 # Algebra 2 Generators
 from backend.app.generators.algebra_2.complex_numbers import (
@@ -187,6 +193,10 @@ GENERATOR_REGISTRY: Dict[str, Type[BaseGenerator]] = {
     DistributivePropertyGenerator.generator_id: DistributivePropertyGenerator,
     LiteralEquationsGenerator.generator_id: LiteralEquationsGenerator,
     Algebra1WordProblemsGenerator.generator_id: Algebra1WordProblemsGenerator,
+    ScientificNotationGenerator.generator_id: ScientificNotationGenerator,
+    ExponentialFunctionsGenerator.generator_id: (
+        ExponentialFunctionsGenerator
+    ),
 
     # Geometry
     PythagoreanTheoremGenerator.generator_id: PythagoreanTheoremGenerator,

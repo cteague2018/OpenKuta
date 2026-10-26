@@ -91,3 +91,4 @@ class LiteralEquationsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"equation": eq_typst}
         )
+
