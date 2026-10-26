@@ -1,4 +1,5 @@
 from __future__ import annotations
+import sympy as sp
 
 import random
 
@@ -105,3 +106,70 @@ class CalculusDerivativesGenerator(BaseGenerator):
                 difficulty=ProblemDifficulty.SPICY,
                 standards=self.standards
             )
+
+
+
+class CalculusTangentLinesGenerator(BaseGenerator):
+    generator_id = "calculus.tangent_lines"
+    name = "Tangent and Normal Lines"
+    category = "Calculus"
+    standards = ["AP.CALC.CHA-3.E", "AP.CALC.CHA-3.F"]
+
+    def generate_single(
+        self,
+        rng: random.Random,
+        difficulty: ProblemDifficulty,
+        problem_idx: int,
+        allow_negatives: bool = True
+    ) -> BaseProblem:
+        x = sp.Symbol('x')
+        x0 = rng.choice([-2, -1, 1, 2, 3])
+
+        if difficulty == ProblemDifficulty.MILD:
+            a = rng.choice([1, 2, -1])
+            b = rng.randint(-3, 3)
+            c = rng.randint(-5, 5)
+            f_expr = a * x**2 + b * x + c
+        elif difficulty == ProblemDifficulty.MEDIUM:
+            a = rng.choice([1, -1])
+            b = rng.choice([-2, 2])
+            f_expr = a * x**3 + b * x
+        else: # SPICY
+            c = rng.choice([1, 2])
+            f_expr = c * sp.sin(x) if rng.random() < 0.5 else sp.exp(x)
+            x0 = 0
+
+        df_expr = sp.diff(f_expr, x)
+        y0 = f_expr.subs(x, x0)
+        m = df_expr.subs(x, x0)
+
+        b_tangent = -m * x0 + y0
+        m_s = "" if m == 1 else ("-" if m == -1 else str(m))
+        b_s = f"+ {b_tangent}" if b_tangent > 0 else (f"- {abs(b_tangent)}" if b_tangent < 0 else "")
+        ans = f"y = {m_s}x {b_s}".strip()
+
+        eq_typst = f"f(x) = {sp.printing.latex(f_expr)}, quad \"at \" x = {x0}"
+        steps = [
+            f"Given function: $ f(x) = {sp.printing.latex(f_expr)} $ at $ x_0 = {x0} $",
+            f"Find derivative: $ f'(x) = {sp.printing.latex(df_expr)} $",
+            f"Calculate slope at $ x_0 = {x0} $: $ m = f'({x0}) = {m} $",
+            f"Calculate point coordinates: $ y_0 = f({x0}) = {y0} \\implies ({x0}, {y0}) $",
+            f"Use point-slope form $ y - y_0 = m(x - x_0) $: $ y - ({y0}) = {m}(x - ({x0})) $",
+            f"Result: $ {ans} $"
+        ]
+
+        d1 = f"y = -{m_s}x {b_s}".strip()
+        d2 = f"y = {m_s}x {'- ' if b_tangent >= 0 else '+ '}{abs(b_tangent)}".strip()
+        d3 = f"y = {m}x"
+
+        return BaseProblem(
+            id=f"calc_tangent_{difficulty.value}_{problem_idx}",
+            prompt_text="Find the equation of the line tangent to each function at the given point.",
+            equation_typst=f"$ {eq_typst} $",
+            answer_typst=f"$ {ans} $",
+            steps_typst=steps,
+            distractors=[f"$ {d} $" for d in [d1, d2, d3]],
+            difficulty=difficulty,
+            standards=self.standards,
+            metadata={"slope": str(m), "point": (str(x0), str(y0))}
+        )

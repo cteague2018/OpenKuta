@@ -103,3 +103,60 @@ class ExponentialFunctionsGenerator(BaseGenerator):
             metadata={"equation": q_text}
         )
 
+
+
+
+class GraphingExponentialGenerator(BaseGenerator):
+    generator_id = "algebra_1.graphing_exponential"
+    name = "Graphing Exponential Functions"
+    category = "Algebra 1"
+    standards = ["CCSS.MATH.CONTENT.HSF.IF.C.7.E", "TEKS.MATH.A1.9.D"]
+
+    def generate_single(
+        self,
+        rng: random.Random,
+        difficulty: ProblemDifficulty,
+        problem_idx: int,
+        allow_negatives: bool = True
+    ) -> BaseProblem:
+        base = rng.choice([2, 3, 4, 1/2, 1/3])
+        c = rng.randint(-3, 3)
+        a = rng.choice([1, 2, -1])
+
+        base_s = f"({base})" if isinstance(base, float) or "/" in str(base) else str(base)
+        if base == 0.5:
+            base_s = "(1/2)"
+        elif base == 1/3:
+            base_s = "(1/3)"
+
+        a_s = "" if a == 1 else ("-" if a == -1 else f"{a} * ")
+        c_s = f"+ {c}" if c > 0 else (f"- {abs(c)}" if c < 0 else "")
+        eq = f"y = {a_s}{base_s}^x {c_s}".strip()
+
+        is_growth = (base > 1 and a > 0) or (base < 1 and a < 0)
+        asymptote = f"y = {c}"
+        y_int = a + c
+        steps = [
+            f"Given exponential function: $ {eq} $",
+            f"Horizontal asymptote: $ {asymptote} $",
+            f"y-intercept (when $ x = 0 $): $ (0, {y_int}) $",
+            f"This represents exponential {'growth' if is_growth else 'decay'}.",
+            f"Plot points and draw a smooth curve approaching asymptote $ {asymptote} $."
+        ]
+
+        ans = f"Asymptote: {asymptote}; y-int: (0, {y_int})"
+        d1 = f"Asymptote: y = {c + 1}; y-int: (0, {y_int})"
+        d2 = f"Asymptote: x = {c}; y-int: ({y_int}, 0)"
+        d3 = f"Asymptote: {asymptote}; y-int: (0, {y_int - 1})"
+
+        return BaseProblem(
+            id=f"graph_exp_{difficulty.value}_{problem_idx}",
+            prompt_text="Sketch the graph of each exponential function. State the horizontal asymptote and y-intercept.",
+            equation_typst=f"$ {eq} $",
+            answer_typst=f"$ {ans} $",
+            steps_typst=steps,
+            distractors=[f"$ {d} $" for d in [d1, d2, d3]],
+            difficulty=difficulty,
+            standards=self.standards,
+            metadata={"asymptote": asymptote, "y_intercept": y_int}
+        )

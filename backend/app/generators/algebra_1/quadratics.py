@@ -603,3 +603,83 @@ class QuadraticsCompletingSquareGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"equation": eq}
         )
+
+
+
+class GraphingQuadraticsGenerator(BaseGenerator):
+    generator_id = "algebra_1.graphing_quadratics"
+    name = "Graphing Quadratic Functions"
+    category = "Algebra 1"
+    standards = ["CCSS.MATH.CONTENT.HSF.IF.C.7.A", "TEKS.MATH.A1.7.A"]
+
+    def generate_single(
+        self,
+        rng: random.Random,
+        difficulty: ProblemDifficulty,
+        problem_idx: int,
+        allow_negatives: bool = True
+    ) -> BaseProblem:
+        h = rng.randint(-4, 4) if allow_negatives else rng.randint(0, 4)
+        k = rng.randint(-4, 4) if allow_negatives else rng.randint(0, 4)
+        a = rng.choice([-1, 1, 2, -2])
+
+        if difficulty == ProblemDifficulty.MILD:
+            h_s = f"- {h}" if h > 0 else (f"+ {abs(h)}" if h < 0 else "")
+            k_s = f"+ {k}" if k > 0 else (f"- {abs(k)}" if k < 0 else "")
+            a_s = "" if a == 1 else ("-" if a == -1 else str(a))
+            inner = f"(x {h_s})" if h != 0 else "x"
+            eq = f"y = {a_s}{inner}^2 {k_s}".strip()
+            y_int = a * (h * h) + k
+            steps = [
+                f"Given quadratic function: $ {eq} $",
+                f"Identify vertex $ (h, k) $: $ ({h}, {k}) $",
+                f"Axis of symmetry: $ x = {h} $",
+                f"The parabola opens {'upward' if a > 0 else 'downward'} because $ a = {a} $.",
+                f"Plot vertex $ ({h}, {k}) $ and y-intercept $ (0, {y_int}) $, then sketch curve."
+            ]
+        elif difficulty == ProblemDifficulty.MEDIUM:
+            b = -2 * a * h
+            c = a * (h * h) + k
+            a_s = "" if a == 1 else ("-" if a == -1 else str(a))
+            b_s = f"+ {b}x" if b > 0 else (f"- {abs(b)}x" if b < 0 else "")
+            c_s = f"+ {c}" if c > 0 else (f"- {abs(c)}" if c < 0 else "")
+            eq = f"y = {a_s}x^2 {b_s} {c_s}".strip().replace("+ -", "- ")
+            steps = [
+                f"Given quadratic function: $ {eq} $",
+                f"Vertex x-coordinate using $ x = -b / (2a) $: $ x = -({b}) / (2({a})) = {h} $",
+                f"Vertex y-coordinate: $ y = f({h}) = {k} $",
+                f"Vertex: $ ({h}, {k}) $, Axis of symmetry: $ x = {h} $",
+                f"Plot vertex and y-intercept $ (0, {c}) $, then sketch parabola."
+            ]
+        else: # SPICY
+            b = -2 * a * h
+            c = a * (h * h) + k
+            sym = rng.choice(["<", "<=", ">", ">="])
+            is_solid = "<=" in sym or ">=" in sym
+            a_s = "" if a == 1 else ("-" if a == -1 else str(a))
+            b_s = f"+ {b}x" if b > 0 else (f"- {abs(b)}x" if b < 0 else "")
+            c_s = f"+ {c}" if c > 0 else (f"- {abs(c)}" if c < 0 else "")
+            eq = f"y {sym} {a_s}x^2 {b_s} {c_s}".strip().replace("+ -", "- ")
+            steps = [
+                f"Given quadratic inequality: $ {eq} $",
+                f"Graph the boundary parabola with a {'solid' if is_solid else 'dashed'} curve.",
+                f"Vertex is at $ ({h}, {k}) $.",
+                f"Test point $ (0, 0) $ to shade region."
+            ]
+
+        ans = f"Vertex: ({h}, {k}); Axis: x = {h}"
+        d1 = f"Vertex: ({-h}, {k}); Axis: x = {-h}"
+        d2 = f"Vertex: ({k}, {h}); Axis: x = {k}"
+        d3 = f"Vertex: ({h}, {-k}); Axis: x = {h}"
+
+        return BaseProblem(
+            id=f"graph_quad_{difficulty.value}_{problem_idx}",
+            prompt_text="Sketch the graph of each quadratic function. Identify the vertex and axis of symmetry.",
+            equation_typst=f"$ {eq} $",
+            answer_typst=f"$ {ans} $",
+            steps_typst=steps,
+            distractors=[f"$ {d} $" for d in [d1, d2, d3]],
+            difficulty=difficulty,
+            standards=self.standards,
+            metadata={"vertex": (h, k)}
+        )

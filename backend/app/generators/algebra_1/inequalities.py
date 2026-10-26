@@ -137,3 +137,74 @@ class LinearInequalitiesGenerator(BaseGenerator):
                 standards=self.standards
             )
 
+
+
+
+class GraphingInequalitiesGenerator(BaseGenerator):
+    generator_id = "algebra_1.graphing_inequalities"
+    name = "Graphing Single-Variable Inequalities"
+    category = "Algebra 1"
+    standards = ["CCSS.MATH.CONTENT.HSA.REI.B.3", "TEKS.MATH.A1.5.B"]
+
+    def generate_single(
+        self,
+        rng: random.Random,
+        difficulty: ProblemDifficulty,
+        problem_idx: int,
+        allow_negatives: bool = True
+    ) -> BaseProblem:
+        var = rng.choice(["x", "n", "k", "m", "p", "v"])
+        val = rng.randint(-8, 8) if allow_negatives else rng.randint(0, 8)
+        sym = rng.choice(["<", "<=", ">", ">="])
+
+        if difficulty == ProblemDifficulty.MILD:
+            eq = f"{var} {sym} {val}"
+            ans = f"{var} {sym} {val}"
+            is_closed = "<=" in sym or ">=" in sym
+            dir_s = "left" if "<" in sym else "right"
+            steps = [
+                f"Given inequality: $ {eq} $",
+                f"Place an {'closed (solid)' if is_closed else 'open'} circle at $ {val} $ on the number line.",
+                f"Draw an arrow pointing to the {dir_s} since the inequality represents values {'less than' if '<' in sym else 'greater than'} {val}."
+            ]
+        elif difficulty == ProblemDifficulty.MEDIUM:
+            a = rng.choice([2, 3, -2, -3])
+            b = rng.randint(-6, 6)
+            c = a * val + b
+            b_s = f"+ {b}" if b > 0 else (f"- {abs(b)}" if b < 0 else "")
+            eq = f"{a} {var} {b_s} {sym} {c}".replace("+ -", "- ")
+            res_sym = (">" if sym == "<" else (">=" if sym == "<=" else ("<" if sym == ">" else "<="))) if a < 0 else sym
+            ans = f"{var} {res_sym} {val}"
+            is_closed = "<=" in res_sym or ">=" in res_sym
+            dir_s = "left" if "<" in res_sym else "right"
+            steps = [
+                f"Given inequality: $ {eq} $",
+                f"Subtract constant and divide by {a} (remembering to {'FLIP the inequality sign because dividing by negative' if a < 0 else 'preserve the sign'}): $ {ans} $",
+                f"Graph: {'closed' if is_closed else 'open'} circle at $ {val} $, arrow pointing {dir_s}."
+            ]
+        else: # SPICY
+            v1 = rng.randint(-6, 0)
+            v2 = rng.randint(1, 7)
+            eq = f"{v1} < {var} <= {v2}"
+            ans = f"{v1} < {var} <= {v2}"
+            steps = [
+                f"Given compound inequality: $ {eq} $",
+                f"Place an open circle at $ {v1} $ and a closed (solid) circle at $ {v2} $.",
+                f"Shade the segment connecting $ {v1} $ and $ {v2} $ on the number line."
+            ]
+
+        d1 = f"{var} {'<' if sym == '>' else '>'} {val}"
+        d2 = f"{var} {sym} {-val}"
+        d3 = f"{var} {sym} {val + 1}"
+
+        return BaseProblem(
+            id=f"graph_ineq_num_{difficulty.value}_{problem_idx}",
+            prompt_text="Draw a graph for each inequality on a number line.",
+            equation_typst=f"$ {eq} $",
+            answer_typst=f"$ {ans} $",
+            steps_typst=steps,
+            distractors=[f"$ {d} $" for d in [d1, d2, d3]],
+            difficulty=difficulty,
+            standards=self.standards,
+            metadata={"inequality": eq}
+        )

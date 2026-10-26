@@ -64,7 +64,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.beginning_algeb.adding_and_subtracting_ra",
             "name": "Adding and subtracting rational numbers",
-            "generator_id": "algebra_2.rational_expressions",
+            "generator_id": "algebra_1.rational_numbers_arithmetic",
             "available": true
           },
           {
@@ -146,7 +146,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.inequalities.graphing_single_variable_",
             "name": "Graphing single-variable inequalities",
-            "generator_id": "algebra_1.inequalities",
+            "generator_id": "algebra_1.graphing_inequalities",
             "available": true
           },
           {
@@ -263,7 +263,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.linear_equation.graphing_absolute_value_e",
             "name": "Graphing absolute value equations",
-            "generator_id": "algebra_1.absolute_value",
+            "generator_id": "algebra_1.graphing_absolute_value",
             "available": true
           },
           {
@@ -321,7 +321,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.exponents.graphing_exponential_func",
             "name": "Graphing exponential functions",
-            "generator_id": "algebra_1.exponential_functions",
+            "generator_id": "algebra_1.graphing_exponential",
             "available": true
           },
           {
@@ -362,25 +362,25 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.polynomials.adding_and_subtracting",
             "name": "Adding and subtracting",
-            "generator_id": "algebra_1.factoring",
+            "generator_id": "algebra_1.polynomials_add_sub",
             "available": true
           },
           {
             "id": "algebra_1.polynomials.dividing",
             "name": "Dividing",
-            "generator_id": "algebra_1.factoring",
+            "generator_id": "algebra_2.polynomial_division",
             "available": true
           },
           {
             "id": "algebra_1.polynomials.multiplying",
             "name": "Multiplying",
-            "generator_id": "algebra_1.factoring",
+            "generator_id": "algebra_1.polynomials_multiply",
             "available": true
           },
           {
             "id": "algebra_1.polynomials.multiplying_special_cases",
             "name": "Multiplying special cases",
-            "generator_id": "algebra_1.factoring",
+            "generator_id": "algebra_1.polynomials_multiply",
             "available": true
           }
         ]
@@ -420,13 +420,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.quadratic_funct.graphing",
             "name": "Graphing",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.graphing_quadratics",
             "available": true
           },
           {
             "id": "algebra_1.quadratic_funct.graphing_quadratic_inequa",
             "name": "Graphing quadratic inequalities",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.graphing_quadratics",
             "available": true
           },
           {
@@ -1316,7 +1316,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.linear_relation.graphing_absolute_value_e",
             "name": "Graphing absolute value equations",
-            "generator_id": "algebra_1.absolute_value",
+            "generator_id": "algebra_1.graphing_absolute_value",
             "available": true
           },
           {
@@ -1363,7 +1363,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.systems_of_equa.systems_of_equations_word",
             "name": "Systems of equations word problems (2 variables)",
-            "generator_id": "algebra_1.systems",
+            "generator_id": "algebra_1.word_problems",
             "available": true
           },
           {
@@ -1462,13 +1462,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.quadratic_funct.graphing_quadratic_functi",
             "name": "Graphing quadratic functions",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.graphing_quadratics",
             "available": true
           },
           {
             "id": "algebra_2.quadratic_funct.graphing_quadratic_inequa",
             "name": "Graphing quadratic inequalities",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.graphing_quadratics",
             "available": true
           },
           {
@@ -1533,19 +1533,19 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.polynomial_func.adding_and_subtracting",
             "name": "Adding and subtracting",
-            "generator_id": "algebra_1.factoring",
+            "generator_id": "algebra_1.polynomials_add_sub",
             "available": true
           },
           {
             "id": "algebra_2.polynomial_func.multiplying",
             "name": "Multiplying",
-            "generator_id": "algebra_1.factoring",
+            "generator_id": "algebra_1.polynomials_multiply",
             "available": true
           },
           {
             "id": "algebra_2.polynomial_func.multiplying_special_cases",
             "name": "Multiplying special cases",
-            "generator_id": "algebra_1.factoring",
+            "generator_id": "algebra_1.polynomials_multiply",
             "available": true
           },
           {
@@ -1758,13 +1758,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.conic_sections.circles_graphing_properti",
             "name": "Circles, graphing & properties",
-            "generator_id": "geometry.circles",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
             "id": "algebra_2.conic_sections.circles_writing_equations",
             "name": "Circles, writing equations",
-            "generator_id": "geometry.circles",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
@@ -1852,7 +1852,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.exponential_and.graphing_exponential_func",
             "name": "Graphing exponential functions",
-            "generator_id": "algebra_1.exponential_functions",
+            "generator_id": "algebra_1.graphing_exponential",
             "available": true
           },
           {
@@ -2266,7 +2266,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.exponential_and.graphing_exponential_func",
             "name": "Graphing exponential functions",
-            "generator_id": "algebra_1.exponential_functions",
+            "generator_id": "algebra_1.graphing_exponential",
             "available": true
           },
           {
@@ -2619,13 +2619,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "precalculus.conic_sections.circles_graphing_properti",
             "name": "Circles, graphing & properties",
-            "generator_id": "geometry.circles",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
             "id": "precalculus.conic_sections.circles_writing_equations",
             "name": "Circles, writing equations",
-            "generator_id": "geometry.circles",
+            "generator_id": "precalculus.polar_conics",
             "available": true
           },
           {
@@ -3025,7 +3025,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "calculus.applications_of.slope_tangent_and_normal_",
             "name": "Slope, tangent, and normal lines",
-            "generator_id": "calculus.derivatives",
+            "generator_id": "calculus.tangent_lines",
             "available": true
           },
           {
@@ -3624,7 +3624,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "grade_6.numeric_express.properties_of_addition_an",
             "name": "Properties of addition and multiplication",
-            "generator_id": "grade_6.ratios_rates",
+            "generator_id": "algebra_1.distributive_property",
             "available": true
           },
           {
@@ -3728,7 +3728,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "grade_6.inequalities.writing_and_graphing_ineq",
             "name": "Writing and graphing inequalities",
-            "generator_id": "grade_6.one_step",
+            "generator_id": "algebra_1.graphing_inequalities",
             "available": true
           },
           {
@@ -3740,7 +3740,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "grade_6.inequalities.solving_and_graphing_one_",
             "name": "Solving and graphing one-step inequalities",
-            "generator_id": "algebra_1.inequalities",
+            "generator_id": "algebra_1.graphing_inequalities",
             "available": true
           },
           {
@@ -4050,7 +4050,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "pre_algebra.inequalities.graphing_inequalities_on_",
             "name": "Graphing inequalities on a number line",
-            "generator_id": "algebra_1.inequalities",
+            "generator_id": "algebra_1.graphing_inequalities",
             "available": true
           }
         ]
@@ -4122,6 +4122,9 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
     ]
   }
 };
+
+export const COURSE_CATALOG = DEFAULT_COURSE_CATALOG;
+
 export const DEFAULT_SAMPLE_PROBLEMS: Problem[] = [
   {
     id: "demo_1",

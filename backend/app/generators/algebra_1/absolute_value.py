@@ -112,3 +112,53 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
             metadata={"equation": eq_str}
         )
 
+
+
+
+class GraphingAbsoluteValueGenerator(BaseGenerator):
+    generator_id = "algebra_1.graphing_absolute_value"
+    name = "Graphing Absolute Value Equations"
+    category = "Algebra 1"
+    standards = ["CCSS.MATH.CONTENT.HSF.IF.C.7.B", "TEKS.MATH.A1.6.C"]
+
+    def generate_single(
+        self,
+        rng: random.Random,
+        difficulty: ProblemDifficulty,
+        problem_idx: int,
+        allow_negatives: bool = True
+    ) -> BaseProblem:
+        h = rng.randint(-4, 4) if allow_negatives else rng.randint(0, 4)
+        k = rng.randint(-4, 4) if allow_negatives else rng.randint(0, 4)
+        a = rng.choice([-2, -1, 1, 2, 3])
+
+        h_s = f"- {h}" if h > 0 else (f"+ {abs(h)}" if h < 0 else "")
+        k_s = f"+ {k}" if k > 0 else (f"- {abs(k)}" if k < 0 else "")
+        a_s = "" if a == 1 else ("-" if a == -1 else str(a))
+        inner = f"x {h_s}".strip() if h != 0 else "x"
+        eq = f"y = {a_s}|{inner}| {k_s}".strip()
+
+        steps = [
+            f"Given absolute value equation: $ {eq} $",
+            f"Identify vertex $ (h, k) $: $ ({h}, {k}) $",
+            f"The V-shape opens {'upward' if a > 0 else 'downward'} with branch slope $ \\pm {abs(a)} $.",
+            f"Plot vertex $ ({h}, {k}) $ and symmetric points $ ({h + 1}, {k + a}) $ and $ ({h - 1}, {k + a}) $.",
+            "Draw the two straight rays forming the V-graph."
+        ]
+
+        ans = f"Vertex: ({h}, {k})"
+        d1 = f"Vertex: ({-h}, {k})"
+        d2 = f"Vertex: ({k}, {h})"
+        d3 = f"Vertex: ({h}, {-k})"
+
+        return BaseProblem(
+            id=f"graph_abs_{difficulty.value}_{problem_idx}",
+            prompt_text="Sketch the graph of each absolute value equation. Identify the vertex.",
+            equation_typst=f"$ {eq} $",
+            answer_typst=f"$ {ans} $",
+            steps_typst=steps,
+            distractors=[f"$ {d} $" for d in [d1, d2, d3]],
+            difficulty=difficulty,
+            standards=self.standards,
+            metadata={"vertex": (h, k)}
+        )

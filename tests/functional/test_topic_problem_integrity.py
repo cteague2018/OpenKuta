@@ -103,6 +103,9 @@ class TestTopicProblemIntegrity:
             ("systems of inequalities", ["inequalit", "shade", "region"]),
             ("taking square roots", ["square root", "roots", "sqrt"]),
             ("discriminant", ["discriminant", "solution"]),
+            ("graphing single-variable inequalities", ["number line", "graph", "circle", "arrow", "inequalit"]),
+            ("slope, tangent, and normal lines", ["tangent", "normal", "slope", "derivative", "point"]),
+            ("multiplying special cases", ["product", "binomial", "x^", "x", "foil", "^2", "square"]),
         ]
     )
     def test_topic_domain_invariants(self, topic_keyword, expected_substrs):

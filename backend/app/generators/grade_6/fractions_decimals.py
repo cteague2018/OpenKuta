@@ -1,4 +1,5 @@
 from __future__ import annotations
+import sympy as sp
 
 import math
 import random
@@ -269,4 +270,58 @@ class Grade6FractionsDecimalsGenerator(BaseGenerator):
             difficulty=ProblemDifficulty.SPICY,
             standards=self.standards,
             metadata={"dividend": dividend, "divisor": divisor, "quotient": quotient}
+        )
+
+
+
+class RationalNumbersArithmeticGenerator(BaseGenerator):
+    generator_id = "algebra_1.rational_numbers_arithmetic"
+    name = "Adding and Subtracting Rational Numbers"
+    category = "Algebra 1"
+    standards = ["CCSS.MATH.CONTENT.7.NS.A.1", "CCSS.MATH.CONTENT.7.NS.A.2"]
+
+    def generate_single(
+        self,
+        rng: random.Random,
+        difficulty: ProblemDifficulty,
+        problem_idx: int,
+        allow_negatives: bool = True
+    ) -> BaseProblem:
+        den1 = rng.choice([2, 3, 4, 5, 6, 8])
+        den2 = rng.choice([den1, den1 * 2, 2, 3, 4])
+        num1 = rng.choice([-7, -5, -3, -1, 1, 3, 5, 7])
+        num2 = rng.choice([-7, -5, -3, -1, 1, 3, 5, 7])
+
+        f1 = sp.Rational(num1, den1)
+        f2 = sp.Rational(num2, den2)
+        op = rng.choice(["+", "-"])
+
+        if op == "+":
+            ans_rat = f1 + f2
+            eq = f"({f1}) + ({f2})" if f2 < 0 else f"{f1} + {f2}"
+        else:
+            ans_rat = f1 - f2
+            eq = f"{f1} - ({f2})" if f2 < 0 else f"{f1} - {f2}"
+
+        ans_s = str(ans_rat.p) if ans_rat.q == 1 else f"{ans_rat.p}/{ans_rat.q}"
+        steps = [
+            f"Given expression: $ {eq} $",
+            f"Find common denominator and perform operation: $ {ans_s} $",
+            f"Result: $ {ans_s} $"
+        ]
+
+        d1 = f"{ans_rat.p + 1}/{ans_rat.q}" if ans_rat.q != 1 else str(ans_rat.p + 1)
+        d2 = f"{-ans_rat.p}/{ans_rat.q}" if ans_rat.q != 1 else str(-ans_rat.p)
+        d3 = f"{num1 + num2}/{den1 + den2}"
+
+        return BaseProblem(
+            id=f"rat_num_{difficulty.value}_{problem_idx}",
+            prompt_text="Evaluate each expression. Simplify your answer completely.",
+            equation_typst=f"$ {eq} $",
+            answer_typst=f"$ {ans_s} $",
+            steps_typst=steps,
+            distractors=[f"$ {d} $" for d in [d1, d2, d3]],
+            difficulty=difficulty,
+            standards=self.standards,
+            metadata={"answer": ans_s}
         )

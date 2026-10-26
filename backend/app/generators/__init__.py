@@ -12,6 +12,7 @@ from backend.app.generators.algebra_1.exponent_rules import (
 # New High-Priority Classroom Generators
 from backend.app.generators.algebra_1.inequalities import (
     LinearInequalitiesGenerator,
+    GraphingInequalitiesGenerator,
 )
 from backend.app.generators.algebra_1.linear_equations import (
     LinearEquationsGenerator,
@@ -25,11 +26,14 @@ from backend.app.generators.algebra_1.multi_step_equations import (
 )
 from backend.app.generators.algebra_1.polynomials import (
     PolynomialFactoringGenerator,
+    PolynomialAddSubGenerator,
+    PolynomialMultiplyGenerator,
 )
 
 # Algebra 1 Generators
 from backend.app.generators.algebra_1.quadratics import (
     QuadraticEquationsGenerator,
+    GraphingQuadraticsGenerator,
     QuadraticsFactoringGenerator,
     QuadraticsSquareRootsGenerator,
     QuadraticsFormulaGenerator,
@@ -51,6 +55,7 @@ from backend.app.generators.algebra_1.verbal_expressions import (
 )
 from backend.app.generators.algebra_1.absolute_value import (
     AbsoluteValueEquationsGenerator,
+    GraphingAbsoluteValueGenerator,
 )
 from backend.app.generators.algebra_1.distributive_property import (
     DistributivePropertyGenerator,
@@ -66,6 +71,7 @@ from backend.app.generators.algebra_1.scientific_notation import (
 )
 from backend.app.generators.algebra_1.exponential_functions import (
     ExponentialFunctionsGenerator,
+    GraphingExponentialGenerator,
 )
 
 # Algebra 2 Generators
@@ -95,6 +101,7 @@ from backend.app.generators.algebra_2.rational_expressions import (
 )
 from backend.app.generators.calculus.derivatives import (
     CalculusDerivativesGenerator,
+    CalculusTangentLinesGenerator,
 )
 from backend.app.generators.calculus.diff_eq import (
     CalculusDiffEqGenerator,
@@ -147,6 +154,7 @@ from backend.app.generators.grade_6.factors_multiples import (
 )
 from backend.app.generators.grade_6.fractions_decimals import (
     Grade6FractionsDecimalsGenerator,
+    RationalNumbersArithmeticGenerator,
 )
 from backend.app.generators.grade_6.integers import (
     Grade6IntegersGenerator,
@@ -210,7 +218,15 @@ GENERATOR_REGISTRY: Dict[str, Type[BaseGenerator]] = {
     SystemsEliminationGenerator.generator_id: SystemsEliminationGenerator,
     SystemsInequalitiesGenerator.generator_id: SystemsInequalitiesGenerator,
     PolynomialFactoringGenerator.generator_id: PolynomialFactoringGenerator,
+    PolynomialAddSubGenerator.generator_id: PolynomialAddSubGenerator,
+    PolynomialMultiplyGenerator.generator_id: PolynomialMultiplyGenerator,
     LinearInequalitiesGenerator.generator_id: LinearInequalitiesGenerator,
+    GraphingInequalitiesGenerator.generator_id: GraphingInequalitiesGenerator,
+    GraphingQuadraticsGenerator.generator_id: GraphingQuadraticsGenerator,
+    GraphingAbsoluteValueGenerator.generator_id: GraphingAbsoluteValueGenerator,
+    GraphingExponentialGenerator.generator_id: GraphingExponentialGenerator,
+    RationalNumbersArithmeticGenerator.generator_id: RationalNumbersArithmeticGenerator,
+    CalculusTangentLinesGenerator.generator_id: CalculusTangentLinesGenerator,
     ExponentRulesGenerator.generator_id: ExponentRulesGenerator,
     VerbalExpressionsGenerator.generator_id: VerbalExpressionsGenerator,
     AbsoluteValueEquationsGenerator.generator_id: (
