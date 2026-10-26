@@ -34,6 +34,7 @@ import {
   RotateCcw,
   History,
   Undo2,
+  Key,
 } from "lucide-react";
 import katex from "katex";
 import {
@@ -258,6 +259,41 @@ export default function OpenMathForgeApp() {
   const [selectedClassId, setSelectedClassId] = useState<string>("class_local_alg1_p2");
   const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
   const [isBatchGenerating, setIsBatchGenerating] = useState<boolean>(false);
+
+  // Pro License & Access State
+  const [proLicenseInput, setProLicenseInput] = useState<string>("");
+  const [isProLicensed, setIsProLicensed] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("omf_pro_license_active") === "true";
+    }
+    return false;
+  });
+  const [licenseStatusMessage, setLicenseStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [showDemoPreviewGrading, setShowDemoPreviewGrading] = useState<boolean>(false);
+
+  const isUserPro = Boolean(
+    (session?.user as any)?.isPro ||
+    (session?.user as any)?.tier === "pro" ||
+    isProLicensed
+  );
+
+  const handleActivateLicense = (keyToTest?: string) => {
+    const key = (keyToTest || proLicenseInput).trim().toUpperCase();
+    if (!key) {
+      setLicenseStatusMessage({ type: "error", text: "Please enter a valid school district or educator license key." });
+      return;
+    }
+    if (key.startsWith("OMF-PRO") || key.startsWith("PRO-") || key === "TEACHER-PRO-2026") {
+      setIsProLicensed(true);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("omf_pro_license_active", "true");
+        localStorage.setItem("omf_pro_license_key", key);
+      }
+      setLicenseStatusMessage({ type: "success", text: `License activated successfully! (${key})` });
+    } else {
+      setLicenseStatusMessage({ type: "error", text: "Invalid license key. Check your school district activation code or subscribe to Pro." });
+    }
+  };
 
   // Vision Grader State
   const [uploadedScanFile, setUploadedScanFile] = useState<File | null>(null);
@@ -1122,8 +1158,8 @@ export default function OpenMathForgeApp() {
               >
                 <FileCheck className="w-3.5 h-3.5" />
                 <span>Vision & CAS Grader</span>
-                {!session?.user && (
-                  <span className="text-[9px] bg-slate-700 text-slate-300 px-1 py-0.2 rounded font-mono font-normal">
+                {!isUserPro && (
+                  <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1 py-0.2 rounded font-mono font-bold">
                     PRO
                   </span>
                 )}
@@ -1140,8 +1176,12 @@ export default function OpenMathForgeApp() {
                   <div className="hidden md:block text-left">
                     <div className="font-semibold text-slate-100 flex items-center space-x-1">
                       <span className="truncate max-w-[120px]">{session.user.name || "Teacher"}</span>
-                      <span className="text-[9px] bg-indigo-500/30 text-indigo-300 font-bold px-1.5 py-0.2 rounded border border-indigo-400/40">
-                        TEACHER
+                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
+                        isUserPro
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/30"
+                          : "bg-amber-500/20 text-amber-300 border-amber-400/30"
+                      }`}>
+                        {isUserPro ? "PRO TEACHER" : "DEMO / COMMUNITY"}
                       </span>
                     </div>
                   </div>
@@ -1896,11 +1936,11 @@ export default function OpenMathForgeApp() {
               <div className="font-bold flex items-center space-x-1.5">
                 <span>Vision & CAS Grader</span>
                 <span className="text-[10px] bg-amber-200/60 text-amber-800 font-mono px-1.5 py-0.2 rounded font-semibold">
-                  PRO TIER
+                  PRO SERVICE
                 </span>
               </div>
               <div className="text-amber-800 leading-relaxed text-[11px]">
-                Sign in with your district Google Workspace, Microsoft 365, or educator account to access automatic handwriting step verification.
+                Sign in with your educator account to view your subscription status or enter your school district license key.
               </div>
             </div>
           </div>
@@ -1911,8 +1951,154 @@ export default function OpenMathForgeApp() {
               className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center space-x-2 mx-auto"
             >
               <LogIn className="w-4 h-4" />
-              <span>Sign In to Access Vision Grader</span>
+              <span>Sign In with School Account</span>
             </button>
+          </div>
+        </div>
+      ) : !isUserPro ? (
+        /* Pro License Gatekeeper when in Demo / Community Tier */
+        <div className="max-w-3xl mx-auto px-4 py-10 space-y-6 flex-1 flex flex-col justify-center">
+          <div className="text-center space-y-3">
+            <div className="w-16 h-16 bg-gradient-to-tr from-amber-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md">
+              <Sparkles className="w-8 h-8" />
+            </div>
+            <div className="inline-flex items-center space-x-2 px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-full text-xs font-bold">
+              <span>Account: {session.user.name || "Demo Educator"}</span>
+              <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.2 rounded uppercase tracking-wider font-mono">
+                Community / Demo
+              </span>
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              Vision & CAS Grader is a Pro Cloud Compute Service
+            </h2>
+            <p className="text-xs text-slate-600 max-w-xl mx-auto leading-relaxed">
+              OpenMathForge Worksheet Studio and Classroom Management are 100% free and open-source. Automated computer vision deskewing, handwriting extraction, and symbolic step verification require high-compute cloud infrastructure and are reserved for Pro subscribers and licensed school districts.
+            </p>
+          </div>
+
+          {/* Tier Comparison Card */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
+              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>Free & Open Source</span>
+                <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">Active</span>
+              </div>
+              <ul className="text-xs space-y-2 text-slate-700">
+                <li className="flex items-center"><CheckCircle2 className="w-4 h-4 text-emerald-500 mr-2 shrink-0" /> Full Worksheet Studio (All 7 courses)</li>
+                <li className="flex items-center"><CheckCircle2 className="w-4 h-4 text-emerald-500 mr-2 shrink-0" /> Zero-PII PC Classroom Rosters</li>
+                <li className="flex items-center"><CheckCircle2 className="w-4 h-4 text-emerald-500 mr-2 shrink-0" /> Local Recycle Bin & Auto-Snapshots</li>
+                <li className="flex items-center"><CheckCircle2 className="w-4 h-4 text-emerald-500 mr-2 shrink-0" /> Canvas / Schoology QTI 2.1 Export</li>
+              </ul>
+            </div>
+
+            <div className="bg-gradient-to-br from-indigo-50/60 to-purple-50/60 border-2 border-indigo-200 rounded-xl p-5 shadow-xs relative overflow-hidden">
+              <div className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span>Pro Cloud Compute</span>
+                <span className="text-[10px] text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded font-bold border border-indigo-300">Paid Service</span>
+              </div>
+              <ul className="text-xs space-y-2 text-slate-700">
+                <li className="flex items-center"><Sparkles className="w-4 h-4 text-indigo-600 mr-2 shrink-0" /> OpenCV 4-Corner ArUco Deskewing</li>
+                <li className="flex items-center"><Sparkles className="w-4 h-4 text-indigo-600 mr-2 shrink-0" /> Automated Handwriting Box Slicing</li>
+                <li className="flex items-center"><Sparkles className="w-4 h-4 text-indigo-600 mr-2 shrink-0" /> SymPy CAS Step Equivalence Engine</li>
+                <li className="flex items-center"><Sparkles className="w-4 h-4 text-indigo-600 mr-2 shrink-0" /> Partial Credit & Diagnostic Error Tags</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* District License Activation Card */}
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-3">
+            <h3 className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+              <Key className="w-4 h-4 text-indigo-600" />
+              <span>Have a School District License Key or Pro Voucher?</span>
+            </h3>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                placeholder="Enter License Key (e.g. OMF-PRO-DISTRICT)"
+                value={proLicenseInput}
+                onChange={(e) => setProLicenseInput(e.target.value)}
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+              <button
+                onClick={() => handleActivateLicense()}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-lg transition shadow-xs whitespace-nowrap"
+              >
+                Activate Pro License
+              </button>
+            </div>
+            {licenseStatusMessage && (
+              <div className={`text-xs p-2.5 rounded-lg border flex items-center space-x-2 ${
+                licenseStatusMessage.type === "success"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                  : "bg-rose-50 text-rose-800 border-rose-300"
+              }`}>
+                {licenseStatusMessage.type === "success" ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                )}
+                <span>{licenseStatusMessage.text}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Interactive Mock Grader Preview Toggle */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-left">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs font-bold text-slate-800 flex items-center space-x-1.5">
+                <FileCheck className="w-4 h-4 text-indigo-600" />
+                <span>Interactive Pro Grader Preview</span>
+              </div>
+              <button
+                onClick={() => setShowDemoPreviewGrading(!showDemoPreviewGrading)}
+                className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline"
+              >
+                {showDemoPreviewGrading ? "Hide Preview" : "View Sample Graded Paper"}
+              </button>
+            </div>
+
+            {showDemoPreviewGrading && (
+              <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3 text-xs">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 text-[11px] font-mono text-slate-500">
+                  <span>Student: Alex Rivera (omf_st_4a91)</span>
+                  <span className="font-bold text-indigo-600">Worksheet Form A • Score: 3.5 / 4.0 (88%)</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="p-2.5 bg-slate-50 rounded border border-slate-200 font-mono text-[11px]">
+                    <div className="text-slate-400 text-[10px] mb-1">Problem 1: Solve for x: 4(x - 3) = 20</div>
+                    <div className="text-emerald-700 flex items-center justify-between">
+                      <span>Step 1: 4x - 12 = 20</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-bold">✓ CAS Verified</span>
+                    </div>
+                    <div className="text-emerald-700 flex items-center justify-between mt-1">
+                      <span>Step 2: 4x = 32</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-bold">✓ CAS Verified</span>
+                    </div>
+                    <div className="text-emerald-700 flex items-center justify-between mt-1">
+                      <span>Step 3: x = 8</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-bold">✓ Final Solution Correct</span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 bg-amber-50/50 rounded border border-amber-200 font-mono text-[11px]">
+                    <div className="text-slate-400 text-[10px] mb-1">Problem 2: Solve: 2x + 7 = 3</div>
+                    <div className="text-rose-700 flex items-center justify-between">
+                      <span>Step 1: 2x = 10 (Student added 7 instead of subtracting)</span>
+                      <span className="text-[10px] bg-rose-100 text-rose-800 px-1.5 py-0.2 rounded font-bold">⚠️ Sign Flip Error</span>
+                    </div>
+                    <div className="text-amber-800 flex items-center justify-between mt-1">
+                      <span>Step 2: x = 5 (Follow-through arithmetic correct)</span>
+                      <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-bold">💡 Partial Credit: 1.5/2.0 pts</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Open-Source Self-Hosting Disclosure */}
+          <div className="text-center text-[11px] text-slate-400">
+            Self-hosting OpenMathForge on your own server or cluster? You can enable unmetered local compute in your private environment configuration.
           </div>
         </div>
       ) : (

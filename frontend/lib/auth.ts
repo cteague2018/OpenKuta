@@ -36,8 +36,9 @@ export const authOptions: NextAuthOptions = {
             name: "Demo Math Educator",
             email: "educator@openmathforge.org",
             role: "teacher",
-            tier: "pro",
+            tier: "community",
             district: "Lincoln Unified School District",
+            isPro: false,
           };
         }
         return {
@@ -45,8 +46,9 @@ export const authOptions: NextAuthOptions = {
           name: credentials.name || credentials.email.split("@")[0],
           email: credentials.email,
           role: "teacher",
-          tier: "pro",
+          tier: "community",
           district: credentials.email.includes("@") ? credentials.email.split("@")[1] : "Independent",
+          isPro: false,
         };
       },
     }),
@@ -59,16 +61,18 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as any).role || "teacher";
-        token.tier = (user as any).tier || "pro";
+        token.tier = (user as any).tier || "community";
         token.district = (user as any).district || "School District";
+        token.isPro = Boolean((user as any).isPro);
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
         (session.user as any).role = token.role || "teacher";
-        (session.user as any).tier = token.tier || "pro";
+        (session.user as any).tier = token.tier || "community";
         (session.user as any).district = token.district || "School District";
+        (session.user as any).isPro = Boolean(token.isPro);
       }
       return session;
     },
