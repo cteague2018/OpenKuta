@@ -15,6 +15,10 @@ from backend.app.generators.algebra_1.inequalities import (
 )
 from backend.app.generators.algebra_1.linear_equations import (
     LinearEquationsGenerator,
+    SlopeGenerator,
+    GraphingLinesGenerator,
+    WritingLinearEquationsGenerator,
+    GraphingLinearInequalitiesGenerator,
 )
 from backend.app.generators.algebra_1.multi_step_equations import (
     MultiStepEquationsGenerator,
@@ -26,9 +30,18 @@ from backend.app.generators.algebra_1.polynomials import (
 # Algebra 1 Generators
 from backend.app.generators.algebra_1.quadratics import (
     QuadraticEquationsGenerator,
+    QuadraticsFactoringGenerator,
+    QuadraticsSquareRootsGenerator,
+    QuadraticsFormulaGenerator,
+    QuadraticsDiscriminantGenerator,
+    QuadraticsCompletingSquareGenerator,
 )
 from backend.app.generators.algebra_1.systems import (
     SystemsOfEquationsGenerator,
+    SystemsGraphingGenerator,
+    SystemsSubstitutionGenerator,
+    SystemsEliminationGenerator,
+    SystemsInequalitiesGenerator,
 )
 from backend.app.generators.algebra_1.two_step_equations import (
     TwoStepEquationsGenerator,
@@ -179,10 +192,23 @@ from backend.app.generators.precalculus.vectors import (
 GENERATOR_REGISTRY: Dict[str, Type[BaseGenerator]] = {
     # Algebra 1
     QuadraticEquationsGenerator.generator_id: QuadraticEquationsGenerator,
+    QuadraticsFactoringGenerator.generator_id: QuadraticsFactoringGenerator,
+    QuadraticsSquareRootsGenerator.generator_id: QuadraticsSquareRootsGenerator,
+    QuadraticsFormulaGenerator.generator_id: QuadraticsFormulaGenerator,
+    QuadraticsDiscriminantGenerator.generator_id: QuadraticsDiscriminantGenerator,
+    QuadraticsCompletingSquareGenerator.generator_id: QuadraticsCompletingSquareGenerator,
     TwoStepEquationsGenerator.generator_id: TwoStepEquationsGenerator,
     MultiStepEquationsGenerator.generator_id: MultiStepEquationsGenerator,
     LinearEquationsGenerator.generator_id: LinearEquationsGenerator,
+    SlopeGenerator.generator_id: SlopeGenerator,
+    GraphingLinesGenerator.generator_id: GraphingLinesGenerator,
+    WritingLinearEquationsGenerator.generator_id: WritingLinearEquationsGenerator,
+    GraphingLinearInequalitiesGenerator.generator_id: GraphingLinearInequalitiesGenerator,
     SystemsOfEquationsGenerator.generator_id: SystemsOfEquationsGenerator,
+    SystemsGraphingGenerator.generator_id: SystemsGraphingGenerator,
+    SystemsSubstitutionGenerator.generator_id: SystemsSubstitutionGenerator,
+    SystemsEliminationGenerator.generator_id: SystemsEliminationGenerator,
+    SystemsInequalitiesGenerator.generator_id: SystemsInequalitiesGenerator,
     PolynomialFactoringGenerator.generator_id: PolynomialFactoringGenerator,
     LinearInequalitiesGenerator.generator_id: LinearInequalitiesGenerator,
     ExponentRulesGenerator.generator_id: ExponentRulesGenerator,

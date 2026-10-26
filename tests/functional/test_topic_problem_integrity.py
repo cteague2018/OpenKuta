@@ -97,6 +97,12 @@ class TestTopicProblemIntegrity:
             ("exponential function", ["^", "growth", "decay", "initial", "f(t)"]),
             ("word problem", ["mph", "miles", "liters", "hours", "chemist", "people", "population", "tickets", "sold", "years"]),
             ("probability", ["probability", "ways", "committees", "meals", "p("]),
+            ("solving by graphing", ["graph", "graphing", "line"]),
+            ("solving by substitution", ["substitution", "substitute"]),
+            ("solving by elimination", ["elimination", "eliminate"]),
+            ("systems of inequalities", ["inequalit", "shade", "region"]),
+            ("taking square roots", ["square root", "roots", "sqrt"]),
+            ("discriminant", ["discriminant", "solution"]),
         ]
     )
     def test_topic_domain_invariants(self, topic_keyword, expected_substrs):

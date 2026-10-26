@@ -233,31 +233,31 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.linear_equation.slope",
             "name": "Slope",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.slope",
             "available": true
           },
           {
             "id": "algebra_1.linear_equation.more_on_slope",
             "name": "More on slope",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.slope",
             "available": true
           },
           {
             "id": "algebra_1.linear_equation.graphing_linear_equations",
             "name": "Graphing linear equations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.graphing_lines",
             "available": true
           },
           {
             "id": "algebra_1.linear_equation.writing_linear_equations",
             "name": "Writing linear equations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.writing_linear_equations",
             "available": true
           },
           {
             "id": "algebra_1.linear_equation.graphing_linear_inequalit",
             "name": "Graphing linear inequalities",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.graphing_linear_inequalities",
             "available": true
           },
           {
@@ -280,25 +280,25 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.systems_of_equa.solving_by_graphing",
             "name": "Solving by graphing",
-            "generator_id": "algebra_1.systems",
+            "generator_id": "algebra_1.systems_graphing",
             "available": true
           },
           {
             "id": "algebra_1.systems_of_equa.solving_by_elimination",
             "name": "Solving by elimination",
-            "generator_id": "algebra_1.systems",
+            "generator_id": "algebra_1.systems_elimination",
             "available": true
           },
           {
             "id": "algebra_1.systems_of_equa.solving_by_substitution",
             "name": "Solving by substitution",
-            "generator_id": "algebra_1.systems",
+            "generator_id": "algebra_1.systems_substitution",
             "available": true
           },
           {
             "id": "algebra_1.systems_of_equa.graphing_systems_of_inequ",
             "name": "Graphing systems of inequalities",
-            "generator_id": "algebra_1.systems",
+            "generator_id": "algebra_1.systems_inequalities",
             "available": true
           },
           {
@@ -432,37 +432,37 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_1.quadratic_funct.solving_equations_by_taki",
             "name": "Solving equations by taking square roots",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_square_roots",
             "available": true
           },
           {
             "id": "algebra_1.quadratic_funct.solving_equations_by_fact",
             "name": "Solving equations by factoring",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_factoring",
             "available": true
           },
           {
             "id": "algebra_1.quadratic_funct.solving_equations_with_th",
             "name": "Solving equations with the Quadratic Formula",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_formula",
             "available": true
           },
           {
             "id": "algebra_1.quadratic_funct.understanding_the_discrim",
             "name": "Understanding the discriminant",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_discriminant",
             "available": true
           },
           {
             "id": "algebra_1.quadratic_funct.completing_the_square_by_",
             "name": "Completing the square by finding the constant",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_completing_square",
             "available": true
           },
           {
             "id": "algebra_1.quadratic_funct.solving_equations_by_comp",
             "name": "Solving equations by completing the square",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_completing_square",
             "available": true
           }
         ]
@@ -725,13 +725,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "geometry.parallel_lines_.graphing_linear_equations",
             "name": "Graphing linear equations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.graphing_lines",
             "available": true
           },
           {
             "id": "geometry.parallel_lines_.writing_linear_equations",
             "name": "Writing linear equations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.writing_linear_equations",
             "available": true
           }
         ]
@@ -1304,13 +1304,13 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.linear_relation.graphing_linear_equations",
             "name": "Graphing linear equations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.graphing_lines",
             "available": true
           },
           {
             "id": "algebra_2.linear_relation.writing_linear_equations",
             "name": "Writing linear equations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.writing_linear_equations",
             "available": true
           },
           {
@@ -1322,7 +1322,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.linear_relation.graphing_linear_inequalit",
             "name": "Graphing linear inequalities",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.graphing_linear_inequalities",
             "available": true
           },
           {
@@ -1339,25 +1339,25 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.systems_of_equa.graphing_systems_of_linea",
             "name": "Graphing systems of linear inequalities",
-            "generator_id": "algebra_1.systems",
+            "generator_id": "algebra_1.systems_inequalities",
             "available": true
           },
           {
             "id": "algebra_2.systems_of_equa.solving_systems_by_graphi",
             "name": "Solving systems by graphing (2 variables)",
-            "generator_id": "algebra_1.systems",
+            "generator_id": "algebra_1.systems_graphing",
             "available": true
           },
           {
             "id": "algebra_2.systems_of_equa.solving_systems_by_elimin",
             "name": "Solving systems by elimination (2 variables)",
-            "generator_id": "algebra_1.systems",
+            "generator_id": "algebra_1.systems_elimination",
             "available": true
           },
           {
             "id": "algebra_2.systems_of_equa.solving_systems_by_substi",
             "name": "Solving systems by substitution (2 variables)",
-            "generator_id": "algebra_1.systems",
+            "generator_id": "algebra_1.systems_substitution",
             "available": true
           },
           {
@@ -1486,37 +1486,37 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "algebra_2.quadratic_funct.solving_equations_by_taki",
             "name": "Solving equations by taking square roots",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_square_roots",
             "available": true
           },
           {
             "id": "algebra_2.quadratic_funct.solving_equations_by_fact",
             "name": "Solving equations by factoring",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_factoring",
             "available": true
           },
           {
             "id": "algebra_2.quadratic_funct.completing_the_square",
             "name": "Completing the square",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_completing_square",
             "available": true
           },
           {
             "id": "algebra_2.quadratic_funct.solving_equations_by_comp",
             "name": "Solving equations by completing the square",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_completing_square",
             "available": true
           },
           {
             "id": "algebra_2.quadratic_funct.solving_equations_with_th",
             "name": "Solving equations with the Quadratic Formula",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_formula",
             "available": true
           },
           {
             "id": "algebra_2.quadratic_funct.the_discriminant",
             "name": "The discriminant",
-            "generator_id": "algebra_1.quadratics",
+            "generator_id": "algebra_1.quadratics_discriminant",
             "available": true
           }
         ]
@@ -4067,25 +4067,25 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
           {
             "id": "pre_algebra.linear_relation.finding_slope_from_a_grap",
             "name": "Finding slope from a graph",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.slope",
             "available": true
           },
           {
             "id": "pre_algebra.linear_relation.finding_slope_from_two_po",
             "name": "Finding slope from two points",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.slope",
             "available": true
           },
           {
             "id": "pre_algebra.linear_relation.graphing_linear_equations",
             "name": "Graphing linear equations",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.graphing_lines",
             "available": true
           },
           {
             "id": "pre_algebra.linear_relation.writing_slope_intercept_f",
             "name": "Writing slope-intercept form",
-            "generator_id": "algebra_1.linear_equations",
+            "generator_id": "algebra_1.writing_linear_equations",
             "available": true
           }
         ]
@@ -4122,7 +4122,6 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
     ]
   }
 };
-
 export const DEFAULT_SAMPLE_PROBLEMS: Problem[] = [
   {
     id: "demo_1",
