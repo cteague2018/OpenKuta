@@ -21,10 +21,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python 3.10
+      - name: Install Headless System Libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0
+
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: "pip"
 
       - name: Set up Node.js 20
@@ -36,8 +41,8 @@ jobs:
 
       - name: Install Python Dependencies & Type Checkers
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e ".[dev]"
           pip install mypy ruff pip-audit
 
       - name: Install Frontend Dependencies
@@ -75,23 +80,23 @@ jobs:
       - name: Install Headless System Libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgl1-mesa-glx libglib2.0-0
+          sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0
 
       - name: Install Typst CLI Binary
         uses: typst-community/setup-typst@v3
         with:
           typst-version: "0.11.0"
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: "pip"
 
       - name: Install Python Dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e ".[dev]"
           pip install hypothesis
 
       - name: "Gate 6: Math Truth Engine & SymPy Identity Verification"
@@ -116,18 +121,18 @@ jobs:
       - name: Install Headless System Libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgl1-mesa-glx libglib2.0-0
+          sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: "pip"
 
       - name: Install Python Dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e ".[dev]"
 
       - name: "Gate 9: BOLA/IDOR, FERPA Lifecycle & Adversarial Uploads"
         run: |
@@ -144,12 +149,12 @@ jobs:
       - name: Install Headless System Libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgl1-mesa-glx libglib2.0-0
+          sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0
 
-      - name: Set up Python 3.10
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: "pip"
 
       - name: Set up Node.js 20
@@ -161,8 +166,8 @@ jobs:
 
       - name: Install Python Dependencies & Playwright
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev]
+          python -m pip install --upgrade pip setuptools wheel
+          pip install -e ".[dev]"
           pip install playwright
           python -m playwright install --with-deps chromium
 
@@ -205,4 +210,3 @@ jobs:
             exit 1
           fi
           echo "All production verification gates passed cleanly with zero defects."
-
