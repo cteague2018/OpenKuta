@@ -29,7 +29,7 @@ export interface Problem {
 
 export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
   "algebra_1": {
-    "title": "Infinite Algebra 1",
+    "title": "Algebra 1",
     "description": "Covers all typical algebra material, over 90 topics in all, from adding and subtracting positives and negatives to solving rational equations.",
     "categories": [
       {
@@ -590,7 +590,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
     ]
   },
   "geometry": {
-    "title": "Infinite Geometry",
+    "title": "Geometry",
     "description": "Covers all typical Geometry material, beginning with a review of important Algebra 1 concepts and going through transformations, over 85 topics in all.",
     "categories": [
       {
@@ -1194,7 +1194,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
     ]
   },
   "algebra_2": {
-    "title": "Infinite Algebra 2",
+    "title": "Algebra 2",
     "description": "Covers all typical Algebra 2 material, beginning with a few major Algebra 1 concepts and going through trigonometry, over 125 topics in all.",
     "categories": [
       {
@@ -2137,7 +2137,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
     ]
   },
   "precalculus": {
-    "title": "Infinite Precalculus",
+    "title": "Precalculus",
     "description": "Covers all typical Precalculus material and more: trigonometric functions, equations, and identities; parametric equations; polar coordinates; vectors; limits; and more. Over 100 topics.",
     "categories": [
       {
@@ -2861,7 +2861,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
     ]
   },
   "calculus": {
-    "title": "Infinite Calculus",
+    "title": "Calculus",
     "description": "Covers all of the fundamentals of Calculus: limits, continuity, differentiation, and integration as well as applications such as related rates and volume using cylindrical shells.",
     "categories": [
       {
@@ -3945,7 +3945,7 @@ export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {
     ]
   },
   "pre_algebra": {
-    "title": "Infinite Pre-Algebra",
+    "title": "Pre-Algebra",
     "description": "Fractions, integers, decimals, simple one/two step equations, inequalities, graphs, and proportions.",
     "categories": [
       {

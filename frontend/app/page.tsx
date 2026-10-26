@@ -160,7 +160,7 @@ export default function OpenMathForgeApp() {
   });
 
   // Worksheet Layout Controls
-  const [worksheetTitle, setWorksheetTitle] = useState<string>("Infinite Algebra 1 Practice");
+  const [worksheetTitle, setWorksheetTitle] = useState<string>("Algebra 1 Practice");
   const [columns, setColumns] = useState<number>(2);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [showAnswerKey, setShowAnswerKey] = useState<boolean>(false);

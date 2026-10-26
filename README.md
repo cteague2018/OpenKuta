@@ -1,5 +1,9 @@
 # OpenMathForge 📐⚡
 
+[![Live Web Application](https://img.shields.io/badge/Live%20App-openmathforge.vercel.app-blue?style=flat-square)](https://openmathforge.vercel.app)
+[![Production Quality Gates](https://github.com/cteague2018/OpenMathForge/actions/workflows/openmathforge-production-gates.yml/badge.svg)](https://github.com/cteague2018/OpenMathForge/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+
 An open-source, web-based algorithmic math worksheet generator and grading engine built with SymPy and Typst as a modern, high-performance web alternative to legacy desktop worksheet software.
 
 OpenMathForge integrates procedural mathematical generation, sub-100ms vector typesetting, computer vision marker deskewing, symbolic CAS partial-credit grading, LMS roster synchronization, and IMS QTI 2.1 export.
