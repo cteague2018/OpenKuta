@@ -45,4 +45,3 @@ def test_standards_json_integrity():
     assert "curricula" in data
     assert "CCSS-M" in data["curricula"]
     assert "TEKS" in data["curricula"]
-

@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import cv2
 import numpy as np
-import pytest
 
 from backend.app.grading.aligner import (
     CANONICAL_HEIGHT,
-    CANONICAL_MARGIN,
     CANONICAL_WIDTH,
     WorksheetAligner,
 )

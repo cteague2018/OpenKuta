@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import io
-import pytest
-from backend.app.core.base import GeneratorConfig, ProblemDifficulty
+from backend.app.core.base import GeneratorConfig
 from backend.app.core.compiler import TypstCompiler
-from backend.app.generators import GENERATOR_REGISTRY, get_generator
+from backend.app.generators import get_generator
 
 
 class TestDocumentRenderPipeline:
@@ -73,7 +71,7 @@ class TestDocumentRenderPipeline:
         problems = gen.generate(cfg)
         assert len(problems) == 12
 
-        for i, p in enumerate(problems):
+        for _i, p in enumerate(problems):
             # Check problem ID format contains index or conforms to structure
             assert p.id
             assert p.prompt_text
@@ -123,4 +121,3 @@ class TestDocumentRenderPipeline:
 
         assert matrix_pdf.startswith(b"%PDF-")
         assert len(matrix_pdf) > 10000, "Matrix key PDF should exceed 10 KB"
-

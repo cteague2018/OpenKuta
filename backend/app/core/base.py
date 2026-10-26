@@ -34,6 +34,8 @@ class BaseProblem(BaseModel):
     difficulty: ProblemDifficulty = Field(default=ProblemDifficulty.MILD, description="Difficulty tier")
     bounding_box: Optional[BoundingBox] = Field(default=None, description="Pre-computed workspace bounding box")
     standards: List[str] = Field(default_factory=list, description="Curriculum standard codes (e.g., CCSS.MATH.CONTENT.HSA.REI.B.4)")
+    diagram_svg: Optional[str] = Field(default=None, description="Optional SVG diagram/graph/table rendered in the problem prompt area")
+    answer_svg: Optional[str] = Field(default=None, description="Optional SVG diagram/graph/plot rendered in the answer key")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Arbitrary generator metadata")
 
     @property
@@ -165,4 +167,3 @@ class BaseGenerator(ABC):
 
         prob.choices = choices
         prob.correct_choice = correct_letter
-

@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_number_line
 
 
 class LinearInequalitiesGenerator(BaseGenerator):
@@ -138,8 +139,6 @@ class LinearInequalitiesGenerator(BaseGenerator):
             )
 
 
-
-
 class GraphingInequalitiesGenerator(BaseGenerator):
     generator_id = "algebra_1.graphing_inequalities"
     name = "Graphing Single-Variable Inequalities"
@@ -162,6 +161,7 @@ class GraphingInequalitiesGenerator(BaseGenerator):
             ans = f"{var} {sym} {val}"
             is_closed = "<=" in sym or ">=" in sym
             dir_s = "left" if "<" in sym else "right"
+            ans_svg = svg_number_line(intervals=[{"type": "ray", "val": val, "dir": dir_s, "closed": is_closed}])
             steps = [
                 f"Given inequality: $ {eq} $",
                 f"Place an {'closed (solid)' if is_closed else 'open'} circle at $ {val} $ on the number line.",
@@ -177,16 +177,18 @@ class GraphingInequalitiesGenerator(BaseGenerator):
             ans = f"{var} {res_sym} {val}"
             is_closed = "<=" in res_sym or ">=" in res_sym
             dir_s = "left" if "<" in res_sym else "right"
+            ans_svg = svg_number_line(intervals=[{"type": "ray", "val": val, "dir": dir_s, "closed": is_closed}])
             steps = [
                 f"Given inequality: $ {eq} $",
                 f"Subtract constant and divide by {a} (remembering to {'FLIP the inequality sign because dividing by negative' if a < 0 else 'preserve the sign'}): $ {ans} $",
                 f"Graph: {'closed' if is_closed else 'open'} circle at $ {val} $, arrow pointing {dir_s}."
             ]
-        else: # SPICY
+        else:  # SPICY
             v1 = rng.randint(-6, 0)
             v2 = rng.randint(1, 7)
             eq = f"{v1} < {var} <= {v2}"
             ans = f"{v1} < {var} <= {v2}"
+            ans_svg = svg_number_line(intervals=[{"type": "segment", "a": v1, "b": v2, "closed_a": False, "closed_b": True}])
             steps = [
                 f"Given compound inequality: $ {eq} $",
                 f"Place an open circle at $ {v1} $ and a closed (solid) circle at $ {v2} $.",
@@ -206,5 +208,7 @@ class GraphingInequalitiesGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],
             difficulty=difficulty,
             standards=self.standards,
+            diagram_svg=svg_number_line(),
+            answer_svg=ans_svg,
             metadata={"inequality": eq}
         )

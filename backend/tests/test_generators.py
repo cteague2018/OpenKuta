@@ -197,7 +197,6 @@ def test_new_classroom_curriculum_generators():
     assert all(len(p.steps_typst) >= 3 for p in probs)
 
 
-
 def test_upgraded_geometry_and_grade6_generators():
     """Verify procedural generation and rigor of 8 upgraded Geometry and Grade 6 generators."""
     from backend.app.generators.geometry.angles_lines import GeometryAnglesLinesGenerator

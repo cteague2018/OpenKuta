@@ -52,4 +52,3 @@ class StudentSubmission(BaseModel):
     error_types: List[str] = Field(default_factory=list)
     is_verified: bool = True
     raw_qr_data: Dict[str, Any] = Field(default_factory=dict)
-

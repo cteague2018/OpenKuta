@@ -50,7 +50,7 @@ class Algebra2ComplexNumbersGenerator(BaseGenerator):
                 difficulty=ProblemDifficulty.MILD,
                 standards=self.standards
             )
-        else:
+        elif difficulty == ProblemDifficulty.MEDIUM:
             # Multiplication: (a + bi)(c + di) = (ac - bd) + (ad + bc)i
             eq_typst = f"({a} {b_sign} {abs(b)} i)({c} {d_sign} {abs(d)} i)"
             real_part = a * c - b * d
@@ -68,12 +68,43 @@ class Algebra2ComplexNumbersGenerator(BaseGenerator):
             ]
 
             return BaseProblem(
-                id=f"a2_cplx_{difficulty.value}_{problem_idx}",
+                id=f"a2_cplx_med_{problem_idx}",
                 prompt_text="Simplify each expression into standard a + bi form.",
                 equation_typst=eq_typst,
                 answer_typst=ans_typst,
                 steps_typst=steps,
-                distractors=[f"{a*c + b*d} {ans_sign} {abs(imag_part)} i", f"{real_part} - {abs(imag_part)} i"],
+                distractors=[f"{a*c + b*d} {ans_sign} {abs(imag_part)} i", f"{real_part} - {abs(imag_part)} i", f"{real_part + 2} + {abs(imag_part)} i"],
+                difficulty=difficulty,
+                standards=self.standards
+            )
+        else:
+            # Spicy: Complex division or squaring with conjugate: (r + q*i)*(c + d*i) / (c + d*i) = r + q*i
+            r_ans = rng.choice([-4, -3, -2, 2, 3, 4])
+            q_ans = rng.choice([-5, -3, -2, 2, 3, 5])
+            c_den = rng.choice([1, 2, 3])
+            d_den = rng.choice([1, 2, -1, -2])
+            num_r = r_ans * c_den - q_ans * d_den
+            num_i = r_ans * d_den + q_ans * c_den
+            den_norm = c_den * c_den + d_den * d_den
+            nr_sign = "+" if num_i >= 0 else "-"
+            dd_sign = "+" if d_den >= 0 else "-"
+            ans_sign = "+" if q_ans >= 0 else "-"
+            eq_typst = f"({num_r} {nr_sign} {abs(num_i)} i) / ({c_den} {dd_sign} {abs(d_den)} i)"
+            ans_typst = f"{r_ans} {ans_sign} {abs(q_ans)} i"
+            conj_sign = "-" if d_den >= 0 else "+"
+            steps = [
+                f"Multiply numerator and denominator by the complex conjugate $ ({c_den} {conj_sign} {abs(d_den)} i) $.",
+                f"Denominator becomes $ ({c_den})^2 + ({abs(d_den)})^2 = {den_norm} $.",
+                f"Expand numerator: $ {r_ans * den_norm} + ({q_ans * den_norm}) i $.",
+                f"Divide real and imaginary parts by {den_norm}: $ {ans_typst} $"
+            ]
+            return BaseProblem(
+                id=f"a2_cplx_spicy_{problem_idx}",
+                prompt_text="Divide and simplify into standard a + bi form.",
+                equation_typst=eq_typst,
+                answer_typst=ans_typst,
+                steps_typst=steps,
+                distractors=[f"{-r_ans} {ans_sign} {abs(q_ans)} i", f"{r_ans} {'-' if q_ans >= 0 else '+'} {abs(q_ans)} i", f"{r_ans + 1} {ans_sign} {abs(q_ans)} i"],
                 difficulty=difficulty,
                 standards=self.standards
             )

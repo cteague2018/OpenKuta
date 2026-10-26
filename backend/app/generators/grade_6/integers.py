@@ -155,4 +155,3 @@ class Grade6IntegersGenerator(BaseGenerator):
                 difficulty=ProblemDifficulty.SPICY,
                 standards=self.standards
             )
-

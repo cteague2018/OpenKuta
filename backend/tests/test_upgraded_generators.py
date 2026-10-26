@@ -262,4 +262,3 @@ def test_polynomial_division_procedural():
         assert len(p.distractors) >= 3
         assert p.answer_typst not in p.distractors
         assert len(p.steps_typst) >= 5
-

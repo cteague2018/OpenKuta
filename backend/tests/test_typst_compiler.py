@@ -43,4 +43,3 @@ def test_matrix_key_typst_compilation():
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 1000
     assert pdf_bytes.startswith(b"%PDF-")
-

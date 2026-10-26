@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import time
-import subprocess
 import urllib.request
 from typing import Generator
+
 import pytest
+
+from backend.app.core.base import GeneratorConfig
 from backend.app.core.compiler import TypstCompiler
 from backend.app.generators.algebra_1.quadratics import QuadraticEquationsGenerator
-from backend.app.core.base import GeneratorConfig
 
 
 @pytest.fixture(scope="class")

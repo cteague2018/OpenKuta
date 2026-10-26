@@ -4,6 +4,7 @@ import math
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_circle_diagram
 
 
 class GeometryCirclesGenerator(BaseGenerator):
@@ -59,6 +60,8 @@ class GeometryCirclesGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.MILD,
             standards=self.standards,
+            diagram_svg=svg_circle_diagram(radius_label=f"r = {r}"),
+            answer_svg=svg_circle_diagram(radius_label=f"r = {r}"),
             metadata={"radius": r, "circumference_pi": c_val, "area_pi": a_val}
         )
 
@@ -121,6 +124,8 @@ class GeometryCirclesGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.MEDIUM,
             standards=self.standards,
+            diagram_svg=svg_circle_diagram(radius_label=f"r = {r}", angle_label=f"{theta}°", show_sector=True),
+            answer_svg=svg_circle_diagram(radius_label=f"r = {r}", angle_label=f"{theta}°", show_sector=True),
             metadata={"radius": r, "theta": theta}
         )
 
@@ -184,5 +189,7 @@ class GeometryCirclesGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.SPICY,
             standards=self.standards,
+            diagram_svg=svg_circle_diagram(radius_label=f"r = {r}", angle_label=f"{theta}°", show_sector=True),
+            answer_svg=svg_circle_diagram(radius_label=f"r = {r}", angle_label=f"{theta}°", show_sector=True),
             metadata={"radius": r, "theta": theta}
         )

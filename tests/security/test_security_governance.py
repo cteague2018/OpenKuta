@@ -3,24 +3,23 @@ from __future__ import annotations
 import io
 import pathlib
 import tempfile
+
 import pytest
-from starlette.datastructures import UploadFile
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 
 from backend.app.api.multitenant_routes import (
-    get_tenant_worksheets,
     get_tenant_rosters,
-    verify_tenant_authorization,
+    get_tenant_worksheets,
     heavy_endpoint_limiter,
 )
 from backend.app.api.routes import grade_upload
 from backend.app.core.privacy import (
-    hash_student_identifier,
     anonymize_student_record,
+    hash_student_identifier,
     purge_ephemeral_storage,
 )
-from backend.app.grading.verifier import CASStepVerifier
 from backend.app.core.rate_limiter import TokenBucketRateLimiter
+from backend.app.grading.verifier import CASStepVerifier
 
 
 class TestSecurityAndGovernance:

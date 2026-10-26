@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import random
+from typing import Any
 
 import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_coordinate_plane
 
 
 class LinearEquationsGenerator(BaseGenerator):
@@ -90,13 +92,13 @@ class LinearEquationsGenerator(BaseGenerator):
         """Write the slope-intercept equation given a point and slope."""
         m_num = rng.choice([-3, -2, -1, 1, 2, 3])
         m_den = rng.choice([1, 2, 3, 4]) if rng.random() < 0.4 else 1
-        m = sp.Rational(m_num, m_den)
+        m: Any = sp.Rational(m_num, m_den)
 
         # Choose point (x1, y1)
         x1 = rng.randint(-6, 6) if allow_negatives else rng.randint(0, 8)
         # Ensure b is clean integer or simple fraction
         b = rng.randint(-8, 8) if allow_negatives else rng.randint(1, 8)
-        y1 = m * x1 + b
+        y1: Any = m * x1 + b
 
         m_str = f"{m.p}/{m.q}" if m.q != 1 else str(m.p)
         if m_str == "1":
@@ -193,8 +195,6 @@ class LinearEquationsGenerator(BaseGenerator):
         )
 
 
-
-
 class SlopeGenerator(BaseGenerator):
     generator_id = "algebra_1.slope"
     name = "Slope of a Line"
@@ -217,7 +217,7 @@ class SlopeGenerator(BaseGenerator):
         elif difficulty == ProblemDifficulty.MEDIUM:
             dx = rng.choice([-7, -5, -4, 4, 5, 7])
             dy = rng.randint(-9, 9)
-        else: # SPICY
+        else:  # SPICY
             if rng.random() < 0.35:
                 dx = 0
                 dy = rng.choice([-5, -3, 3, 5])
@@ -267,6 +267,25 @@ class SlopeGenerator(BaseGenerator):
             d3 = "m = 0" if rat != 0 else "m = 1"
             distractors = [d1, d2, d3]
 
+        if dx == 0:
+            diag_svg = svg_coordinate_plane(
+                lines=[{"x_vert": float(x1), "color": "#2563eb"}],
+                points=[
+                    {"x": x1, "y": y1, "color": "#dc2626", "label": f"({x1},{y1})"},
+                    {"x": x2, "y": y2, "color": "#dc2626", "label": f"({x2},{y2})"},
+                ],
+            )
+        else:
+            m_fl = dy / dx
+            b_fl = y1 - m_fl * x1
+            diag_svg = svg_coordinate_plane(
+                lines=[{"m": m_fl, "b": b_fl, "color": "#2563eb"}],
+                points=[
+                    {"x": x1, "y": y1, "color": "#dc2626", "label": f"({x1},{y1})"},
+                    {"x": x2, "y": y2, "color": "#dc2626", "label": f"({x2},{y2})"},
+                ],
+            )
+
         return BaseProblem(
             id=f"slope_{difficulty.value}_{problem_idx}",
             prompt_text="Find the slope of the line through each pair of points.",
@@ -276,6 +295,8 @@ class SlopeGenerator(BaseGenerator):
             distractors=[f"$ {d} $" if "m =" in d else d for d in distractors],
             difficulty=difficulty,
             standards=self.standards,
+            diagram_svg=diag_svg,
+            answer_svg=diag_svg,
             metadata={"m": ans_typst, "p1": (x1, y1), "p2": (x2, y2)}
         )
 
@@ -299,6 +320,19 @@ class GraphingLinesGenerator(BaseGenerator):
             m_s = "" if m == 1 else ("-" if m == -1 else str(m))
             b_s = f"+ {b}" if b > 0 else (f"- {abs(b)}" if b < 0 else "")
             eq = f"y = {m_s}x {b_s}".strip()
+            ans_str = f"$ \"Line through \" (0, {b}) \" and \" (1, {b + m}), quad m = {m} $"
+            distractors = [
+                f"$ \"Line through \" (0, {-b}) \" with \" m = {m} $",
+                f"$ \"Line through \" (0, {b}) \" with \" m = {-m} $",
+                f"$ \"Line through \" ({b}, 0) \" with \" m = {m} $",
+            ]
+            ans_svg = svg_coordinate_plane(
+                lines=[{"m": float(m), "b": float(b), "color": "#dc2626"}],
+                points=[
+                    {"x": 0, "y": b, "color": "#2563eb", "label": f"(0,{b})"},
+                    {"x": 1, "y": b + m, "color": "#2563eb", "label": f"(1,{b+m})"},
+                ],
+            )
             steps = [
                 f"Given linear equation: $ {eq} $",
                 f"Identify the slope: $ m = {m} $",
@@ -308,12 +342,31 @@ class GraphingLinesGenerator(BaseGenerator):
             ]
         elif difficulty == ProblemDifficulty.MEDIUM:
             if rng.random() < 0.2:
-                val = rng.randint(-5, 5)
+                val = rng.choice([-5, -4, -3, -2, 2, 3, 4, 5])
                 var = rng.choice(["x", "y"])
                 eq = f"{var} = {val}"
+                kind = "Vertical" if var == "x" else "Horizontal"
+                other_kind = "Horizontal" if var == "x" else "Vertical"
+                pt_lbl = f"({val}, 0)" if var == "x" else f"(0, {val})"
+                ans_str = f"$ \"{kind} line through \" {pt_lbl} $"
+                distractors = [
+                    f"$ \"{other_kind} line through \" {pt_lbl} $",
+                    f"$ \"{kind} line through \" ({-val}, 0) $" if var == "x" else f"$ \"{kind} line through \" (0, {-val}) $",
+                    f"$ \"Line through origin with slope \" {val} $",
+                ]
+                if var == "x":
+                    ans_svg = svg_coordinate_plane(
+                        lines=[{"x_vert": float(val), "color": "#dc2626"}],
+                        points=[{"x": val, "y": 0, "color": "#2563eb", "label": f"({val},0)"}],
+                    )
+                else:
+                    ans_svg = svg_coordinate_plane(
+                        lines=[{"m": 0.0, "b": float(val), "color": "#dc2626"}],
+                        points=[{"x": 0, "y": val, "color": "#2563eb", "label": f"(0,{val})"}],
+                    )
                 steps = [
                     f"Given equation: $ {eq} $",
-                    f"This is a {'vertical' if var == 'x' else 'horizontal'} line passing through {var} = {val}.",
+                    f"This is a {kind.lower()} line passing through {var} = {val}.",
                     f"Plot points where {var} is always {val} and draw the line."
                 ]
             else:
@@ -324,13 +377,26 @@ class GraphingLinesGenerator(BaseGenerator):
                 num_abs, den_abs = abs(num), abs(den)
                 b_s = f"+ {b}" if b > 0 else (f"- {abs(b)}" if b < 0 else "")
                 eq = f"y = {sign}{num_abs}/{den_abs} x {b_s}".strip()
+                ans_str = f"$ \"Line through \" (0, {b}) \" and \" ({den}, {b + num}), quad m = {sign}{num_abs}/{den_abs} $"
+                distractors = [
+                    f"$ \"Line through \" (0, {b}) \" with \" m = {'' if sign else '-'}{num_abs}/{den_abs} $",
+                    f"$ \"Line through \" (0, {-b}) \" with \" m = {sign}{num_abs}/{den_abs} $",
+                    f"$ \"Line through \" (0, {b}) \" with \" m = {sign}{den_abs}/{num_abs} $",
+                ]
+                ans_svg = svg_coordinate_plane(
+                    lines=[{"m": num / den, "b": float(b), "color": "#dc2626"}],
+                    points=[
+                        {"x": 0, "y": b, "color": "#2563eb", "label": f"(0,{b})"},
+                        {"x": den, "y": b + num, "color": "#2563eb", "label": f"({den},{b+num})"},
+                    ],
+                )
                 steps = [
                     f"Given linear equation: $ {eq} $",
                     f"Slope: $ m = {sign}{num_abs}/{den_abs} $, y-intercept: $ (0, {b}) $",
                     f"From $ (0, {b}) $, rise {num} and run {den} to reach second point $ ({den}, {b + num}) $.",
                     "Draw the line connecting these points."
                 ]
-        else: # SPICY
+        else:  # SPICY
             A = rng.choice([-3, -2, -1, 1, 2, 3])
             B = rng.choice([2, 3, 4, -2, -3])
             C = rng.choice([6, 12, -6, -12, 8, -8])
@@ -339,21 +405,33 @@ class GraphingLinesGenerator(BaseGenerator):
             eq = f"{a_s} {b_s} = {C}".replace("+ -", "- ")
             m_val = sp.Rational(-A, B)
             b_val = sp.Rational(C, B)
+            ans_str = f"$ \"Line with slope \" m = {m_val} \" and y-int \" (0, {b_val}) $"
+            distractors = [
+                f"$ \"Line with slope \" m = {-m_val} \" and y-int \" (0, {b_val}) $",
+                f"$ \"Line with slope \" m = {m_val} \" and y-int \" (0, {-b_val}) $",
+                f"$ \"Line with slope \" m = {A} \" and y-int \" (0, {C}) $",
+            ]
+            ans_svg = svg_coordinate_plane(
+                lines=[{"m": float(m_val), "b": float(b_val), "color": "#dc2626"}],
+                points=[{"x": 0, "y": float(b_val), "color": "#2563eb", "label": f"(0,{b_val})"}],
+            )
             steps = [
                 f"Given equation in standard form: $ {eq} $",
                 f"Convert to slope-intercept form by isolating $y$: $ y = {m_val}x {'+ ' if b_val >= 0 else '- '}{abs(b_val)} $",
-                f"Plot the y-intercept and use the slope to sketch the line."
+                "Plot the y-intercept and use the slope to sketch the line."
             ]
 
         return BaseProblem(
             id=f"graph_line_{difficulty.value}_{problem_idx}",
             prompt_text="Sketch the graph of each line.",
             equation_typst=f"$ {eq} $",
-            answer_typst="Graph on coordinate plane",
+            answer_typst=ans_str,
             steps_typst=steps,
-            distractors=["Opposite slope graph", "Shifted y-intercept graph", "Inverted x/y axes graph"],
+            distractors=distractors,
             difficulty=difficulty,
             standards=self.standards,
+            diagram_svg=svg_coordinate_plane(),
+            answer_svg=ans_svg,
             metadata={"equation": eq}
         )
 
@@ -375,7 +453,7 @@ class WritingLinearEquationsGenerator(BaseGenerator):
             m = rng.choice([-3, -2, -1, 1, 2, 3])
             x1 = rng.randint(-6, 6)
             b = rng.randint(-6, 6)
-            y1 = m * x1 + b
+            y1: Any = m * x1 + b
             eq_typst = f"\"through: \" ({x1}, {y1}), quad \"slope = \" {m}"
             m_s = "" if m == 1 else ("-" if m == -1 else str(m))
             b_s = f"+ {b}" if b > 0 else (f"- {abs(b)}" if b < 0 else "")
@@ -383,7 +461,7 @@ class WritingLinearEquationsGenerator(BaseGenerator):
 
             steps = [
                 f"Given point $ ({x1}, {y1}) $ and slope $ m = {m} $",
-                f"Point-slope formula: $ y - y_1 = m(x - x_1) $",
+                "Point-slope formula: $ y - y_1 = m(x - x_1) $",
                 f"Substitute: $ y - ({y1}) = {m}(x - ({x1})) $",
                 f"Solve for $y$: $ y = {m_s}x {b_s} $",
                 f"Result: $ {ans_typst} $"
@@ -391,18 +469,18 @@ class WritingLinearEquationsGenerator(BaseGenerator):
         elif difficulty == ProblemDifficulty.MEDIUM:
             m_num = rng.choice([-3, -2, -1, 1, 2, 3])
             m_den = rng.choice([1, 2, 3])
-            m = sp.Rational(m_num, m_den)
+            m_rat: Any = sp.Rational(m_num, m_den)
             x1 = rng.randint(-5, 5)
             b = rng.randint(-6, 6)
-            y1 = m * x1 + b
+            y1_rat: Any = m_rat * x1 + b
             dx = m_den * rng.choice([-2, -1, 1, 2])
             x2 = x1 + dx
-            y2 = y1 + m * dx
-            x1_i, y1_i = int(x1), int(y1)
-            x2_i, y2_i = int(x2), int(y2)
+            y2_rat: Any = y1_rat + m_rat * dx
+            x1_i, y1_i = int(x1), int(y1_rat)
+            x2_i, y2_i = int(x2), int(y2_rat)
 
             eq_typst = f"\"through: \" ({x1_i}, {y1_i}) quad \"and\" quad ({x2_i}, {y2_i})"
-            m_str = str(m.p) if m.q == 1 else f"{m.p}/{m.q}"
+            m_str = str(m_rat.p) if m_rat.q == 1 else f"{m_rat.p}/{m_rat.q}"
             m_s = "" if m_str == "1" else ("-" if m_str == "-1" else m_str)
             b_s = f"+ {b}" if b > 0 else (f"- {abs(b)}" if b < 0 else "")
             ans_typst = f"y = {m_s}x {b_s}".strip()
@@ -413,7 +491,7 @@ class WritingLinearEquationsGenerator(BaseGenerator):
                 f"Isolate $y$: $ y = {m_s}x {b_s} $",
                 f"Result: $ {ans_typst} $"
             ]
-        else: # SPICY
+        else:  # SPICY
             is_perp = rng.choice([True, False])
             m_orig = rng.choice([-3, -2, 2, 3])
             b_orig = rng.randint(-5, 5)
@@ -421,19 +499,19 @@ class WritingLinearEquationsGenerator(BaseGenerator):
             b_target = rng.randint(-6, 6)
 
             if is_perp:
-                m_target = sp.Rational(-1, m_orig)
+                m_target: Any = sp.Rational(-1, m_orig)
                 rel = "perpendicular to"
             else:
                 m_target = sp.Rational(m_orig, 1)
                 rel = "parallel to"
 
-            y1 = m_target * x1 + b_target
-            if not y1.is_integer:
+            y1_sp: Any = m_target * x1 + b_target
+            if not y1_sp.is_integer:
                 x1 = int(m_orig * rng.choice([1, 2, -1, -2]))
-                y1 = m_target * x1 + b_target
+                y1_sp = m_target * x1 + b_target
 
             x1_i = int(x1)
-            y1_i = int(y1)
+            y1_i = int(y1_sp)
             orig_s = f"y = {m_orig}x {'+ ' if b_orig > 0 else '- '}{abs(b_orig)}"
             eq_typst = f"\"through: \" ({x1_i}, {y1_i}), quad \"{rel} \" {orig_s}"
             m_str = str(m_target.p) if m_target.q == 1 else f"{m_target.p}/{m_target.q}"
@@ -487,7 +565,7 @@ class GraphingLinearInequalitiesGenerator(BaseGenerator):
             m_s = "" if m == 1 else ("-" if m == -1 else str(m))
             b_s = f"+ {b}" if b > 0 else (f"- {abs(b)}" if b < 0 else "")
             eq = f"y {sym} {m_s}x {b_s}".strip()
-
+            m_fl, b_fl, eff_op = float(m), float(b), sym
             shade_dir = "above" if ">" in sym else "below"
             steps = [
                 f"Given inequality: $ {eq} $",
@@ -502,7 +580,7 @@ class GraphingLinearInequalitiesGenerator(BaseGenerator):
             sign = "-" if (num * den) < 0 else ""
             b_s = f"+ {b}" if b > 0 else (f"- {abs(b)}" if b < 0 else "")
             eq = f"y {sym} {sign}{abs(num)}/{abs(den)} x {b_s}".strip()
-
+            m_fl, b_fl, eff_op = num / den, float(b), sym
             shade_dir = "above" if ">" in sym else "below"
             steps = [
                 f"Given inequality: $ {eq} $",
@@ -510,7 +588,7 @@ class GraphingLinearInequalitiesGenerator(BaseGenerator):
                 f"Draw a {'solid' if is_solid else 'dashed'} line.",
                 f"Shade {shade_dir} the boundary line."
             ]
-        else: # SPICY
+        else:  # SPICY
             A = rng.choice([-3, -2, 1, 2, 3])
             B = rng.choice([-3, -2, -1])
             C = rng.choice([-6, 6, -12, 12])
@@ -519,21 +597,39 @@ class GraphingLinearInequalitiesGenerator(BaseGenerator):
             eq = f"{a_s} {b_s} {sym} {C}"
 
             opp = {"<": ">", "<=": ">=", ">": "<", ">=": "<="}[sym]
+            m_fl, b_fl, eff_op = -A / B, C / B, opp
+            shade_dir = "above" if ">" in opp else "below"
             steps = [
                 f"Given inequality in standard form: $ {eq} $",
                 f"Subtract $ {a_s} $ from both sides: $ {B}y {sym} -{A}x + {C} $",
                 f"Divide by negative {abs(B)} (remembering to FLIP the inequality sign): $ y {opp} {-A}/{B} x + {C}/{B} $",
-                f"Draw a {'solid' if is_solid else 'dashed'} line and shade {'above' if '>' in opp else 'below'}."
+                f"Draw a {'solid' if is_solid else 'dashed'} line and shade {shade_dir}."
             ]
+
+        style_word = "Solid" if is_solid else "Dashed"
+        opp_style = "Dashed" if is_solid else "Solid"
+        opp_dir = "below" if shade_dir == "above" else "above"
+        ans_str = f"$ \"{style_word} boundary, shaded {shade_dir} (y-int \" (0, {round(b_fl, 2)}) \")\" $"
+        distractors = [
+            f"$ \"{style_word} boundary, shaded {opp_dir}\" $",
+            f"$ \"{opp_style} boundary, shaded {shade_dir}\" $",
+            f"$ \"{opp_style} boundary, shaded {opp_dir}\" $",
+        ]
+        ans_svg = svg_coordinate_plane(
+            lines=[{"m": m_fl, "b": b_fl, "dashed": not is_solid, "color": "#dc2626"}],
+            shaded_half_planes=[{"m": m_fl, "b": b_fl, "op": eff_op, "color": "#3b82f6"}],
+        )
 
         return BaseProblem(
             id=f"graph_ineq_{difficulty.value}_{problem_idx}",
             prompt_text="Sketch the graph of each linear inequality.",
             equation_typst=f"$ {eq} $",
-            answer_typst="Shaded half-plane on coordinate plane",
+            answer_typst=ans_str,
             steps_typst=steps,
-            distractors=["Opposite shaded half-plane", "Solid instead of dashed boundary line", "Inverted boundary slope"],
+            distractors=distractors,
             difficulty=difficulty,
             standards=self.standards,
+            diagram_svg=svg_coordinate_plane(),
+            answer_svg=ans_svg,
             metadata={"inequality": eq}
         )

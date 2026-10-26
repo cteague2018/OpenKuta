@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_solid_3d
 
 
 class GeometryAreaVolumeGenerator(BaseGenerator):
@@ -70,6 +71,8 @@ class GeometryAreaVolumeGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.MILD,
             standards=self.standards,
+            diagram_svg=svg_solid_3d("prism", f"l={length}", f"w={w}", f"h={h}"),
+            answer_svg=svg_solid_3d("prism", f"l={length}", f"w={w}", f"h={h}"),
             metadata={"length": length, "width": w, "height": h, "volume": vol, "surface_area": sa}
         )
 
@@ -118,6 +121,8 @@ class GeometryAreaVolumeGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.MEDIUM,
             standards=self.standards,
+            diagram_svg=svg_solid_3d("cylinder", f"r={r}", f"h={h}"),
+            answer_svg=svg_solid_3d("cylinder", f"r={r}", f"h={h}"),
             metadata={"radius": r, "height": h, "volume_pi": vol, "surface_area_pi": sa}
         )
 
@@ -202,5 +207,7 @@ class GeometryAreaVolumeGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.SPICY,
             standards=self.standards,
+            diagram_svg=svg_solid_3d(solid_type, f"r={r}", f"h={h}" if solid_type == "cone" else ""),
+            answer_svg=svg_solid_3d(solid_type, f"r={r}", f"h={h}" if solid_type == "cone" else ""),
             metadata={"solid_type": solid_type, "radius": r}
         )

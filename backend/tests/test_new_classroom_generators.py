@@ -32,7 +32,7 @@ def test_registry_registration():
 
 @pytest.mark.parametrize("seed", [1, 42, 100, 2024, 9999])
 @pytest.mark.parametrize("difficulty", [ProblemDifficulty.MILD, ProblemDifficulty.MEDIUM, ProblemDifficulty.SPICY])
-def test_coordinate_geometry_generation(seed: int, difficulty: ProblemDifficulty):
+def test_coordinate_geometry_generation(seed: int, difficulty: ProblemDifficulty) -> None:
     gen = CoordinateGeometryGenerator()
     config = GeneratorConfig(
         problem_count=5,
@@ -65,7 +65,7 @@ def test_coordinate_geometry_generation(seed: int, difficulty: ProblemDifficulty
 
 @pytest.mark.parametrize("seed", [2, 55, 303, 1729, 8888])
 @pytest.mark.parametrize("difficulty", [ProblemDifficulty.MILD, ProblemDifficulty.MEDIUM, ProblemDifficulty.SPICY])
-def test_triangle_trig_generation(seed: int, difficulty: ProblemDifficulty):
+def test_triangle_trig_generation(seed: int, difficulty: ProblemDifficulty) -> None:
     gen = TriangleTrigGenerator()
     config = GeneratorConfig(
         problem_count=5,
@@ -99,7 +99,7 @@ def test_triangle_trig_generation(seed: int, difficulty: ProblemDifficulty):
 
 @pytest.mark.parametrize("seed", [3, 77, 404, 5555, 9876])
 @pytest.mark.parametrize("difficulty", [ProblemDifficulty.MILD, ProblemDifficulty.MEDIUM, ProblemDifficulty.SPICY])
-def test_lhopital_generation(seed: int, difficulty: ProblemDifficulty):
+def test_lhopital_generation(seed: int, difficulty: ProblemDifficulty) -> None:
     gen = LhopitalGenerator()
     config = GeneratorConfig(
         problem_count=5,

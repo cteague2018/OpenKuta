@@ -103,10 +103,22 @@
         ]
       )
 
-      #v(6pt)
+      #v(4pt)
       #align(center)[
-        #text(size: 11pt)[{{ prob.equation_typst }}]
+        #text(size: 10.5pt)[{{ prob.equation_typst }}]
       ]
+
+      {% if show_answers and answer_svg_files and loop.index in answer_svg_files %}
+      #v(3pt)
+      #align(center)[
+        #image("{{ answer_svg_files[loop.index] }}", height: 95pt, fit: "contain")
+      ]
+      {% elif diagram_files and loop.index in diagram_files %}
+      #v(3pt)
+      #align(center)[
+        #image("{{ diagram_files[loop.index] }}", height: 95pt, fit: "contain")
+      ]
+      {% endif %}
 
       {% if prob.choices and prob.choices|length >= 4 %}
       #v(6pt)

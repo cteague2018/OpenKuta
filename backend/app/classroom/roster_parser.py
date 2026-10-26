@@ -136,4 +136,3 @@ class RosterParser:
             )
 
         return students, fmt
-

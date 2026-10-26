@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import re
-import pytest
-from hypothesis import given, strategies as st, settings, HealthCheck
 import sympy as sp
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
 from backend.app.core.base import GeneratorConfig, ProblemDifficulty
 from backend.app.generators import GENERATOR_REGISTRY, get_generator
 from backend.app.grading.verifier import CASStepVerifier
-
 
 cas_verifier = CASStepVerifier()
 
@@ -99,7 +97,7 @@ class TestMathTruthEngine:
     def test_linear_equations_identity_and_solution_truth(self) -> None:
         """Verify linear equation solutions satisfy equation with zero residue."""
         gen = get_generator("algebra_1.two_step")
-        x = sp.Symbol("x")
+        sp.Symbol("x")
         cfg = GeneratorConfig(problem_count=10, seed=555)
         problems = gen.generate(cfg)
 
@@ -134,7 +132,7 @@ class TestMathTruthEngine:
 
     def test_four_form_anti_cheat_scramble_parity(self) -> None:
         """Assert 4-form scrambles (A, B, C, D) maintain 1:1 index alignment with their answer keys."""
-        from backend.app.api.routes import generate_multi_form, MultiFormRequest
+        from backend.app.api.routes import MultiFormRequest, generate_multi_form
 
         req = MultiFormRequest(
             title="Algebra 1 Mastery Test",
@@ -193,4 +191,3 @@ class TestMathTruthEngine:
                 assert p.answer_typst
                 assert "nan" not in p.equation_typst
                 assert "zoo" not in p.equation_typst
-

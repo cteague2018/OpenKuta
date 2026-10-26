@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
 import pytest
 
 from backend.app.core.base import GeneratorConfig, ProblemDifficulty
@@ -118,7 +116,7 @@ class TestTopicProblemIntegrity:
 
         assert len(matching_topics) > 0, f"No catalog topics matched '{topic_keyword}'"
 
-        for course, cat, name, gid in matching_topics[:5]:
+        for course, _cat, name, gid in matching_topics[:5]:
             gen = get_generator(gid)
             probs = gen.generate(GeneratorConfig(problem_count=3, seed=101))
             corpus = " ".join(
@@ -131,4 +129,3 @@ class TestTopicProblemIntegrity:
                 f"Topic '{name}' in '{course}' generated problems unrelated to '{topic_keyword}'.\n"
                 f"Corpus: {corpus[:200]}..."
             )
-

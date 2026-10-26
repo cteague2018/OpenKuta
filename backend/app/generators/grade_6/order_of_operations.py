@@ -151,4 +151,3 @@ class Grade6OrderOfOperationsGenerator(BaseGenerator):
                 difficulty=ProblemDifficulty.SPICY,
                 standards=self.standards
             )
-

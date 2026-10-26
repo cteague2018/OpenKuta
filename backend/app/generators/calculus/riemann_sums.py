@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_data_table
 
 
 class CalculusRiemannSumsGenerator(BaseGenerator):
@@ -18,10 +19,10 @@ class CalculusRiemannSumsGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        # Subintervals n
-        n = 4
+        # Subintervals n scaled by difficulty
+        n = 3 if difficulty == ProblemDifficulty.MILD else (4 if difficulty == ProblemDifficulty.MEDIUM else 6)
         a = 0
-        b = rng.choice([4, 8])
+        b = n * rng.choice([1, 2])
         dx = (b - a) // n
 
         # Function f(x) = k * x^2 or f(x) = x^2 + c
@@ -34,6 +35,11 @@ class CalculusRiemannSumsGenerator(BaseGenerator):
         # Grid points x_0, x_1, x_2, x_3, x_4
         grid = [a + i * dx for i in range(n + 1)]
         f_vals = [f(x) for x in grid]
+        tbl_svg = svg_data_table(
+            headers=["x"] + [str(x) for x in grid],
+            rows=[["f(x)"] + [str(int(v)) for v in f_vals]],
+            title="Function Values on Subintervals",
+        )
 
         func_str = f"{k} x^2 + {c}" if k > 1 else f"x^2 + {c}"
 
@@ -68,7 +74,9 @@ class CalculusRiemannSumsGenerator(BaseGenerator):
                 steps_typst=steps,
                 distractors=distractors,
                 difficulty=ProblemDifficulty.MILD,
-                standards=self.standards
+                standards=self.standards,
+                diagram_svg=tbl_svg,
+                answer_svg=tbl_svg,
             )
 
         elif difficulty == ProblemDifficulty.MEDIUM:
@@ -102,7 +110,9 @@ class CalculusRiemannSumsGenerator(BaseGenerator):
                 steps_typst=steps,
                 distractors=distractors,
                 difficulty=ProblemDifficulty.MEDIUM,
-                standards=self.standards
+                standards=self.standards,
+                diagram_svg=tbl_svg,
+                answer_svg=tbl_svg,
             )
         else:
             # Trapezoidal Rule (TRAM): (dx / 2) * [f(x0) + 2f(x1) + 2f(x2) + 2f(x3) + f(x4)]
@@ -133,6 +143,7 @@ class CalculusRiemannSumsGenerator(BaseGenerator):
                 steps_typst=steps,
                 distractors=distractors,
                 difficulty=ProblemDifficulty.SPICY,
-                standards=self.standards
+                standards=self.standards,
+                diagram_svg=tbl_svg,
+                answer_svg=tbl_svg,
             )
-

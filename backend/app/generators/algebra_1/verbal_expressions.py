@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -69,7 +68,7 @@ class VerbalExpressionsGenerator(BaseGenerator):
                     [f"{var} + {num1} / {num2}", f"{num2} / ({var} + {num1})", f"{var}/{num2} + {num1}"]
                 ),
             ]
-        else: # SPICY
+        else:  # SPICY
             patterns = [
                 (
                     f"Twice the difference of {num2} times a number $ {var} $ and {num1}",
@@ -106,4 +105,3 @@ class VerbalExpressionsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"phrase": phrase, "variable": var}
         )
-

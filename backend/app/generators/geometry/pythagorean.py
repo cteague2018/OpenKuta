@@ -146,4 +146,3 @@ class PythagoreanTheoremGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"a": a, "b": b, "c_sq": c_sq}
         )
-

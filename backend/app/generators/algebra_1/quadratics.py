@@ -6,6 +6,7 @@ import random
 import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_coordinate_plane
 from backend.app.core.typst_utils import format_polynomial_typst
 
 
@@ -230,7 +231,6 @@ class QuadraticEquationsGenerator(BaseGenerator):
         )
 
 
-
 class QuadraticsFactoringGenerator(BaseGenerator):
     generator_id = "algebra_1.quadratics_factoring"
     name = "Solving Quadratics by Factoring"
@@ -290,7 +290,7 @@ class QuadraticsFactoringGenerator(BaseGenerator):
                 f"Set each factor to zero to solve for $x$: $ x = {r1_sol}, {r2} $",
                 f"Result: $ x = {r1_sol}, {r2} $"
             ]
-        else: # SPICY
+        else:  # SPICY
             r1 = rng.choice([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6])
             r2 = rng.choice([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6])
             poly = (x - r1) * (x - r2)
@@ -370,7 +370,7 @@ class QuadraticsSquareRootsGenerator(BaseGenerator):
                 f"Take the square root of both sides: $ x = plus.minus sqrt({k * k}) $",
                 f"Result: $ {ans} $"
             ]
-        else: # SPICY
+        else:  # SPICY
             h = rng.randint(-6, 6)
             k = rng.choice([2, 3, 4, 5, 6, 7])
             c = k * k
@@ -430,7 +430,7 @@ class QuadraticsFormulaGenerator(BaseGenerator):
             c = r1 * r2
             r1_s = f"{r1}/{a}" if r1 % a != 0 else str(r1 // a)
             ans = f"x = {r1_s}, {r2}"
-        else: # SPICY
+        else:  # SPICY
             a = rng.choice([1, 2, 3])
             b = rng.choice([-5, -3, -1, 1, 3, 5])
             c = rng.choice([-5, -4, -3, -2, 2, 3, 4, 5])
@@ -485,18 +485,33 @@ class QuadraticsDiscriminantGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        a = rng.choice([1, 2, 3, -1, -2])
-        case = rng.choice(["two_real", "one_real", "two_imaginary"])
-        if case == "one_real":
-            k = rng.randint(-4, 4)
-            b = 2 * a * k
-            c = a * (k * k)
-        elif case == "two_real":
-            b = rng.randint(-6, 6)
-            c = -rng.randint(1, 6) if a > 0 else rng.randint(1, 6)
+        if difficulty == ProblemDifficulty.MILD:
+            a = 1
+            case = rng.choice(["two_real", "one_real"])
+            if case == "one_real":
+                k = rng.choice([-4, -3, -2, 2, 3, 4])
+                b = 2 * k
+                c = k * k
+            else:
+                b = rng.choice([-6, -5, -4, 4, 5, 6])
+                c = rng.choice([-5, -4, -3, -2, -1])
+        elif difficulty == ProblemDifficulty.MEDIUM:
+            a = rng.choice([2, 3, -1, -2])
+            case = rng.choice(["two_real", "one_real", "two_imaginary"])
+            if case == "one_real":
+                k = rng.choice([-3, -2, 2, 3])
+                b = 2 * a * k
+                c = a * (k * k)
+            elif case == "two_real":
+                b = rng.randint(-6, 6)
+                c = -rng.randint(1, 6) if a > 0 else rng.randint(1, 6)
+            else:
+                b = rng.choice([-2, -1, 1, 2])
+                c = rng.randint(4, 9) if a > 0 else -rng.randint(4, 9)
         else:
-            b = rng.choice([-2, -1, 0, 1, 2])
-            c = rng.randint(4, 9) if a > 0 else -rng.randint(4, 9)
+            a = rng.choice([3, 4, 5, -3, -4])
+            b = rng.choice([-9, -7, -5, 5, 7, 9])
+            c = rng.choice([-8, -6, 6, 8, 10])
 
         disc = b * b - 4 * a * c
         if disc > 0:
@@ -509,13 +524,16 @@ class QuadraticsDiscriminantGenerator(BaseGenerator):
         a_s = f"{a}x^2" if a not in (1, -1) else ("x^2" if a == 1 else "-x^2")
         b_s = f"+ {b}x" if b > 0 else (f"- {abs(b)}x" if b < 0 else "")
         c_s = f"+ {c}" if c > 0 else (f"- {abs(c)}" if c < 0 else "")
-        eq = f"{a_s} {b_s} {c_s} = 0".replace("+ -", "- ")
+        if difficulty == ProblemDifficulty.SPICY:
+            eq = f"{a_s} {b_s} = {-c}".replace("+ -", "- ")
+        else:
+            eq = f"{a_s} {b_s} {c_s} = 0".replace("+ -", "- ")
 
         ans = f"{disc}; {sol_type}"
         steps = [
             f"Given quadratic equation: $ {eq} $",
             f"Identify coefficients: $ a = {a}, b = {b}, c = {c} $",
-            f"Use discriminant formula: $ D = b^2 - 4 a c $",
+            "Use discriminant formula: $ D = b^2 - 4 a c $",
             f"Calculate: $ D = ({b})^2 - 4({a})({c}) = {b*b} - ({4*a*c}) = {disc} $",
             f"Since $ D {' > 0' if disc > 0 else (' = 0' if disc == 0 else ' < 0')} $, there are {sol_type}.",
             f"Result: $ {ans} $"
@@ -605,7 +623,6 @@ class QuadraticsCompletingSquareGenerator(BaseGenerator):
         )
 
 
-
 class GraphingQuadraticsGenerator(BaseGenerator):
     generator_id = "algebra_1.graphing_quadratics"
     name = "Graphing Quadratic Functions"
@@ -651,7 +668,7 @@ class GraphingQuadraticsGenerator(BaseGenerator):
                 f"Vertex: $ ({h}, {k}) $, Axis of symmetry: $ x = {h} $",
                 f"Plot vertex and y-intercept $ (0, {c}) $, then sketch parabola."
             ]
-        else: # SPICY
+        else:  # SPICY
             b = -2 * a * h
             c = a * (h * h) + k
             sym = rng.choice(["<", "<=", ">", ">="])
@@ -664,13 +681,19 @@ class GraphingQuadraticsGenerator(BaseGenerator):
                 f"Given quadratic inequality: $ {eq} $",
                 f"Graph the boundary parabola with a {'solid' if is_solid else 'dashed'} curve.",
                 f"Vertex is at $ ({h}, {k}) $.",
-                f"Test point $ (0, 0) $ to shade region."
+                "Test point $ (0, 0) $ to shade region."
             ]
 
         ans = f"Vertex: ({h}, {k}); Axis: x = {h}"
         d1 = f"Vertex: ({-h}, {k}); Axis: x = {-h}"
         d2 = f"Vertex: ({k}, {h}); Axis: x = {k}"
         d3 = f"Vertex: ({h}, {-k}); Axis: x = {h}"
+
+        ans_svg = svg_coordinate_plane(
+            functions=[{"fn": lambda xv, _a=a, _h=h, _k=k: _a * ((xv - _h) ** 2) + _k, "color": "#dc2626"}],
+            asymptotes=[{"x": float(h), "color": "#64748b"}],
+            points=[{"x": h, "y": k, "color": "#2563eb", "label": f"({h},{k})"}],
+        )
 
         return BaseProblem(
             id=f"graph_quad_{difficulty.value}_{problem_idx}",
@@ -681,5 +704,7 @@ class GraphingQuadraticsGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],
             difficulty=difficulty,
             standards=self.standards,
+            diagram_svg=svg_coordinate_plane(),
+            answer_svg=ans_svg,
             metadata={"vertex": (h, k)}
         )

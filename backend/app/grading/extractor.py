@@ -109,4 +109,3 @@ class ProblemWorkspaceExtractor:
             )
 
         return results
-

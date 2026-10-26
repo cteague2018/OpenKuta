@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -50,7 +49,7 @@ class LiteralEquationsGenerator(BaseGenerator):
                     ["w = P - 2l", "w = (P + 2l) / 2", "w = P / 2 - l"]
                 ),
             ]
-        else: # SPICY
+        else:  # SPICY
             patterns = [
                 (
                     "Solve for C",
@@ -75,8 +74,8 @@ class LiteralEquationsGenerator(BaseGenerator):
         prompt_prefix, eq_typst, ans_typst, distractors = rng.choice(patterns)
         steps = [
             f"Equation: $ {eq_typst} $, {prompt_prefix}.",
-            f"Isolate terms containing the target variable on one side.",
-            f"Factor or divide by the coefficient to solve completely.",
+            "Isolate terms containing the target variable on one side.",
+            "Factor or divide by the coefficient to solve completely.",
             f"Result: $ {ans_typst} $"
         ]
 
@@ -91,4 +90,3 @@ class LiteralEquationsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"equation": eq_typst}
         )
-

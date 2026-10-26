@@ -170,4 +170,3 @@ def test_classroom_api_endpoints():
     csv_res = export_gradebook_csv(default_id, format="canvas")
     assert csv_res.status_code == 200
     assert "SIS User ID" in csv_res.body.decode("utf-8")
-

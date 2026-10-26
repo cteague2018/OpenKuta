@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -75,7 +74,7 @@ class DistributivePropertyGenerator(BaseGenerator):
                     f"{a + b}{var}^2 {sign} {a + c}{var}",
                 ]
 
-        else: # SPICY
+        else:  # SPICY
             # a(b x + c) - d(e x - f)
             a = rng.randint(2, 4)
             b = rng.randint(2, 3)
@@ -103,8 +102,8 @@ class DistributivePropertyGenerator(BaseGenerator):
 
         steps = [
             f"Given expression: $ {eq_str} $",
-            f"Multiply the outer term across each term inside the parentheses.",
-            f"Combine any like algebraic terms.",
+            "Multiply the outer term across each term inside the parentheses.",
+            "Combine any like algebraic terms.",
             f"Final expanded expression: $ {ans_str} $"
         ]
 
@@ -119,4 +118,3 @@ class DistributivePropertyGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"expression": eq_str}
         )
-

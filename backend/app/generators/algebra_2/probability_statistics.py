@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -30,7 +29,7 @@ class ProbabilityStatisticsGenerator(BaseGenerator):
             ans_str = f"{total} meals"
             distractors = [f"{n1 + n2 + n3} meals", f"{total + 10} meals", f"{n1 * n2} meals"]
             steps = [
-                f"Use the Fundamental Counting Principle: multiply the number of choices for each course.",
+                "Use the Fundamental Counting Principle: multiply the number of choices for each course.",
                 f"Total combinations: $ {n1} * {n2} * {n3} = {total} $."
             ]
 
@@ -62,7 +61,7 @@ class ProbabilityStatisticsGenerator(BaseGenerator):
                     f"Compute: $ {val} $ committees."
                 ]
 
-        else: # SPICY
+        else:  # SPICY
             # Probability with combinations
             # In a bag of 5 red and 6 blue marbles, probability of drawing 2 red
             red = rng.randint(4, 6)
@@ -104,4 +103,3 @@ class ProbabilityStatisticsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"problem": q_str}
         )
-

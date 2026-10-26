@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -62,7 +61,7 @@ class GeneralFunctionsGenerator(BaseGenerator):
                 f"Result: $ {ans_str} $."
             ]
 
-        else: # SPICY
+        else:  # SPICY
             # Function composition (f o g)(x)
             a = rng.choice([2, 3])
             b = rng.randint(1, 5)
@@ -79,7 +78,7 @@ class GeneralFunctionsGenerator(BaseGenerator):
             ]
 
             steps = [
-                f"By definition, $ (f compose g)(x) = f(g(x)) $.",
+                "By definition, $ (f compose g)(x) = f(g(x)) $.",
                 f"Substitute $ g(x) = x^2 - {c} $ into $ f $: $ f(x^2 - {c}) = {a}(x^2 - {c}) + {b} $.",
                 f"Distribute and simplify: $ {a}x^2 - {a * c} + {b} = {ans_str} $."
             ]
@@ -95,4 +94,3 @@ class GeneralFunctionsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"problem": q_str}
         )
-

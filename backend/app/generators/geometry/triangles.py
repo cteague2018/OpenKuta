@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_general_triangle
 
 
 class GeometryTrianglesGenerator(BaseGenerator):
@@ -65,6 +66,8 @@ class GeometryTrianglesGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.MILD,
             standards=self.standards,
+            diagram_svg=svg_general_triangle(ang_a=f"{a}°", ang_b=f"{b}°", ang_c="?"),
+            answer_svg=svg_general_triangle(ang_a=f"{a}°", ang_b=f"{b}°", ang_c=f"{c}°"),
             metadata={"angle_A": a, "angle_B": b, "angle_C": c}
         )
 
@@ -121,6 +124,8 @@ class GeometryTrianglesGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.MEDIUM,
             standards=self.standards,
+            diagram_svg=svg_general_triangle(ang_a=f"{a}°", ang_b=f"{b}°" if find_exterior else "?", ext_c="?" if find_exterior else f"{ext}°"),
+            answer_svg=svg_general_triangle(ang_a=f"{a}°", ang_b=f"{b}°", ext_c=f"{ext}°"),
             metadata={"angle_A": a, "angle_B": b, "exterior_D": ext}
         )
 
@@ -196,5 +201,7 @@ class GeometryTrianglesGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.SPICY,
             standards=self.standards,
+            diagram_svg=svg_general_triangle(ang_a=f"{a}x{sign_b}", ang_b="60°" if is_equilateral else f"{vertex}°"),
+            answer_svg=svg_general_triangle(ang_a="60°" if is_equilateral else f"{base_target}°", ang_b="60°" if is_equilateral else f"{vertex}°", ang_c="60°" if is_equilateral else f"{base_target}°"),
             metadata={"x": x}
         )

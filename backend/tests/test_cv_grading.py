@@ -118,5 +118,3 @@ def test_qr_code_generation_and_decoding(tmp_path):
     assert decoded.get("problem_count") == 6
     assert decoded.get("student_id") == "STU-5555"
     assert decoded.get("class_id") == "cls_alg2_p1"
-
-

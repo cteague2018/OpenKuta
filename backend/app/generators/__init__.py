@@ -5,54 +5,6 @@ from pathlib import Path
 from typing import Any, Dict, Type
 
 from backend.app.core.base import BaseGenerator
-from backend.app.generators.algebra_1.exponent_rules import (
-    ExponentRulesGenerator,
-)
-
-# New High-Priority Classroom Generators
-from backend.app.generators.algebra_1.inequalities import (
-    LinearInequalitiesGenerator,
-    GraphingInequalitiesGenerator,
-)
-from backend.app.generators.algebra_1.linear_equations import (
-    LinearEquationsGenerator,
-    SlopeGenerator,
-    GraphingLinesGenerator,
-    WritingLinearEquationsGenerator,
-    GraphingLinearInequalitiesGenerator,
-)
-from backend.app.generators.algebra_1.multi_step_equations import (
-    MultiStepEquationsGenerator,
-)
-from backend.app.generators.algebra_1.polynomials import (
-    PolynomialFactoringGenerator,
-    PolynomialAddSubGenerator,
-    PolynomialMultiplyGenerator,
-)
-
-# Algebra 1 Generators
-from backend.app.generators.algebra_1.quadratics import (
-    QuadraticEquationsGenerator,
-    GraphingQuadraticsGenerator,
-    QuadraticsFactoringGenerator,
-    QuadraticsSquareRootsGenerator,
-    QuadraticsFormulaGenerator,
-    QuadraticsDiscriminantGenerator,
-    QuadraticsCompletingSquareGenerator,
-)
-from backend.app.generators.algebra_1.systems import (
-    SystemsOfEquationsGenerator,
-    SystemsGraphingGenerator,
-    SystemsSubstitutionGenerator,
-    SystemsEliminationGenerator,
-    SystemsInequalitiesGenerator,
-)
-from backend.app.generators.algebra_1.two_step_equations import (
-    TwoStepEquationsGenerator,
-)
-from backend.app.generators.algebra_1.verbal_expressions import (
-    VerbalExpressionsGenerator,
-)
 from backend.app.generators.algebra_1.absolute_value import (
     AbsoluteValueEquationsGenerator,
     GraphingAbsoluteValueGenerator,
@@ -60,23 +12,74 @@ from backend.app.generators.algebra_1.absolute_value import (
 from backend.app.generators.algebra_1.distributive_property import (
     DistributivePropertyGenerator,
 )
-from backend.app.generators.algebra_1.literal_equations import (
-    LiteralEquationsGenerator,
-)
-from backend.app.generators.algebra_1.word_problems import (
-    Algebra1WordProblemsGenerator,
-)
-from backend.app.generators.algebra_1.scientific_notation import (
-    ScientificNotationGenerator,
+from backend.app.generators.algebra_1.exponent_rules import (
+    ExponentRulesGenerator,
 )
 from backend.app.generators.algebra_1.exponential_functions import (
     ExponentialFunctionsGenerator,
     GraphingExponentialGenerator,
 )
 
+# New High-Priority Classroom Generators
+from backend.app.generators.algebra_1.inequalities import (
+    GraphingInequalitiesGenerator,
+    LinearInequalitiesGenerator,
+)
+from backend.app.generators.algebra_1.linear_equations import (
+    GraphingLinearInequalitiesGenerator,
+    GraphingLinesGenerator,
+    LinearEquationsGenerator,
+    SlopeGenerator,
+    WritingLinearEquationsGenerator,
+)
+from backend.app.generators.algebra_1.literal_equations import (
+    LiteralEquationsGenerator,
+)
+from backend.app.generators.algebra_1.multi_step_equations import (
+    MultiStepEquationsGenerator,
+)
+from backend.app.generators.algebra_1.polynomials import (
+    PolynomialAddSubGenerator,
+    PolynomialFactoringGenerator,
+    PolynomialMultiplyGenerator,
+)
+
+# Algebra 1 Generators
+from backend.app.generators.algebra_1.quadratics import (
+    GraphingQuadraticsGenerator,
+    QuadraticEquationsGenerator,
+    QuadraticsCompletingSquareGenerator,
+    QuadraticsDiscriminantGenerator,
+    QuadraticsFactoringGenerator,
+    QuadraticsFormulaGenerator,
+    QuadraticsSquareRootsGenerator,
+)
+from backend.app.generators.algebra_1.scientific_notation import (
+    ScientificNotationGenerator,
+)
+from backend.app.generators.algebra_1.systems import (
+    SystemsEliminationGenerator,
+    SystemsGraphingGenerator,
+    SystemsInequalitiesGenerator,
+    SystemsOfEquationsGenerator,
+    SystemsSubstitutionGenerator,
+)
+from backend.app.generators.algebra_1.two_step_equations import (
+    TwoStepEquationsGenerator,
+)
+from backend.app.generators.algebra_1.verbal_expressions import (
+    VerbalExpressionsGenerator,
+)
+from backend.app.generators.algebra_1.word_problems import (
+    Algebra1WordProblemsGenerator,
+)
+
 # Algebra 2 Generators
 from backend.app.generators.algebra_2.complex_numbers import (
     Algebra2ComplexNumbersGenerator,
+)
+from backend.app.generators.algebra_2.general_functions import (
+    GeneralFunctionsGenerator,
 )
 from backend.app.generators.algebra_2.log_properties import (
     LogPropertiesGenerator,
@@ -86,9 +89,6 @@ from backend.app.generators.algebra_2.logarithms import (
 )
 from backend.app.generators.algebra_2.polynomial_division import (
     PolynomialDivisionGenerator,
-)
-from backend.app.generators.algebra_2.general_functions import (
-    GeneralFunctionsGenerator,
 )
 from backend.app.generators.algebra_2.probability_statistics import (
     ProbabilityStatisticsGenerator,
@@ -123,6 +123,7 @@ from backend.app.generators.calculus.limits import (
 from backend.app.generators.calculus.riemann_sums import (
     CalculusRiemannSumsGenerator,
 )
+from backend.app.generators.curriculum_topics import build_topic_generator_registry
 from backend.app.generators.geometry.angles_lines import (
     GeometryAnglesLinesGenerator,
 )
@@ -300,6 +301,18 @@ GENERATOR_REGISTRY: Dict[str, Type[BaseGenerator]] = {
     Grade6IntegersGenerator.generator_id: Grade6IntegersGenerator,
 }
 
+_BASE_GENERATOR_REGISTRY: Dict[str, Type[BaseGenerator]] = dict(GENERATOR_REGISTRY)
+
+# Comprehensive Course Catalog Taxonomy covering all 7 curriculum tiers
+_CATALOG_PATH = Path(__file__).resolve().parent / "catalog_data.json"
+with open(_CATALOG_PATH, "r", encoding="utf-8") as _f:
+    COURSE_CATALOG: Dict[str, Dict[str, Any]] = json.load(_f)
+
+TOPIC_GENERATOR_REGISTRY: Dict[str, Type[BaseGenerator]] = build_topic_generator_registry(
+    COURSE_CATALOG
+)
+GENERATOR_REGISTRY.update(TOPIC_GENERATOR_REGISTRY)
+
 
 def get_generator(generator_id: str) -> BaseGenerator:
     if generator_id not in GENERATOR_REGISTRY:
@@ -308,9 +321,3 @@ def get_generator(generator_id: str) -> BaseGenerator:
             f"{list(GENERATOR_REGISTRY.keys())}"
         )
     return GENERATOR_REGISTRY[generator_id]()
-
-
-# Comprehensive Course Catalog Taxonomy covering all 7 curriculum tiers
-_CATALOG_PATH = Path(__file__).resolve().parent / "catalog_data.json"
-with open(_CATALOG_PATH, "r", encoding="utf-8") as _f:
-    COURSE_CATALOG: Dict[str, Dict[str, Any]] = json.load(_f)

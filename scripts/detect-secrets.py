@@ -10,7 +10,6 @@ import re
 import sys
 from pathlib import Path
 
-
 SECRET_PATTERNS = [
     (re.compile(r"(?i)aws_access_key_id\s*=\s*['\"]?(AKIA[0-9A-Z]{16})['\"]?"), "AWS Access Key"),
     (re.compile(r"(?i)aws_secret_access_key\s*=\s*['\"]?([0-9a-zA-Z/+]{40})['\"]?"), "AWS Secret Key"),

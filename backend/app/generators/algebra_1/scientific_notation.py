@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -84,7 +83,7 @@ class ScientificNotationGenerator(BaseGenerator):
                 f"Standard form: $ {ans_str} $."
             ]
 
-        else: # SPICY
+        else:  # SPICY
             # Multiplication & Division in scientific notation
             op = rng.choice(["multiply", "divide"])
             if op == "multiply":
@@ -137,4 +136,3 @@ class ScientificNotationGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"problem": q_text}
         )
-

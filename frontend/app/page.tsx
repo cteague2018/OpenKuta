@@ -1850,6 +1850,19 @@ export default function OpenMathForgeApp() {
                                     <ProblemEquation raw={prob.equation_typst} />
                                   </div>
 
+                                  {prob.diagram_svg && !showAnswerKey && (
+                                    <div
+                                      className="my-1.5 flex justify-center items-center max-h-36 overflow-hidden"
+                                      dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
+                                    />
+                                  )}
+                                  {prob.diagram_svg && showAnswerKey && !prob.answer_svg && (
+                                    <div
+                                      className="my-1.5 flex justify-center items-center max-h-36 overflow-hidden"
+                                      dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
+                                    />
+                                  )}
+
                                   {/* Multiple Choice Options Grid */}
                                   {prob.choices && prob.choices.length >= 4 && (
                                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-2.5 pt-2 border-t border-slate-100 text-xs">
@@ -1879,6 +1892,12 @@ export default function OpenMathForgeApp() {
                                       )}
                                       <ProblemEquation raw={prob.answer_typst} inline />
                                     </div>
+                                    {prob.answer_svg && (
+                                      <div
+                                        className="my-1.5 flex justify-center items-center bg-white/80 rounded p-1 border border-amber-200/70 max-h-40 overflow-hidden"
+                                        dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
+                                      />
+                                    )}
                                     {prob.steps_typst && prob.steps_typst.length > 0 && (
                                       <div className="mt-1.5 space-y-1 text-[11px] text-amber-900">
                                         <div className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
@@ -2914,6 +2933,29 @@ export default function OpenMathForgeApp() {
                             <ProblemEquation raw={p.answer_typst} inline />
                           </div>
                         </div>
+
+                        {(p.answer_svg || p.diagram_svg) && (
+                          <div className="flex flex-wrap gap-3 justify-center items-center pt-1">
+                            {p.diagram_svg && (
+                              <div className="flex flex-col items-center">
+                                <span className="text-[9px] uppercase text-slate-400 font-semibold">Problem Visual</span>
+                                <div
+                                  className="max-h-28 overflow-hidden"
+                                  dangerouslySetInnerHTML={{ __html: p.diagram_svg }}
+                                />
+                              </div>
+                            )}
+                            {p.answer_svg && (
+                              <div className="flex flex-col items-center">
+                                <span className="text-[9px] uppercase text-amber-600 font-semibold">Answer Visual</span>
+                                <div
+                                  className="max-h-28 overflow-hidden"
+                                  dangerouslySetInnerHTML={{ __html: p.answer_svg }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {modalQuestionType === "multiple_choice" && p.choices && p.choices.length >= 4 && (
                           <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-1.5 border-t border-slate-100 text-[11px]">

@@ -127,4 +127,3 @@ class ClassroomStore:
             if s.student_id.lower() == student_id.lower():
                 return s
         return None
-

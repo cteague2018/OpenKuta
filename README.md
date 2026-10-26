@@ -12,26 +12,33 @@ OpenMathForge integrates procedural mathematical generation, sub-100ms vector ty
 
 ## 🏗️ Architecture & Features
 
-1. **Deterministic CAS Math Core**
+1. **Deterministic CAS Math Core & 598-Topic 1:1 Curriculum Engine**
    - Procedural backward parameterization via **SymPy**. Zero LLM hallucinations, guaranteed integer/rational invariants, full seed determinism.
-   - Comprehensive curriculum catalog across 7 tiers: Grade 6 Math, Pre-Algebra, Algebra 1, Geometry, Algebra 2, Precalculus, and Calculus (43+ algorithmic generators).
-2. **Typesetting & Anti-Cheating Document Engine**
-   - Sub-100ms compilation via **Typst** (`typst-py`).
+   - **100% 1-to-1 Curriculum Coverage**: All **598 curriculum topics and subtopics** across 7 courses (`grade_6`, `pre_algebra`, `algebra_1`, `geometry`, `algebra_2`, `precalculus`, and `calculus`) map to dedicated, dynamically registered topic generators (`generator_id == topic.id`) alongside 73 base domain generators (`671` total registered generators).
+   - **Difficulty-Invariant Subtopic Fidelity**: Every topic and subtopic generates strictly relevant problems at all 3 difficulty tiers (`mild`, `medium`, `spicy`) without cross-topic multiplexing, verified by automated forensic audit suites (`backend/tests/test_forensic_topic_audit.py` and `tests/functional/test_topic_problem_integrity.py`).
+2. **Vector SVG Visuals, Graphs, Geometric Diagrams & Data Tables**
+   - Pure-Python deterministic SVG engine (`backend/app/core/svg_utils.py`) generating publication-grade vector graphics (`diagram_svg` for problem prompts and `answer_svg` for plotted answer keys):
+     - **Coordinate Planes & Function Plotters**: Linear equations, inequalities with half-plane shading, systems of equations/inequalities, quadratics, polynomials, rationals with asymptotes, exponentials, logarithms, piecewise functions, conics, polar grids, slope fields, and Riemann sum rectangles/shaded integrals.
+     - **Number Lines**: Single and compound inequalities with open/closed boundary circles and directional rays.
+     - **Geometric Figures**: Labeled right and general triangles, parallel lines cut by a transversal, polygons, circles with radii/chords/arcs/secants, and 3D solids (prisms, cylinders, cones, spheres, pyramids).
+     - **Statistical Plots & Structured Tables**: Box-and-whisker plots, histograms/dot plots, stem-and-leaf plots, Venn diagrams, two-way frequency tables, and calculus function/derivative tables.
+3. **Typesetting & Anti-Cheating Document Engine**
+   - Sub-100ms compilation via **Typst** (`typst-py`) with native inline SVG rendering (`image.decode`) for both problem prompts and multi-form answer keys.
    - 4 ArUco 4x4 corner fiducials and metadata QR codes `{worksheet_id, form_id, seed, student_id}`.
    - Dynamic workspace clearance calculation to eliminate page overruns.
    - 4-form multi-scramble (Forms A, B, C, D) with unified 4-column master grading matrix.
-3. **Computer Vision & CAS Grading**
+4. **Computer Vision & CAS Grading**
    - OpenCV fiducial detection, perspective warp to canonical US-Letter (2550x3300 px at 300 DPI), and workspace box slicing.
    - SymPy step-difference CAS verifier ($\Delta = \text{simplify}(S_k - S_{k-1}) == 0$).
    - Automated error classification: arithmetic, sign, distribution, conceptual, with partial credit scoring.
-4. **Classroom Management & Auto-Gradebook**
+5. **Classroom Management & Auto-Gradebook**
    - 1-click roster import supporting **Google Classroom**, **Canvas LMS**, **Clever**, and **OneRoster** CSVs.
    - Batch personalized PDF generation with unique student QR codes.
    - Direct grade sync into local class gradebooks.
-5. **EdTech LMS Export**
+6. **EdTech LMS Export**
    - Canvas-compliant **QTI 2.1** XML and ZIP package export with CCSS-M and TEKS curriculum tagging.
-6. **Modern Studio UI**
-   - Next.js 14 App Router, Tailwind CSS, KaTeX live mathematical preview, assignment tray, and camera vision grader dropzone.
+7. **Modern Studio UI**
+   - Next.js 14 App Router, Tailwind CSS, KaTeX live mathematical preview, interactive inline SVG diagram/graph rendering for problems and answer keys, assignment tray, and camera vision grader dropzone.
 
 ---
 

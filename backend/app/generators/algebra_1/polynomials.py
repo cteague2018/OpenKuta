@@ -154,13 +154,6 @@ class PolynomialFactoringGenerator(BaseGenerator):
         )
 
 
-
-import random
-import sympy as sp
-from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
-from backend.app.core.typst_utils import format_polynomial_typst
-
-
 class PolynomialAddSubGenerator(BaseGenerator):
     generator_id = "algebra_1.polynomials_add_sub"
     name = "Adding and Subtracting Polynomials"
@@ -195,7 +188,7 @@ class PolynomialAddSubGenerator(BaseGenerator):
             f_const = rng.randint(-8, 8)
             p1 = a * x**2 + b * x + c
             p2 = d * x**2 + e * x + f_const
-        else: # SPICY: Cubics / dissimilar powers
+        else:  # SPICY: Cubics / dissimilar powers
             a = rng.choice([1, 2, 3])
             b = rng.randint(-5, 5)
             c = rng.randint(-7, 7)
@@ -277,14 +270,14 @@ class PolynomialMultiplyGenerator(BaseGenerator):
             eq_typst = f"({a_s} {b_s})({c_s} {d_s})"
             ans_expr = sp.expand((a * x + b) * (c * x + d))
             steps = [
-                f"Use the FOIL method (First, Outside, Inside, Last):",
+                "Use the FOIL method (First, Outside, Inside, Last):",
                 f"First: $ ({a_s}) dot ({c_s}) = {a*c}x^2 $",
                 f"Outside: $ ({a_s}) dot ({d}) = {a*d}x $",
                 f"Inside: $ ({b}) dot ({c_s}) = {b*c}x $",
                 f"Last: $ ({b}) dot ({d}) = {b*d} $",
                 f"Combine middle terms: $ {format_polynomial_typst(ans_expr, x)} $"
             ]
-        else: # SPICY: Special products or Binomial x Trinomial
+        else:  # SPICY: Special products or Binomial x Trinomial
             # Special case: (ax +/- b)^2 or (ax + b)(cx^2 + dx + e)
             subtype = rng.choice(["square", "trinomial"])
             if subtype == "square":
@@ -294,7 +287,7 @@ class PolynomialMultiplyGenerator(BaseGenerator):
                 eq_typst = f"({a}x {b_s})^2"
                 ans_expr = sp.expand((a * x + b)**2)
                 steps = [
-                    f"Use the binomial square pattern: $ (A + B)^2 = A^2 + 2AB + B^2 $",
+                    "Use the binomial square pattern: $ (A + B)^2 = A^2 + 2AB + B^2 $",
                     f"$ ({a}x)^2 + 2({a}x)({b}) + ({b})^2 $",
                     f"Result: $ {format_polynomial_typst(ans_expr, x)} $"
                 ]
@@ -309,7 +302,7 @@ class PolynomialMultiplyGenerator(BaseGenerator):
                 eq_typst = f"(x {b_s})({format_polynomial_typst(p2, x)})"
                 ans_expr = sp.expand((x + b) * p2)
                 steps = [
-                    f"Distribute each term in the binomial across the trinomial:",
+                    "Distribute each term in the binomial across the trinomial:",
                     f"$ x dot ({format_polynomial_typst(p2, x)}) + ({b}) dot ({format_polynomial_typst(p2, x)}) $",
                     f"Combine like terms: $ {format_polynomial_typst(ans_expr, x)} $"
                 ]

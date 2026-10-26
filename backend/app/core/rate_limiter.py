@@ -36,4 +36,3 @@ class TokenBucketRateLimiter:
     def reset(self) -> None:
         with self.lock:
             self.buckets.clear()
-

@@ -81,4 +81,3 @@ def test_classroom_store_and_batch_pdf():
     assert isinstance(pdf_bytes, bytes)
     assert len(pdf_bytes) > 2000
     assert pdf_bytes.startswith(b"%PDF-")
-

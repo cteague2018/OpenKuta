@@ -69,4 +69,3 @@ def format_polynomial_typst(poly_expr: sp.Expr, var: sp.Symbol = sp.Symbol('x'))
             terms.append(term_str)
 
     return " ".join(terms) if terms else "0"
-

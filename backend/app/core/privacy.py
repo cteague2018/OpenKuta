@@ -38,4 +38,3 @@ def purge_ephemeral_storage(storage_dir: pathlib.Path, max_age_seconds: float = 
             except Exception:
                 pass
     return deleted_count
-

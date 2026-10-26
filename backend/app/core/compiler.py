@@ -82,6 +82,8 @@ class TypstCompiler:
         student_name: Optional[str] = None,
         student_id: Optional[str] = None,
         student_period: Optional[str] = None,
+        diagram_files: Optional[Dict[int, str]] = None,
+        answer_svg_files: Optional[Dict[int, str]] = None,
     ) -> str:
         """Render the Typst markup for a student worksheet."""
         template = self.jinja_env.get_template("worksheet.typ.j2")
@@ -91,7 +93,7 @@ class TypstCompiler:
         spicy_problems = [p for p in problems if p.difficulty == "spicy"]
 
         # Dynamic workspace height with extra clearance for multi-step
-        has_multistep = any(
+        any(
             "multi" in (p.prompt_text or "").lower() or len(p.steps_typst) >= 4
             for p in problems
         )
@@ -127,6 +129,8 @@ class TypstCompiler:
             "student_id": student_id,
             "student_period": student_period,
             "show_answers": show_answers,
+            "diagram_files": diagram_files or {},
+            "answer_svg_files": answer_svg_files or {},
         }
         return template.render(context)
 
@@ -218,6 +222,18 @@ class TypstCompiler:
 
             generate_qr_code(payload, tmp_path / qr_filename)
 
+            diagram_files: Dict[int, str] = {}
+            answer_svg_files: Dict[int, str] = {}
+            for p_idx, prob in enumerate(problems, start=1):
+                if getattr(prob, "diagram_svg", None):
+                    d_name = f"prob_{p_idx}_diagram.svg"
+                    (tmp_path / d_name).write_text(str(prob.diagram_svg), encoding="utf-8")
+                    diagram_files[p_idx] = d_name
+                if getattr(prob, "answer_svg", None):
+                    a_name = f"prob_{p_idx}_answer.svg"
+                    (tmp_path / a_name).write_text(str(prob.answer_svg), encoding="utf-8")
+                    answer_svg_files[p_idx] = a_name
+
             typ_markup = self.render_worksheet_typ(
                 title=title,
                 form_id=form_id,
@@ -231,6 +247,8 @@ class TypstCompiler:
                 student_name=student_name,
                 student_id=student_id,
                 student_period=student_period,
+                diagram_files=diagram_files,
+                answer_svg_files=answer_svg_files,
             )
 
             source_file = tmp_path / "worksheet.typ"
@@ -258,6 +276,18 @@ class TypstCompiler:
                 dest = tmp_path / f"aruco_{m_id}.png"
                 shutil.copyfile(m_path, dest)
                 marker_filenames[m_id] = f"aruco_{m_id}.png"
+
+            diagram_files: Dict[int, str] = {}
+            answer_svg_files: Dict[int, str] = {}
+            for p_idx, prob in enumerate(problems, start=1):
+                if getattr(prob, "diagram_svg", None):
+                    d_name = f"prob_{p_idx}_diagram.svg"
+                    (tmp_path / d_name).write_text(str(prob.diagram_svg), encoding="utf-8")
+                    diagram_files[p_idx] = d_name
+                if getattr(prob, "answer_svg", None):
+                    a_name = f"prob_{p_idx}_answer.svg"
+                    (tmp_path / a_name).write_text(str(prob.answer_svg), encoding="utf-8")
+                    answer_svg_files[p_idx] = a_name
 
             page_markups: List[str] = []
 
@@ -292,6 +322,8 @@ class TypstCompiler:
                     student_name=s_name,
                     student_id=s_id,
                     student_period=s_period,
+                    diagram_files=diagram_files,
+                    answer_svg_files=answer_svg_files,
                 )
                 page_markups.append(markup)
 

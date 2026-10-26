@@ -4,6 +4,7 @@ import math
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_right_triangle
 
 
 class GeometryTrigonometryGenerator(BaseGenerator):
@@ -87,6 +88,8 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.MILD,
             standards=self.standards,
+            diagram_svg=svg_right_triangle(side_a=str(adj), side_b=str(opp), side_c=str(hyp), angle_b="θ"),
+            answer_svg=svg_right_triangle(side_a=str(adj), side_b=str(opp), side_c=str(hyp), angle_b="θ"),
             metadata={"func": func_name, "opp": opp, "adj": adj, "hyp": hyp}
         )
 
@@ -183,6 +186,8 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.MEDIUM,
             standards=self.standards,
+            diagram_svg=svg_right_triangle(side_b="x", angle_b=f"{theta}°"),
+            answer_svg=svg_right_triangle(side_b="x", angle_b=f"{theta}°"),
             metadata={"theta": theta}
         )
 
@@ -280,5 +285,7 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.SPICY,
             standards=self.standards,
+            diagram_svg=svg_right_triangle(angle_b="θ"),
+            answer_svg=svg_right_triangle(angle_b=f"{angle_deg:.1f}°"),
             metadata={"case": case, "angle_deg": angle_deg}
         )

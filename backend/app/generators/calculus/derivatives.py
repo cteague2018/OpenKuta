@@ -1,7 +1,8 @@
 from __future__ import annotations
-import sympy as sp
 
 import random
+
+import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -108,7 +109,6 @@ class CalculusDerivativesGenerator(BaseGenerator):
             )
 
 
-
 class CalculusTangentLinesGenerator(BaseGenerator):
     generator_id = "calculus.tangent_lines"
     name = "Tangent and Normal Lines"
@@ -134,7 +134,7 @@ class CalculusTangentLinesGenerator(BaseGenerator):
             a = rng.choice([1, -1])
             b = rng.choice([-2, 2])
             f_expr = a * x**3 + b * x
-        else: # SPICY
+        else:  # SPICY
             c = rng.choice([1, 2])
             f_expr = c * sp.sin(x) if rng.random() < 0.5 else sp.exp(x)
             x0 = 0

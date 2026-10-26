@@ -44,7 +44,7 @@ class Grade6RatiosRatesGenerator(BaseGenerator):
                 difficulty=ProblemDifficulty.MILD,
                 standards=self.standards
             )
-        else:
+        elif difficulty == ProblemDifficulty.MEDIUM:
             # Equivalent ratios: a / b = x / d
             a = rng.choice([2, 3, 4, 5])
             b = rng.choice([3, 5, 7, 8])
@@ -63,12 +63,41 @@ class Grade6RatiosRatesGenerator(BaseGenerator):
             ]
 
             return BaseProblem(
-                id=f"g6_ratio_{difficulty.value}_{problem_idx}",
+                id=f"g6_ratio_med_{problem_idx}",
                 prompt_text="Find the missing value to make an equivalent ratio.",
                 equation_typst=eq_typst,
                 answer_typst=ans_typst,
                 steps_typst=steps,
                 distractors=[f"x = {c + 1}", f"x = {d - b}", f"x = {c * 2}"],
+                difficulty=difficulty,
+                standards=self.standards
+            )
+        else:
+            # Spicy: Cross-multiplication or rate prediction over larger quantity
+            a = rng.choice([3, 4, 5, 7, 9])
+            b = rng.choice([4, 5, 6, 8, 10])
+            while a == b:
+                b += 1
+            k = rng.choice([6, 7, 8, 9, 11])
+            c = a * k
+            d = b * k
+
+            eq_typst = f"{c} / x = {a} / {b}"
+            ans_typst = f"x = {d}"
+
+            steps = [
+                f"Cross-multiply to solve the proportion: $ {a} x = {c} dot {b} = {c * b} $",
+                f"Divide both sides by {a}: $ x = {c * b} / {a} = {d} $",
+                f"Result: $ {ans_typst} $"
+            ]
+
+            return BaseProblem(
+                id=f"g6_ratio_spicy_{problem_idx}",
+                prompt_text="Solve the proportion for x.",
+                equation_typst=eq_typst,
+                answer_typst=ans_typst,
+                steps_typst=steps,
+                distractors=[f"x = {d + b}", f"x = {c}", f"x = {d - a}"],
                 difficulty=difficulty,
                 standards=self.standards
             )

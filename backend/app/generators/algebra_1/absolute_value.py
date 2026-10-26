@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_coordinate_plane
 
 
 class AbsoluteValueEquationsGenerator(BaseGenerator):
@@ -69,7 +69,7 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
                 f"{var} = {c}, {-c}",
             ]
 
-        else: # SPICY
+        else:  # SPICY
             # Multi-step: d * |a x + b| - k = c
             d = rng.choice([2, 3])
             k = rng.randint(2, 8)
@@ -94,7 +94,7 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
 
         steps = [
             f"$ {eq_str} $",
-            f"Set up two linear cases: positive and negative.",
+            "Set up two linear cases: positive and negative.",
             f"Case 1: $ {step_pos} $",
             f"Case 2: $ {step_neg} $",
             f"Solution set: $ {ans_str} $"
@@ -113,8 +113,6 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
         )
 
 
-
-
 class GraphingAbsoluteValueGenerator(BaseGenerator):
     generator_id = "algebra_1.graphing_absolute_value"
     name = "Graphing Absolute Value Equations"
@@ -128,9 +126,18 @@ class GraphingAbsoluteValueGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        h = rng.randint(-4, 4) if allow_negatives else rng.randint(0, 4)
-        k = rng.randint(-4, 4) if allow_negatives else rng.randint(0, 4)
-        a = rng.choice([-2, -1, 1, 2, 3])
+        if difficulty == ProblemDifficulty.MILD:
+            h = rng.choice([-4, -3, -2, -1, 1, 2, 3, 4])
+            k = rng.choice([-4, -3, -2, -1, 1, 2, 3, 4])
+            a = 1
+        elif difficulty == ProblemDifficulty.MEDIUM:
+            h = rng.randint(-4, 4)
+            k = rng.randint(-4, 4)
+            a = rng.choice([-2, -1, 2, 3])
+        else:
+            h = rng.choice([-5, -4, -3, 3, 4, 5])
+            k = rng.choice([-5, -4, -3, 3, 4, 5])
+            a = rng.choice([-3, -2, 2, 3])
 
         h_s = f"- {h}" if h > 0 else (f"+ {abs(h)}" if h < 0 else "")
         k_s = f"+ {k}" if k > 0 else (f"- {abs(k)}" if k < 0 else "")
@@ -141,7 +148,7 @@ class GraphingAbsoluteValueGenerator(BaseGenerator):
         steps = [
             f"Given absolute value equation: $ {eq} $",
             f"Identify vertex $ (h, k) $: $ ({h}, {k}) $",
-            f"The V-shape opens {'upward' if a > 0 else 'downward'} with branch slope $ \\pm {abs(a)} $.",
+            f"The V-shape opens {'upward' if a > 0 else 'downward'} with branch slope $ plus.minus {abs(a)} $.",
             f"Plot vertex $ ({h}, {k}) $ and symmetric points $ ({h + 1}, {k + a}) $ and $ ({h - 1}, {k + a}) $.",
             "Draw the two straight rays forming the V-graph."
         ]
@@ -150,6 +157,11 @@ class GraphingAbsoluteValueGenerator(BaseGenerator):
         d1 = f"Vertex: ({-h}, {k})"
         d2 = f"Vertex: ({k}, {h})"
         d3 = f"Vertex: ({h}, {-k})"
+
+        ans_svg = svg_coordinate_plane(
+            functions=[{"fn": lambda xv, _a=a, _h=h, _k=k: _a * abs(xv - _h) + _k, "color": "#dc2626"}],
+            points=[{"x": h, "y": k, "color": "#2563eb", "label": f"({h},{k})"}],
+        )
 
         return BaseProblem(
             id=f"graph_abs_{difficulty.value}_{problem_idx}",
@@ -160,5 +172,7 @@ class GraphingAbsoluteValueGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],
             difficulty=difficulty,
             standards=self.standards,
+            diagram_svg=svg_coordinate_plane(),
+            answer_svg=ans_svg,
             metadata={"vertex": (h, k)}
         )

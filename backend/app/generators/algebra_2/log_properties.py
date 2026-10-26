@@ -117,4 +117,3 @@ class LogPropertiesGenerator(BaseGenerator):
                 difficulty=ProblemDifficulty.SPICY,
                 standards=self.standards
             )
-

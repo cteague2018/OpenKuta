@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_coordinate_plane
 
 
 class ExponentialFunctionsGenerator(BaseGenerator):
@@ -67,7 +67,7 @@ class ExponentialFunctionsGenerator(BaseGenerator):
                 f"Since the base $ b = {b_val} {' > 1' if is_growth else ' < 1'} $, this represents {nature}."
             ]
 
-        else: # SPICY
+        else:  # SPICY
             # Word problem: population or depreciation
             init_pop = rng.choice([500, 1200, 2500, 5000])
             growth_pct = rng.choice([4, 6, 8, 10])
@@ -81,12 +81,12 @@ class ExponentialFunctionsGenerator(BaseGenerator):
             )
             ans_str = f"{final_val:,} people"
             distractors = [
-                f"{init_pop + init_pop * growth_pct * years // 100:,} people", # Linear interest mistake
+                f"{init_pop + init_pop * growth_pct * years // 100:,} people",  # Linear interest mistake
                 f"{final_val + 250:,} people",
                 f"{final_val - 180:,} people",
             ]
             steps = [
-                f"Use exponential growth model: $ A = P(1 + r)^t $.",
+                "Use exponential growth model: $ A = P(1 + r)^t $.",
                 f"Substitute $ P = {init_pop} $, $ r = {growth_pct / 100} $, $ t = {years} $.",
                 f"Calculate: $ {init_pop} * (1 + {growth_pct / 100})^{years} approx {final_val:,} $ people."
             ]
@@ -104,8 +104,6 @@ class ExponentialFunctionsGenerator(BaseGenerator):
         )
 
 
-
-
 class GraphingExponentialGenerator(BaseGenerator):
     generator_id = "algebra_1.graphing_exponential"
     name = "Graphing Exponential Functions"
@@ -119,17 +117,21 @@ class GraphingExponentialGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        base = rng.choice([2, 3, 4, 1/2, 1/3])
-        c = rng.randint(-3, 3)
-        a = rng.choice([1, 2, -1])
+        if difficulty == ProblemDifficulty.MILD:
+            base: float = float(rng.choice([2, 3]))
+            c = rng.choice([-3, -2, -1, 1, 2, 3])
+            a = 1
+        elif difficulty == ProblemDifficulty.MEDIUM:
+            base = float(rng.choice([2, 3, 0.5]))
+            c = rng.randint(-3, 3)
+            a = rng.choice([2, 3, -1])
+        else:
+            base = float(rng.choice([2, 3, 4, 0.5]))
+            c = rng.choice([-4, -3, 2, 3, 4])
+            a = rng.choice([-3, -2, 2, 4])
 
-        base_s = f"({base})" if isinstance(base, float) or "/" in str(base) else str(base)
-        if base == 0.5:
-            base_s = "(1/2)"
-        elif base == 1/3:
-            base_s = "(1/3)"
-
-        a_s = "" if a == 1 else ("-" if a == -1 else f"{a} * ")
+        base_s = "(1/2)" if base == 0.5 else str(int(base))
+        a_s = "" if a == 1 else ("-" if a == -1 else f"{a} dot ")
         c_s = f"+ {c}" if c > 0 else (f"- {abs(c)}" if c < 0 else "")
         eq = f"y = {a_s}{base_s}^x {c_s}".strip()
 
@@ -149,6 +151,12 @@ class GraphingExponentialGenerator(BaseGenerator):
         d2 = f"Asymptote: x = {c}; y-int: ({y_int}, 0)"
         d3 = f"Asymptote: {asymptote}; y-int: (0, {y_int - 1})"
 
+        ans_svg = svg_coordinate_plane(
+            functions=[{"fn": lambda xv, _a=a, _b=base, _c=c: _a * (_b ** xv) + _c, "color": "#dc2626"}],
+            asymptotes=[{"y": float(c), "color": "#64748b"}],
+            points=[{"x": 0, "y": y_int, "color": "#2563eb", "label": f"(0,{y_int})"}],
+        )
+
         return BaseProblem(
             id=f"graph_exp_{difficulty.value}_{problem_idx}",
             prompt_text="Sketch the graph of each exponential function. State the horizontal asymptote and y-intercept.",
@@ -158,5 +166,7 @@ class GraphingExponentialGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],
             difficulty=difficulty,
             standards=self.standards,
+            diagram_svg=svg_coordinate_plane(),
+            answer_svg=ans_svg,
             metadata={"asymptote": asymptote, "y_intercept": y_int}
         )

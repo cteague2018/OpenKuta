@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -28,7 +27,7 @@ class Algebra1WordProblemsGenerator(BaseGenerator):
             ans_str = f"{dist} miles"
             distractors = [f"{dist + speed} miles", f"{dist - speed} miles", f"{speed * (hours + 1)} miles"]
             steps = [
-                f"Use the distance formula: $ d = r * t $.",
+                "Use the distance formula: $ d = r * t $.",
                 f"Substitute given rate $ r = {speed} $ and time $ t = {hours} $.",
                 f"Calculate: $ d = {speed} * {hours} = {dist} $ miles."
             ]
@@ -64,12 +63,12 @@ class Algebra1WordProblemsGenerator(BaseGenerator):
                 ans_str = f"{c_count} tickets"
                 distractors = [f"{a_count} tickets", f"{c_count + 3} tickets", f"{max(1, c_count - 2)} tickets"]
                 steps = [
-                    f"Let $ c $ = children's tickets and $ a $ = adult tickets.",
+                    "Let $ c $ = children's tickets and $ a $ = adult tickets.",
                     f"Set up system of equations: $ cases(c + a = {tot_count}, {c_price}c + {a_price}a = {tot_rev}) $.",
                     f"Substitute $ a = {tot_count} - c $ into the cost equation: $ {c_price}c + {a_price}({tot_count} - c) = {tot_rev} $.",
                     f"Solve for $ c $: $ {c_count} $ tickets."
                 ]
-        else: # SPICY
+        else:  # SPICY
             # Mixture word problem
             p1 = rng.choice([10, 20, 25])
             p2 = rng.choice([40, 50, 60])
@@ -92,7 +91,7 @@ class Algebra1WordProblemsGenerator(BaseGenerator):
             steps = [
                 f"Let $ x $ be the liters of {p2}% solution to add.",
                 f"Set up total acid balance: $ {p1 / 100} * {v1} + {p2 / 100} * x = {target_p / 100} * ({v1} + x) $.",
-                f"Solve the linear equation for $ x $.",
+                "Solve the linear equation for $ x $.",
                 f"Result: $ x = {x_liters} $ liters."
             ]
 
@@ -107,4 +106,3 @@ class Algebra1WordProblemsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"question": q_text}
         )
-

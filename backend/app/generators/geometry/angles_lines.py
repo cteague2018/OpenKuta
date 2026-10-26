@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_parallel_transversal
 
 
 class GeometryAnglesLinesGenerator(BaseGenerator):
@@ -204,5 +205,7 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.SPICY,
             standards=self.standards,
+            diagram_svg=svg_parallel_transversal("∠1", "∠2", "consecutive_interior" if is_consecutive else "alt_interior"),
+            answer_svg=svg_parallel_transversal("∠1", "∠2", "consecutive_interior" if is_consecutive else "alt_interior"),
             metadata={"x": x_val}
         )

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import random
-from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.core.svg_utils import svg_coordinate_plane
 
 
 class SystemsGraphingGenerator(BaseGenerator):
@@ -21,6 +21,16 @@ class SystemsGraphingGenerator(BaseGenerator):
     ) -> BaseProblem:
         x_sol = rng.randint(-4, 4) if allow_negatives else rng.randint(1, 4)
         y_sol = rng.randint(-4, 4) if allow_negatives else rng.randint(1, 4)
+        m1: float = 0.0
+        b1: float = 0.0
+        m2: float = 0.0
+        b2: float = 0.0
+        A1: int = 1
+        B1: int = 1
+        C1: int = 0
+        A2: int = 1
+        B2: int = 1
+        C2: int = 0
 
         if difficulty == ProblemDifficulty.MILD:
             # Both in slope-intercept form y = m1*x + b1, y = m2*x + b2 with small integer slopes
@@ -30,10 +40,10 @@ class SystemsGraphingGenerator(BaseGenerator):
             b1 = y_sol - m1 * x_sol
             b2 = y_sol - m2 * x_sol
 
-            b1_str = f"+ {b1}" if b1 > 0 else (f"- {abs(b1)}" if b1 < 0 else "")
-            b2_str = f"+ {b2}" if b2 > 0 else (f"- {abs(b2)}" if b2 < 0 else "")
-            m1_str = "" if m1 == 1 else ("-" if m1 == -1 else str(m1))
-            m2_str = "" if m2 == 1 else ("-" if m2 == -1 else str(m2))
+            b1_str = f"+ {int(b1)}" if b1 > 0 else (f"- {abs(int(b1))}" if b1 < 0 else "")
+            b2_str = f"+ {int(b2)}" if b2 > 0 else (f"- {abs(int(b2))}" if b2 < 0 else "")
+            m1_str = "" if m1 == 1 else ("-" if m1 == -1 else str(int(m1)))
+            m2_str = "" if m2 == 1 else ("-" if m2 == -1 else str(int(m2)))
 
             eq1 = f"y = {m1_str}x {b1_str}".strip()
             eq2 = f"y = {m2_str}x {b2_str}".strip()
@@ -42,8 +52,8 @@ class SystemsGraphingGenerator(BaseGenerator):
 
             steps = [
                 f"Given system: $ {system_typst} $",
-                f"Line 1: $ {eq1} $ has slope $ m_1 = {m1} $ and y-intercept $ (0, {b1}) $.",
-                f"Line 2: $ {eq2} $ has slope $ m_2 = {m2} $ and y-intercept $ (0, {b2}) $.",
+                f"Line 1: $ {eq1} $ has slope $ m_1 = {int(m1)} $ and y-intercept $ (0, {int(b1)}) $.",
+                f"Line 2: $ {eq2} $ has slope $ m_2 = {int(m2)} $ and y-intercept $ (0, {int(b2)}) $.",
                 "Graph both lines on the coordinate plane.",
                 f"Locate the intersection point: $ ({x_sol}, {y_sol}) $.",
                 f"Solution: $ {ans_typst} $"
@@ -68,10 +78,12 @@ class SystemsGraphingGenerator(BaseGenerator):
 
             system_typst = f"cases({eq1}, {eq2})"
             ans_typst = f"({x_sol}, {y_sol})"
-            m2 = -A / B
-            b2 = C / B
-            m2_disp = int(m2) if m2.is_integer() else f"{-A}/{B}"
-            b2_disp = int(b2) if b2.is_integer() else f"{C}/{B}"
+            m2_fl = -A / B
+            b2_fl = C / B
+            m2_disp = int(m2_fl) if m2_fl.is_integer() else f"{-A}/{B}"
+            b2_disp = int(b2_fl) if b2_fl.is_integer() else f"{C}/{B}"
+            m2 = m2_fl
+            b2 = b2_fl
 
             steps = [
                 f"Given system: $ {system_typst} $",
@@ -82,7 +94,7 @@ class SystemsGraphingGenerator(BaseGenerator):
                 f"Solution: $ {ans_typst} $"
             ]
 
-        else: # SPICY
+        else:  # SPICY
             # Both in standard form Ax + By = C
             A1, B1 = rng.choice([(1, 1), (2, -1), (1, -2), (3, 1)])
             A2, B2 = rng.choice([(1, -1), (1, 2), (2, 1), (-1, 2)])
@@ -113,6 +125,24 @@ class SystemsGraphingGenerator(BaseGenerator):
         d2 = f"({-x_sol}, {y_sol})"
         d3 = f"({x_sol + 1}, {y_sol - 1})"
 
+        if difficulty == ProblemDifficulty.MILD:
+            m1_fl, b1_fl = float(m1), float(b1)
+            m2_fl, b2_fl = float(m2), float(b2)
+        elif difficulty == ProblemDifficulty.MEDIUM:
+            m1_fl, b1_fl = float(m1), float(b1)
+            m2_fl, b2_fl = float(m2), float(b2)
+        else:
+            m1_fl, b1_fl = -A1 / B1, C1 / B1
+            m2_fl, b2_fl = -A2 / B2, C2 / B2
+
+        ans_svg = svg_coordinate_plane(
+            lines=[
+                {"m": m1_fl, "b": b1_fl, "color": "#2563eb"},
+                {"m": m2_fl, "b": b2_fl, "color": "#16a34a"},
+            ],
+            points=[{"x": x_sol, "y": y_sol, "color": "#dc2626", "label": f"({x_sol},{y_sol})"}],
+        )
+
         return BaseProblem(
             id=f"sys_graph_{difficulty.value}_{problem_idx}",
             prompt_text="Solve each system of equations by graphing.",
@@ -122,6 +152,8 @@ class SystemsGraphingGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],
             difficulty=difficulty,
             standards=self.standards,
+            diagram_svg=svg_coordinate_plane(),
+            answer_svg=ans_svg,
             metadata={"solution": (x_sol, y_sol)}
         )
 
@@ -209,7 +241,7 @@ class SystemsSubstitutionGenerator(BaseGenerator):
                     f"Solution: $ ({x_sol}, {y_sol}) $"
                 ]
 
-        else: # SPICY
+        else:  # SPICY
             m1 = rng.choice([-3, -2, 2, 3])
             m2 = rng.choice([-1, 1, 4])
             b1 = y_sol - m1 * x_sol
@@ -310,7 +342,7 @@ class SystemsEliminationGenerator(BaseGenerator):
                 f"Solution: $ ({x_sol}, {y_sol}) $"
             ]
 
-        else: # SPICY
+        else:  # SPICY
             a1, b1 = rng.choice([(2, 3), (3, 2), (4, 3), (5, 2)])
             a2, b2 = rng.choice([(3, -2), (2, -5), (3, 4), (-2, 5)])
             if a1 * b2 == a2 * b1:
@@ -377,12 +409,16 @@ class SystemsInequalitiesGenerator(BaseGenerator):
         if difficulty == ProblemDifficulty.MILD:
             ineq1 = f"y {sym1} {m1_s}x {b1_s}".strip()
             ineq2 = f"y {sym2} {m2_s}x {b2_s}".strip()
+            m1_fl, b1_fl, op1_eff = float(m1), float(b1), sym1
+            m2_fl, b2_fl, op2_eff = float(m2), float(b2), sym2
         elif difficulty == ProblemDifficulty.MEDIUM:
             ineq1 = f"y {sym1} {m1_s}x {b1_s}".strip()
             A = rng.choice([1, 2, -1])
             B = rng.choice([1, 2])
             C = rng.randint(-6, 6)
             ineq2 = f"{A}x {'+ ' if B > 0 else '- '}{abs(B)}y {sym2} {C}".replace("+ -", "- ")
+            m1_fl, b1_fl, op1_eff = float(m1), float(b1), sym1
+            m2_fl, b2_fl, op2_eff = -A / B, C / B, sym2
         else:
             A1, B1 = rng.choice([(1, 1), (2, -1), (1, -2)])
             A2, B2 = rng.choice([(1, -1), (2, 1), (-1, 2)])
@@ -390,27 +426,55 @@ class SystemsInequalitiesGenerator(BaseGenerator):
             C2 = rng.randint(-6, 6)
             ineq1 = f"{A1}x {'+ ' if B1 > 0 else '- '}{abs(B1)}y {sym1} {C1}".replace("+ -", "- ")
             ineq2 = f"{A2}x {'+ ' if B2 > 0 else '- '}{abs(B2)}y {sym2} {C2}".replace("+ -", "- ")
+            opp_map = {"<": ">", "<=": ">=", ">": "<", ">=": "<="}
+            m1_fl, b1_fl = -A1 / B1, C1 / B1
+            op1_eff = opp_map[sym1] if B1 < 0 else sym1
+            m2_fl, b2_fl = -A2 / B2, C2 / B2
+            op2_eff = opp_map[sym2] if B2 < 0 else sym2
 
         system_typst = f"cases({ineq1}, {ineq2})"
         b1_style = "solid" if "<=" in sym1 or ">=" in sym1 else "dashed"
         b2_style = "solid" if "<=" in sym2 or ">=" in sym2 else "dashed"
+        dir1 = "above" if ">" in op1_eff else "below"
+        dir2 = "above" if ">" in op2_eff else "below"
 
         steps = [
             f"Given system of inequalities: $ {system_typst} $",
-            f"Boundary line 1 is {b1_style} line. Shade region satisfying $ {ineq1} $.",
-            f"Boundary line 2 is {b2_style} line. Shade region satisfying $ {ineq2} $.",
+            f"Boundary line 1 is {b1_style} line. Shade region {dir1} line 1 satisfying $ {ineq1} $.",
+            f"Boundary line 2 is {b2_style} line. Shade region {dir2} line 2 satisfying $ {ineq2} $.",
             "The final solution is the intersection (overlapping region) of both shaded half-planes."
         ]
+
+        ans_str = f"$ \"Intersection: {dir1} line 1 ({b1_style}) and {dir2} line 2 ({b2_style})\" $"
+        opp_d1 = "below" if dir1 == "above" else "above"
+        opp_d2 = "below" if dir2 == "above" else "above"
+        distractors = [
+            f"$ \"Intersection: {opp_d1} line 1 and {dir2} line 2\" $",
+            f"$ \"Intersection: {dir1} line 1 and {opp_d2} line 2\" $",
+            f"$ \"Intersection: {opp_d1} line 1 and {opp_d2} line 2\" $",
+        ]
+        ans_svg = svg_coordinate_plane(
+            lines=[
+                {"m": m1_fl, "b": b1_fl, "dashed": b1_style == "dashed", "color": "#2563eb"},
+                {"m": m2_fl, "b": b2_fl, "dashed": b2_style == "dashed", "color": "#dc2626"},
+            ],
+            shaded_half_planes=[
+                {"m": m1_fl, "b": b1_fl, "op": op1_eff, "color": "#2563eb"},
+                {"m": m2_fl, "b": b2_fl, "op": op2_eff, "color": "#2563eb"},
+            ],
+        )
 
         return BaseProblem(
             id=f"sys_ineq_{difficulty.value}_{problem_idx}",
             prompt_text="Sketch the solution to each system of inequalities.",
             equation_typst=f"$ {system_typst} $",
-            answer_typst="Shaded intersection region",
+            answer_typst=ans_str,
             steps_typst=steps,
-            distractors=["Region above line 1 only", "Region below line 2 only", "Unbounded disjoint region"],
+            distractors=distractors,
             difficulty=difficulty,
             standards=self.standards,
+            diagram_svg=svg_coordinate_plane(),
+            answer_svg=ans_svg,
             metadata={"ineq1": ineq1, "ineq2": ineq2}
         )
 

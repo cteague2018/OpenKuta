@@ -45,11 +45,9 @@ class Algebra2LogarithmsGenerator(BaseGenerator):
                 difficulty=ProblemDifficulty.MILD,
                 standards=self.standards
             )
-        else:
-            # Solve log_b(2x - c) = exponent
-            c = rng.choice([1, 3, 5])
-            arg + c
-            # let 2x = val ==> if val is odd, use x + c
+        elif difficulty == ProblemDifficulty.MEDIUM:
+            # Solve log_b(x - c) = exponent
+            c = rng.choice([1, 3, 5, 7])
             eq_typst = f"log_{base}(x - {c}) = {exponent}"
             x_val = arg + c
             ans_typst = f"x = {x_val}"
@@ -64,12 +62,42 @@ class Algebra2LogarithmsGenerator(BaseGenerator):
             ]
 
             return BaseProblem(
-                id=f"a2_log_{difficulty.value}_{problem_idx}",
+                id=f"a2_log_med_{problem_idx}",
                 prompt_text="Solve each logarithmic equation.",
                 equation_typst=eq_typst,
                 answer_typst=ans_typst,
                 steps_typst=steps,
                 distractors=[f"x = {arg}", f"x = {arg - c}", f"x = {x_val + 2}"],
+                difficulty=difficulty,
+                standards=self.standards
+            )
+        else:
+            # Spicy: Multi-step logarithmic equation k + log_b(a*x + c) = d
+            a_coef = rng.choice([2, 3, 4, 5])
+            x_val = rng.choice([2, 3, 4, 5, 6, 7])
+            c = arg - a_coef * x_val
+            k_shift = rng.choice([2, 3, 4, -2])
+            rhs = exponent + k_shift
+            c_str = f"+ {c}" if c >= 0 else f"- {abs(c)}"
+            k_str = f"+ {k_shift}" if k_shift >= 0 else f"- {abs(k_shift)}"
+            eq_typst = f"log_{base}({a_coef} x {c_str}) {k_str} = {rhs}"
+            ans_typst = f"x = {x_val}"
+
+            steps = [
+                f"Isolate the logarithm: $ log_{base}({a_coef} x {c_str}) = {rhs} - ({k_shift}) = {exponent} $",
+                f"Convert to exponential form: $ {a_coef} x {c_str} = {base}^{exponent} = {arg} $",
+                f"Solve linear equation: $ {a_coef} x = {arg - c} ==> x = {x_val} $",
+                f"Check domain: $ {a_coef}({x_val}) {c_str} = {arg} > 0 $ (valid).",
+                f"Result: $ {ans_typst} $"
+            ]
+
+            return BaseProblem(
+                id=f"a2_log_spicy_{problem_idx}",
+                prompt_text="Solve each logarithmic equation.",
+                equation_typst=eq_typst,
+                answer_typst=ans_typst,
+                steps_typst=steps,
+                distractors=[f"x = {x_val + 2}", f"x = {arg}", f"x = {-x_val}"],
                 difficulty=difficulty,
                 standards=self.standards
             )

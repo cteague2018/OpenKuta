@@ -1,8 +1,9 @@
 from __future__ import annotations
-import sympy as sp
 
 import math
 import random
+
+import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 
@@ -273,7 +274,6 @@ class Grade6FractionsDecimalsGenerator(BaseGenerator):
         )
 
 
-
 class RationalNumbersArithmeticGenerator(BaseGenerator):
     generator_id = "algebra_1.rational_numbers_arithmetic"
     name = "Adding and Subtracting Rational Numbers"
@@ -287,10 +287,21 @@ class RationalNumbersArithmeticGenerator(BaseGenerator):
         problem_idx: int,
         allow_negatives: bool = True
     ) -> BaseProblem:
-        den1 = rng.choice([2, 3, 4, 5, 6, 8])
-        den2 = rng.choice([den1, den1 * 2, 2, 3, 4])
-        num1 = rng.choice([-7, -5, -3, -1, 1, 3, 5, 7])
-        num2 = rng.choice([-7, -5, -3, -1, 1, 3, 5, 7])
+        if difficulty == ProblemDifficulty.MILD:
+            den1 = rng.choice([3, 4, 5, 6, 8])
+            den2 = den1
+            num1 = rng.choice([-7, -5, -3, -1, 1, 3, 5, 7])
+            num2 = rng.choice([-5, -3, -1, 1, 3, 5])
+        elif difficulty == ProblemDifficulty.MEDIUM:
+            den1 = rng.choice([2, 3, 4, 5, 6])
+            den2 = rng.choice([d for d in [3, 4, 5, 6, 8] if d != den1])
+            num1 = rng.choice([-7, -5, -3, -1, 1, 3, 5, 7])
+            num2 = rng.choice([-7, -5, -3, -1, 1, 3, 5, 7])
+        else:
+            den1 = rng.choice([4, 6, 8, 9, 12])
+            den2 = rng.choice([3, 5, 7, 10])
+            num1 = rng.choice([-11, -9, -7, -5, 5, 7, 9, 11])
+            num2 = rng.choice([-9, -7, -4, 4, 7, 9])
 
         f1 = sp.Rational(num1, den1)
         f2 = sp.Rational(num2, den2)
@@ -306,8 +317,8 @@ class RationalNumbersArithmeticGenerator(BaseGenerator):
         ans_s = str(ans_rat.p) if ans_rat.q == 1 else f"{ans_rat.p}/{ans_rat.q}"
         steps = [
             f"Given expression: $ {eq} $",
-            f"Find common denominator and perform operation: $ {ans_s} $",
-            f"Result: $ {ans_s} $"
+            f"Convert to common denominator $ {ans_rat.q} $ and combine numerators.",
+            f"Simplify fraction to lowest terms: $ {ans_s} $"
         ]
 
         d1 = f"{ans_rat.p + 1}/{ans_rat.q}" if ans_rat.q != 1 else str(ans_rat.p + 1)
