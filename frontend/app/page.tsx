@@ -333,18 +333,32 @@ export default function OpenMathForgeApp() {
     if (worksheetProblems.length === 0) return [];
     const pages: Problem[][] = [];
 
-    // When Answer Key view is active, ensure visual graphs and multi-step solutions
-    // are paginated cleanly into standard 8.5" x 11" pages without vertical overflow
+    const hasVisuals = worksheetProblems.some(
+      (p) => Boolean(p.diagram_svg) || Boolean(p.answer_svg)
+    );
+    const hasLongSteps = worksheetProblems.some(
+      (p) => Boolean(p.steps_typst && p.steps_typst.length > 2)
+    );
+
     let effectivePageSize = maxProblemsPerPage;
-    if (showAnswerKey) {
-      const hasVisualsOrLongSteps = worksheetProblems.some(
-        (p) => Boolean(p.answer_svg) || Boolean(p.steps_typst && p.steps_typst.length > 2)
-      );
-      if (hasVisualsOrLongSteps) {
-        effectivePageSize = Math.min(maxProblemsPerPage, columns === 1 ? 2 : 4);
+
+    if (columns === 1) {
+      // In 1-column layout, visual diagrams or answer steps require generous vertical clearance
+      if (hasVisuals || (showAnswerKey && hasLongSteps)) {
+        effectivePageSize = Math.min(maxProblemsPerPage, 2);
       } else {
-        effectivePageSize = Math.min(maxProblemsPerPage, columns === 1 ? 4 : 6);
+        effectivePageSize = Math.min(maxProblemsPerPage, 4);
       }
+    } else if (columns === 2) {
+      if (showAnswerKey && (hasVisuals || hasLongSteps)) {
+        effectivePageSize = Math.min(maxProblemsPerPage, 4);
+      } else if (hasVisuals) {
+        effectivePageSize = Math.min(maxProblemsPerPage, 4);
+      } else {
+        effectivePageSize = maxProblemsPerPage;
+      }
+    } else {
+      effectivePageSize = maxProblemsPerPage;
     }
 
     for (let i = 0; i < worksheetProblems.length; i += effectivePageSize) {
@@ -1593,7 +1607,12 @@ export default function OpenMathForgeApp() {
                   {[1, 2, 3].map((num) => (
                     <button
                       key={num}
-                      onClick={() => setColumns(num)}
+                      onClick={() => {
+                        setColumns(num);
+                        if (num === 1 && maxProblemsPerPage > 4) {
+                          setMaxProblemsPerPage(2);
+                        }
+                      }}
                       className={`px-2 py-0.5 rounded ${
                         columns === num ? "bg-indigo-600 text-white" : "text-slate-700 hover:bg-slate-200"
                       }`}
@@ -1606,7 +1625,7 @@ export default function OpenMathForgeApp() {
                 {/* Per Page Limit (Handwriting workspace control) */}
                 <div className="flex items-center space-x-1 bg-slate-100 p-0.5 rounded border border-slate-300 text-xs font-semibold" title="Maximum questions per page to guarantee student handwriting space">
                   <span className="px-1 text-slate-500">Per Page:</span>
-                  {[4, 6, 8].map((num) => (
+                  {(columns === 1 ? [2, 4, 6] : [4, 6, 8]).map((num) => (
                     <button
                       key={num}
                       onClick={() => setMaxProblemsPerPage(num)}
@@ -1897,132 +1916,239 @@ export default function OpenMathForgeApp() {
                           {pageProblems.map((prob, pIdx) => {
                             const globalIdx = worksheetProblems.findIndex((p) => p.id === prob.id);
                             const displayIdx = globalIdx !== -1 ? globalIdx : pageIdx * maxProblemsPerPage + pIdx;
+                            const isOneColVisual = columns === 1 && Boolean(prob.diagram_svg || prob.answer_svg);
+
                             return (
                               <div
                                 key={`${prob.id}_${displayIdx}`}
                                 className="border border-slate-300 rounded p-3 flex flex-col justify-between bg-white relative h-full transition-all duration-150 overflow-hidden"
                               >
-                                <div>
-                                  <div className="flex items-start justify-between gap-2 mb-1">
-                                    <div className="flex items-center space-x-1.5 shrink-0">
-                                      <span className="font-bold text-slate-900">{displayIdx + 1})</span>
-                                      <button
-                                        onClick={() => handleRegenerateSingleProblem(displayIdx)}
-                                        data-testid="regenerate-single-problem"
-                                        title="Regenerate Single Problem"
-                                        aria-label="Regenerate Single Problem"
-                                        className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
-                                      >
-                                        <RefreshCw className="w-3 h-3" />
-                                      </button>
-                                    </div>
-                                    <div className="text-[11px] font-medium text-slate-600 italic text-right leading-tight">
-                                      {prob.prompt_text}
-                                    </div>
-                                  </div>
-
-                                  <div className="py-1 text-center text-sm font-medium text-slate-900">
-                                    <ProblemEquation raw={prob.equation_typst} />
-                                  </div>
-
-                                  {prob.diagram_svg && !showAnswerKey && (
-                                    <div
-                                      className="my-1 flex justify-center items-center [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
-                                      dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
-                                    />
-                                  )}
-                                  {prob.diagram_svg && showAnswerKey && !prob.answer_svg && (
-                                    <div
-                                      className="my-1 flex justify-center items-center [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
-                                      dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
-                                    />
-                                  )}
-
-                                  {/* Multiple Choice Options Grid */}
-                                  {prob.choices && prob.choices.length >= 4 && (
-                                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-slate-100 text-xs">
-                                      {prob.choices.map((ch) => (
-                                        <div key={ch.letter} className="flex items-center space-x-1.5">
-                                          <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[10px] border border-slate-200">
-                                            {ch.letter})
-                                          </span>
-                                          <span className="text-slate-800">
-                                            <ProblemEquation raw={ch.text} inline />
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Answer Key Overlay / Student Work Area */}
-                                {showAnswerKey ? (
-                                  <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-1">
-                                    <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60">
-                                      <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
-                                      {prob.correct_choice && (
-                                        <span className="font-bold text-indigo-800 mr-1">
-                                          {prob.correct_choice})
-                                        </span>
-                                      )}
-                                      <ProblemEquation raw={prob.answer_typst} inline />
+                                {isOneColVisual ? (
+                                  /* 1-Column Horizontal Split Layout: Maximizes 736px width for graphs & scratchwork */
+                                  <div className="flex flex-col justify-between h-full">
+                                    <div className="flex items-start justify-between gap-2 mb-1.5 pb-1 border-b border-slate-100">
+                                      <div className="flex items-center space-x-1.5 shrink-0">
+                                        <span className="font-bold text-slate-900">{displayIdx + 1})</span>
+                                        <button
+                                          onClick={() => handleRegenerateSingleProblem(displayIdx)}
+                                          data-testid="regenerate-single-problem"
+                                          title="Regenerate Single Problem"
+                                          aria-label="Regenerate Single Problem"
+                                          className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
+                                        >
+                                          <RefreshCw className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                      <div className="text-[11px] font-medium text-slate-600 italic text-right leading-tight">
+                                        {prob.prompt_text}
+                                      </div>
                                     </div>
 
-                                    {/* Compact Side-by-Side Visual Layout for Graph + Steps */}
-                                    {prob.answer_svg && prob.steps_typst && prob.steps_typst.length > 0 ? (
-                                      <div className="mt-1.5 grid grid-cols-2 gap-2 items-center">
-                                        <div
-                                          className="flex justify-center items-center bg-white/95 rounded p-1 border border-amber-200/70 [&>svg]:max-h-32 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
-                                          dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
-                                        />
-                                        <div className="space-y-0.5 text-[9.5px] leading-tight text-amber-900 overflow-hidden">
-                                          <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
-                                            Solution Steps:
+                                    <div className="flex-1 flex flex-row gap-4 items-stretch min-h-0">
+                                      {/* Left Column: Equation, Choices, and Solution/Work Area */}
+                                      <div className="flex-1 flex flex-col justify-between min-w-0 pr-2">
+                                        <div>
+                                          <div className="py-1 text-center text-sm font-semibold text-slate-900">
+                                            <ProblemEquation raw={prob.equation_typst} />
                                           </div>
-                                          {prob.steps_typst.map((st, sIdx) => (
-                                            <div key={sIdx} className="flex items-start gap-1">
-                                              <span className="text-amber-600 font-mono text-[8.5px] font-semibold shrink-0 mt-0.5">
-                                                {sIdx + 1}.
-                                              </span>
-                                              <div className="min-w-0 break-words">
-                                                <StepTextWithMath text={st} />
+
+                                          {prob.choices && prob.choices.length >= 4 && (
+                                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5 pt-1 border-t border-slate-100 text-xs">
+                                              {prob.choices.map((ch) => (
+                                                <div key={ch.letter} className="flex items-center space-x-1.5">
+                                                  <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[10px] border border-slate-200">
+                                                    {ch.letter})
+                                                  </span>
+                                                  <span className="text-slate-800">
+                                                    <ProblemEquation raw={ch.text} inline />
+                                                  </span>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {showAnswerKey ? (
+                                          <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-2">
+                                            <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60">
+                                              <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
+                                              {prob.correct_choice && (
+                                                <span className="font-bold text-indigo-800 mr-1">
+                                                  {prob.correct_choice})
+                                                </span>
+                                              )}
+                                              <ProblemEquation raw={prob.answer_typst} inline />
+                                            </div>
+                                            {prob.steps_typst && prob.steps_typst.length > 0 && (
+                                              <div className="mt-1.5 space-y-0.5 text-[10px] leading-tight text-amber-900">
+                                                <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
+                                                  Solution Steps:
+                                                </div>
+                                                {prob.steps_typst.map((st, sIdx) => (
+                                                  <div key={sIdx} className="flex items-start gap-1">
+                                                    <span className="text-amber-600 font-mono text-[9px] font-semibold shrink-0 mt-0.5">
+                                                      {sIdx + 1}.
+                                                    </span>
+                                                    <div className="min-w-0 break-words">
+                                                      <StepTextWithMath text={st} />
+                                                    </div>
+                                                  </div>
+                                                ))}
                                               </div>
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <div className="mt-auto pt-2 flex justify-between items-end">
+                                            <span className="text-[10px] text-slate-400 italic">Workspace / Scratchwork</span>
+                                            <div className="text-right text-[10px] text-slate-400 border border-slate-200 px-3 py-1 rounded">
+                                              Ans:
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Right Column: Coordinate Plane Graph */}
+                                      <div className="w-[280px] shrink-0 border-l border-slate-200 pl-3 flex items-center justify-center">
+                                        {showAnswerKey && prob.answer_svg ? (
+                                          <div
+                                            className="flex justify-center items-center bg-white/95 rounded p-1 border border-amber-200/70 [&>svg]:max-h-48 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                            dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
+                                          />
+                                        ) : prob.diagram_svg ? (
+                                          <div
+                                            className="flex justify-center items-center bg-white rounded p-1 border border-slate-200/60 [&>svg]:max-h-48 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                            dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
+                                          />
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  /* Multi-Column or Non-Visual Layout */
+                                  <>
+                                    <div>
+                                      <div className="flex items-start justify-between gap-2 mb-1">
+                                        <div className="flex items-center space-x-1.5 shrink-0">
+                                          <span className="font-bold text-slate-900">{displayIdx + 1})</span>
+                                          <button
+                                            onClick={() => handleRegenerateSingleProblem(displayIdx)}
+                                            data-testid="regenerate-single-problem"
+                                            title="Regenerate Single Problem"
+                                            aria-label="Regenerate Single Problem"
+                                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
+                                          >
+                                            <RefreshCw className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                        <div className="text-[11px] font-medium text-slate-600 italic text-right leading-tight">
+                                          {prob.prompt_text}
+                                        </div>
+                                      </div>
+
+                                      <div className="py-1 text-center text-sm font-medium text-slate-900">
+                                        <ProblemEquation raw={prob.equation_typst} />
+                                      </div>
+
+                                      {prob.diagram_svg && !showAnswerKey && (
+                                        <div
+                                          className="my-1 flex justify-center items-center [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                          dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
+                                        />
+                                      )}
+                                      {prob.diagram_svg && showAnswerKey && !prob.answer_svg && (
+                                        <div
+                                          className="my-1 flex justify-center items-center [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                          dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
+                                        />
+                                      )}
+
+                                      {/* Multiple Choice Options Grid */}
+                                      {prob.choices && prob.choices.length >= 4 && (
+                                        <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-slate-100 text-xs">
+                                          {prob.choices.map((ch) => (
+                                            <div key={ch.letter} className="flex items-center space-x-1.5">
+                                              <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[10px] border border-slate-200">
+                                                {ch.letter})
+                                              </span>
+                                              <span className="text-slate-800">
+                                                <ProblemEquation raw={ch.text} inline />
+                                              </span>
                                             </div>
                                           ))}
                                         </div>
+                                      )}
+                                    </div>
+
+                                    {/* Answer Key Overlay / Student Work Area */}
+                                    {showAnswerKey ? (
+                                      <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-1">
+                                        <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60">
+                                          <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
+                                          {prob.correct_choice && (
+                                            <span className="font-bold text-indigo-800 mr-1">
+                                              {prob.correct_choice})
+                                            </span>
+                                          )}
+                                          <ProblemEquation raw={prob.answer_typst} inline />
+                                        </div>
+
+                                        {/* Compact Side-by-Side Visual Layout for Graph + Steps */}
+                                        {prob.answer_svg && prob.steps_typst && prob.steps_typst.length > 0 ? (
+                                          <div className="mt-1.5 grid grid-cols-2 gap-2 items-center">
+                                            <div
+                                              className="flex justify-center items-center bg-white/95 rounded p-1 border border-amber-200/70 [&>svg]:max-h-32 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                              dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
+                                            />
+                                            <div className="space-y-0.5 text-[9.5px] leading-tight text-amber-900 overflow-hidden">
+                                              <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
+                                                Solution Steps:
+                                              </div>
+                                              {prob.steps_typst.map((st, sIdx) => (
+                                                <div key={sIdx} className="flex items-start gap-1">
+                                                  <span className="text-amber-600 font-mono text-[8.5px] font-semibold shrink-0 mt-0.5">
+                                                    {sIdx + 1}.
+                                                  </span>
+                                                  <div className="min-w-0 break-words">
+                                                    <StepTextWithMath text={st} />
+                                                  </div>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            {prob.answer_svg && (
+                                              <div
+                                                className="my-1 flex justify-center items-center bg-white/95 rounded p-1 border border-amber-200/70 [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
+                                                dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
+                                              />
+                                            )}
+                                            {prob.steps_typst && prob.steps_typst.length > 0 && (
+                                              <div className="mt-1 space-y-0.5 text-[10px] leading-tight text-amber-900">
+                                                <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
+                                                  Solution Steps:
+                                                </div>
+                                                {prob.steps_typst.map((st, sIdx) => (
+                                                  <div key={sIdx} className="flex items-start gap-1">
+                                                    <span className="text-amber-600 font-mono text-[9px] font-semibold shrink-0 mt-0.5">
+                                                      {sIdx + 1}.
+                                                    </span>
+                                                    <div className="min-w-0 break-words">
+                                                      <StepTextWithMath text={st} />
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            )}
+                                          </>
+                                        )}
                                       </div>
                                     ) : (
-                                      <>
-                                        {prob.answer_svg && (
-                                          <div
-                                            className="my-1 flex justify-center items-center bg-white/95 rounded p-1 border border-amber-200/70 [&>svg]:max-h-36 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
-                                            dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
-                                          />
-                                        )}
-                                        {prob.steps_typst && prob.steps_typst.length > 0 && (
-                                          <div className="mt-1 space-y-0.5 text-[10px] leading-tight text-amber-900">
-                                            <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
-                                              Solution Steps:
-                                            </div>
-                                            {prob.steps_typst.map((st, sIdx) => (
-                                              <div key={sIdx} className="flex items-start gap-1">
-                                                <span className="text-amber-600 font-mono text-[9px] font-semibold shrink-0 mt-0.5">
-                                                  {sIdx + 1}.
-                                                </span>
-                                                <div className="min-w-0 break-words">
-                                                  <StepTextWithMath text={st} />
-                                                </div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        )}
-                                      </>
+                                      <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded">
+                                        Ans:
+                                      </div>
                                     )}
-                                  </div>
-                                ) : (
-                                  <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded">
-                                    Ans:
-                                  </div>
+                                  </>
                                 )}
                               </div>
                             );

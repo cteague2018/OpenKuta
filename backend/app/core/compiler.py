@@ -99,15 +99,16 @@ class TypstCompiler:
         )
         # Auto-fit workspace height to maximize surface area and ensure ample room for student handwriting
         total_rows = max(1, (len(problems) + columns - 1) // columns)
-        effective_rows = min(3, total_rows)
-        if effective_rows == 1:
+        if total_rows == 1:
             box_height_pt = 490
-        elif effective_rows == 2:
-            box_height_pt = 275
-        elif effective_rows == 3:
-            box_height_pt = 185
+        elif total_rows == 2:
+            box_height_pt = 260
+        elif total_rows == 3:
+            box_height_pt = 175
+        elif total_rows == 4:
+            box_height_pt = 130
         else:
-            box_height_pt = max(120, min(180, int(580 / max(1, total_rows))))
+            box_height_pt = max(90, min(120, int(540 / total_rows)))
 
         context = {
             "title": title,

@@ -103,6 +103,37 @@
         ]
       )
 
+      {% if columns == 1 and ((show_answers and answer_svg_files and loop.index in answer_svg_files) or (diagram_files and loop.index in diagram_files)) %}
+      #v(2pt)
+      #grid(
+        columns: (1fr, auto),
+        align: (horizon, horizon),
+        gutter: 14pt,
+        [
+          #align(center)[
+            #text(size: 11pt)[{{ prob.equation_typst }}]
+          ]
+          {% if prob.choices and prob.choices|length >= 4 %}
+          #v(6pt)
+          #grid(
+            columns: (1fr, 1fr),
+            row-gutter: 4pt,
+            column-gutter: 8pt,
+            {% for ch in prob.choices %}
+            [ #text(size: 8.5pt, weight: "bold")[{{ ch.letter }})] #text(size: 8.5pt)[{{ ch.text }}] ],
+            {% endfor %}
+          )
+          {% endif %}
+        ],
+        [
+          {% if show_answers and answer_svg_files and loop.index in answer_svg_files %}
+          #image("{{ answer_svg_files[loop.index] }}", height: {{ ((box_height_pt * 0.75) | int) if (box_height_pt * 0.75) < 135 else 135 }}pt, fit: "contain")
+          {% elif diagram_files and loop.index in diagram_files %}
+          #image("{{ diagram_files[loop.index] }}", height: {{ ((box_height_pt * 0.75) | int) if (box_height_pt * 0.75) < 135 else 135 }}pt, fit: "contain")
+          {% endif %}
+        ]
+      )
+      {% else %}
       #v(4pt)
       #align(center)[
         #text(size: 10.5pt)[{{ prob.equation_typst }}]
@@ -130,6 +161,7 @@
         [ #text(size: 8.5pt, weight: "bold")[{{ ch.letter }})] #text(size: 8.5pt)[{{ ch.text }}] ],
         {% endfor %}
       )
+      {% endif %}
       {% endif %}
 
       #align(bottom + right)[
