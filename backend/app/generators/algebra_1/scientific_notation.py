@@ -137,3 +137,4 @@ class ScientificNotationGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"problem": q_text}
         )
+

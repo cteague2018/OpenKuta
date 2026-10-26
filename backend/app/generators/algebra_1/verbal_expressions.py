@@ -26,22 +26,22 @@ class VerbalExpressionsGenerator(BaseGenerator):
         if difficulty == ProblemDifficulty.MILD:
             patterns = [
                 (
-                    f"The sum of {num1} and a number {var}",
+                    f"The sum of {num1} and a number $ {var} $",
                     f"{var} + {num1}",
                     [f"{var} - {num1}", f"{num1} * {var}", f"{var} / {num1}"]
                 ),
                 (
-                    f"{num1} less than a number {var}",
+                    f"{num1} less than a number $ {var} $",
                     f"{var} - {num1}",
                     [f"{num1} - {var}", f"{var} + {num1}", f"{num1} * {var}"]
                 ),
                 (
-                    f"The product of {num2} and a number {var}",
+                    f"The product of {num2} and a number $ {var} $",
                     f"{num2}{var}",
                     [f"{var} + {num2}", f"{var} / {num2}", f"{var}^{num2}"]
                 ),
                 (
-                    f"The quotient of a number {var} and {num1}",
+                    f"The quotient of a number $ {var} $ and {num1}",
                     f"{var} / {num1}",
                     [f"{num1} / {var}", f"{num1}{var}", f"{var} - {num1}"]
                 ),
@@ -49,22 +49,22 @@ class VerbalExpressionsGenerator(BaseGenerator):
         elif difficulty == ProblemDifficulty.MEDIUM:
             patterns = [
                 (
-                    f"{num1} more than twice a number {var}",
+                    f"{num1} more than twice a number $ {var} $",
                     f"2{var} + {num1}",
                     [f"2({var} + {num1})", f"{var} + 2*{num1}", f"2{var} - {num1}"]
                 ),
                 (
-                    f"{num1} less than {num2} times a number {var}",
+                    f"{num1} less than {num2} times a number $ {var} $",
                     f"{num2}{var} - {num1}",
                     [f"{num1} - {num2}{var}", f"{num2}({var} - {num1})", f"{num2}{var} + {num1}"]
                 ),
                 (
-                    f"The sum of {num2} times a number {var} and {num1}",
+                    f"The sum of {num2} times a number $ {var} $ and {num1}",
                     f"{num2}{var} + {num1}",
                     [f"{num2}({var} + {num1})", f"{var} + {num2}*{num1}", f"{num2}{var} - {num1}"]
                 ),
                 (
-                    f"The quotient of {num1} more than {var}, and {num2}",
+                    f"The quotient of {num1} more than $ {var} $, and {num2}",
                     f"({var} + {num1}) / {num2}",
                     [f"{var} + {num1} / {num2}", f"{num2} / ({var} + {num1})", f"{var}/{num2} + {num1}"]
                 ),
@@ -72,17 +72,17 @@ class VerbalExpressionsGenerator(BaseGenerator):
         else: # SPICY
             patterns = [
                 (
-                    f"Twice the difference of {num2} times a number {var} and {num1}",
+                    f"Twice the difference of {num2} times a number $ {var} $ and {num1}",
                     f"2({num2}{var} - {num1})",
                     [f"2*{num2}{var} - {num1}", f"2({num1} - {num2}{var})", f"{num2}{var} - 2*{num1}"]
                 ),
                 (
-                    f"The square of the sum of a number {var} and {num1}",
+                    f"The square of the sum of a number $ {var} $ and {num1}",
                     f"({var} + {num1})^2",
                     [f"{var}^2 + {num1}^2", f"{var}^2 + {num1}", f"2({var} + {num1})"]
                 ),
                 (
-                    f"{num1} less than the quotient of {num2} and the square of {var}",
+                    f"{num1} less than the quotient of {num2} and the square of $ {var} $",
                     f"{num2} / {var}^2 - {num1}",
                     [f"{var}^2 / {num2} - {num1}", f"{num1} - {num2} / {var}^2", f"({num2} - {num1}) / {var}^2"]
                 ),

@@ -23,8 +23,8 @@ class Grade6PercentsGenerator(BaseGenerator):
 
         val_calc = (pct * base) / 100
         val = int(val_calc) if val_calc.is_integer() else round(val_calc, 2)
-        eq_typst = f"\"What is \" {pct}% \" of \" {base} \"?\""
-        ans_typst = f"{val}"
+        eq_typst = f"What is {pct}% of {base}?"
+        ans_typst = f"$ {val} $"
 
         steps = [
             f"Convert percentage to a decimal or fraction: $ {pct}% = {pct}/100 = {pct/100} $",

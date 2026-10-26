@@ -91,8 +91,13 @@ function typstToLatex(raw: string): string {
   s = s.replace(/^\$+\s*/, "").replace(/\s*\$+$/, "").trim();
   // Clean up prefix labels like "Result:" or "Solve for x:"
   s = s.replace(/^(Result|Solve for [^:]+):\s*/i, "").trim();
+
+  // Typst string quotes -> \text{ ... }
+  s = s.replace(/"([^"]*)"/g, "\\text{ $1 }");
+
   // Strip any remaining internal $ delimiters
   s = s.replace(/\$/g, "");
+
   // Typst to LaTeX conversions
   s = s.replace(/plus\.minus/g, "\\pm ");
   s = s.replace(/sqrt\(([^)]+)\)/g, "\\sqrt{$1}");
@@ -101,10 +106,76 @@ function typstToLatex(raw: string): string {
   s = s.replace(/==>/g, "\\implies ");
   s = s.replace(/\s*dot\s*/g, " \\cdot ");
   s = s.replace(/\s*times\s*/g, " \\times ");
-  s = s.replace(/(\d+)\s*\/\s*(\d+)/g, "\\frac{$1}{$2}");
-  // Replace standalone asterisks with space
-  s = s.replace(/\s*\*\s*/g, " ");
-  return s;
+  s = s.replace(/\s*\*\s*/g, " \\cdot ");
+
+  // Vectors & angles
+  s = s.replace(/\bangle\.l\b/g, "\\langle ");
+  s = s.replace(/\bangle\.r\b/g, "\\rangle ");
+  s = s.replace(/\bbold\(([^)]+)\)/g, "\\mathbf{$1}");
+
+  // Limits, Integrals, and Symbols
+  s = s.replace(/\blim_\(([^)]+)\s*->\s*([^)]+)\)/g, "\\lim_{$1 \\to $2}");
+  s = s.replace(/\bintegral_([0-9a-zA-Z\^\-]+)\^([0-9a-zA-Z\^\-]+)/g, "\\int_{$1}^{$2}");
+  s = s.replace(/\bintegral\b/g, "\\int ");
+  s = s.replace(/\bdif\s+([a-zA-Z])/g, " \\, d$1");
+  s = s.replace(/\boo\b/g, "\\infty ");
+  s = s.replace(/\^\s*\\?circle\b/g, "^{\\circ}");
+
+  // Matrices: mat(1, 0; 1, 2)
+  s = s.replace(/\bmat\(([^)]+)\)/g, (_, inner) => {
+    const rows = inner.split(";").map((r: string) =>
+      r.trim().split(",").map((c: string) => c.trim()).join(" & ")
+    );
+    return "\\begin{pmatrix} " + rows.join(" \\\\ ") + " \\end{pmatrix}";
+  });
+
+  // Convert Typst division '/' to LaTeX fractions \frac{...}{...}
+  for (let iter = 0; iter < 3; iter++) {
+    const prev = s;
+    s = s.replace(/\(([^()]+)\)\s*\/\s*\(([^()]+)\)/g, "\\frac{$1}{$2}");
+    s = s.replace(/\(([^()]+)\)\s*\/\s*([a-zA-Z0-9_\^\-]+)/g, "\\frac{$1}{$2}");
+    s = s.replace(/([a-zA-Z0-9_\^\-]+)\s*\/\s*\(([^()]+)\)/g, "\\frac{$1}{$2}");
+    s = s.replace(/(^|[^a-zA-Z0-9_\\{])([a-zA-Z0-9_\^]+)\s*\/\s*([a-zA-Z0-9_\^]+)(?![a-zA-Z0-9_}])/g, "$1\\frac{$2}{$3}");
+    if (s === prev) break;
+  }
+
+  return s.trim();
+}
+
+const PROSE_REGEX = /\b(the|a|an|is|of|and|in|to|for|with|from|than|more|less|twice|sum|product|quotient|difference|square|find|what|given|determine|write|name|solve|represents|initial|travels|car|train|miles|hours|speed|cost|items|menu|race|bag|probab|select|choose|each|triangle|angle|shorter|leg|hypotenuse)\b/i;
+const MATH_KEYWORDS = new Set([
+  'sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'log', 'ln', 'lim', 'quad', 
+  'cases', 'sqrt', 'integral', 'mat', 'bold', 'angle', 'plus', 'minus', 
+  'dif', 'det', 'times', 'dot'
+]);
+
+function isProseProblem(raw: string): boolean {
+  if (!raw) return false;
+  const t = raw.trim();
+
+  // If fully enclosed in single $...$ pair
+  if (t.startsWith("$") && t.endsWith("$") && (t.match(/\$/g) || []).length === 2) {
+    const inner = t.slice(1, -1).trim();
+    if (inner.includes('"')) {
+      return false; // Typst math with quotes like $ (-10, -2) " and " (-8, 3) $
+    }
+    const words = (inner.match(/[a-zA-Z]{3,}/g) || []).filter(
+      (w) => !MATH_KEYWORDS.has(w.toLowerCase())
+    );
+    return words.length >= 3;
+  }
+
+  // If it has internal $ ... $ delimiters (e.g. "Given $ f(x) = 2x $, find $ f(1) $")
+  if (t.includes("$")) {
+    return true;
+  }
+
+  // Check if unquoted string has prose markers or multiple words
+  const clean = t.replace(/"[^"]*"/g, "");
+  const words = (clean.match(/[a-zA-Z]{3,}/g) || []).filter(
+    (w) => !MATH_KEYWORDS.has(w.toLowerCase())
+  );
+  return words.length >= 2 || PROSE_REGEX.test(clean);
 }
 
 function KaTeXInline({ math, className = "" }: { math: string; className?: string }) {
@@ -121,18 +192,70 @@ function KaTeXInline({ math, className = "" }: { math: string; className?: strin
   }
 }
 
+function ProblemEquation({
+  raw,
+  className = "",
+  inline = false,
+}: {
+  raw: string;
+  className?: string;
+  inline?: boolean;
+}) {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+
+  // If classified as Prose or Word Problem
+  if (isProseProblem(trimmed)) {
+    if (trimmed.includes("$")) {
+      const parts = trimmed.split("$");
+      const Tag = inline ? "span" : "div";
+      return (
+        <Tag className={`${inline ? "inline" : "text-center px-1"} text-slate-800 text-sm leading-relaxed ${className}`}>
+          {parts.map((p, idx) => {
+            if (idx % 2 === 1) {
+              return <KaTeXInline key={idx} math={p} className="font-semibold mx-0.5 inline-block" />;
+            }
+            const cleanText = p.replace(/"/g, "");
+            return <span key={idx}>{cleanText}</span>;
+          })}
+        </Tag>
+      );
+    }
+
+    const cleanText = trimmed.replace(/"/g, "");
+    const Tag = inline ? "span" : "div";
+    return (
+      <Tag className={`${inline ? "inline" : "text-center px-2 py-1"} text-slate-800 text-sm font-normal leading-relaxed ${className}`}>
+        {cleanText}
+      </Tag>
+    );
+  }
+
+  // Pure Math Mode
+  if (inline) {
+    return <KaTeXInline math={trimmed} className={className} />;
+  }
+  return (
+    <div className={`py-1 text-center text-sm font-medium text-slate-900 ${className}`}>
+      <KaTeXInline math={trimmed} />
+    </div>
+  );
+}
+
 function StepTextWithMath({ text }: { text: string }) {
   if (!text) return null;
   const trimmed = text.trim();
+  const cleaned = trimmed.replace(/"/g, "");
+
   // If the whole string is an equation like "$ 2x + 4 = 10 $"
-  if (trimmed.startsWith("$") && trimmed.endsWith("$") && (trimmed.match(/\$/g) || []).length === 2) {
-    return <KaTeXInline math={trimmed} className="font-medium" />;
+  if (cleaned.startsWith("$") && cleaned.endsWith("$") && (cleaned.match(/\$/g) || []).length === 2) {
+    return <KaTeXInline math={cleaned} className="font-medium" />;
   }
 
   // Split by '$' for mixed prose and equations
-  const parts = trimmed.split("$");
+  const parts = cleaned.split("$");
   if (parts.length === 1) {
-    return <span>{trimmed}</span>;
+    return <span>{cleaned}</span>;
   }
 
   return (
@@ -1724,7 +1847,7 @@ export default function OpenMathForgeApp() {
                                   </div>
 
                                   <div className="py-2 text-center text-sm font-medium text-slate-900">
-                                    <KaTeXInline math={prob.equation_typst} />
+                                    <ProblemEquation raw={prob.equation_typst} />
                                   </div>
 
                                   {/* Multiple Choice Options Grid */}
@@ -1736,7 +1859,7 @@ export default function OpenMathForgeApp() {
                                             {ch.letter})
                                           </span>
                                           <span className="text-slate-800">
-                                            <KaTeXInline math={ch.text} />
+                                            <ProblemEquation raw={ch.text} inline />
                                           </span>
                                         </div>
                                       ))}
@@ -1754,7 +1877,7 @@ export default function OpenMathForgeApp() {
                                           {prob.correct_choice})
                                         </span>
                                       )}
-                                      <KaTeXInline math={prob.answer_typst} />
+                                      <ProblemEquation raw={prob.answer_typst} inline />
                                     </div>
                                     {prob.steps_typst && prob.steps_typst.length > 0 && (
                                       <div className="mt-1.5 space-y-1 text-[11px] text-amber-900">
@@ -2784,11 +2907,11 @@ export default function OpenMathForgeApp() {
                         <div className="flex justify-between items-start">
                           <div>
                             <span className="font-bold mr-2 text-slate-800">{i + 1})</span>
-                            <KaTeXInline math={p.equation_typst} />
+                            <ProblemEquation raw={p.equation_typst} inline />
                           </div>
                           <div className="text-slate-500 font-mono text-xs shrink-0 ml-2">
                             Ans: {modalQuestionType === "multiple_choice" && p.correct_choice ? `${p.correct_choice}) ` : ""}
-                            <KaTeXInline math={p.answer_typst} />
+                            <ProblemEquation raw={p.answer_typst} inline />
                           </div>
                         </div>
 
@@ -2800,7 +2923,7 @@ export default function OpenMathForgeApp() {
                                   {ch.letter})
                                 </span>
                                 <span className="text-slate-800">
-                                  <KaTeXInline math={ch.text} />
+                                  <ProblemEquation raw={ch.text} inline />
                                 </span>
                               </div>
                             ))}

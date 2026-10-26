@@ -102,3 +102,4 @@ class ExponentialFunctionsGenerator(BaseGenerator):
             standards=self.standards,
             metadata={"equation": q_text}
         )
+
