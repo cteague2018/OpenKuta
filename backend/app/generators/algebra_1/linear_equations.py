@@ -295,7 +295,7 @@ class SlopeGenerator(BaseGenerator):
             distractors=[f"$ {d} $" if "m =" in d else d for d in distractors],
             difficulty=difficulty,
             standards=self.standards,
-            diagram_svg=diag_svg,
+            diagram_svg=None,
             answer_svg=diag_svg,
             metadata={"m": ans_typst, "p1": (x1, y1), "p2": (x2, y2)}
         )

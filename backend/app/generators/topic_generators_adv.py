@@ -218,7 +218,7 @@ def gen_adv_problem(
                     f"Simplify: ${r}$.",
                 ],
                 "distractors": [f"$ {abs(a) + abs(b)} $", f"$ {r * r} $", f"$ {r + 2} $"],
-                "diagram_svg": svg_coordinate_plane(vectors=[{"x1": 0, "y1": 0, "x2": max(-8, min(8, a)), "y2": max(-8, min(8, b)), "color": "#2563eb", "label": "|z|=?"}]),
+                "diagram_svg": svg_coordinate_plane(),
                 "answer_svg": svg_coordinate_plane(vectors=[{"x1": 0, "y1": 0, "x2": max(-8, min(8, a)), "y2": max(-8, min(8, b)), "color": "#dc2626", "label": f"|z|={r}"}]),
             }
 
@@ -1138,7 +1138,7 @@ def gen_adv_problem(
                 "$ \"Critical points\": x = plus.minus 3, quad \"Inflection point\": (0, 3) $",
                 "$ \"Critical points\": x = 0, quad \"Inflection point\": (plus.minus 1, 0) $",
             ],
-            "diagram_svg": svg_coordinate_plane(functions=[{"fn": fn_f, "color": "#2563eb"}]),
+            "diagram_svg": svg_coordinate_plane(),
             "answer_svg": svg_coordinate_plane(
                 functions=[
                     {"fn": fn_f, "color": "#2563eb"},

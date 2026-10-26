@@ -20,6 +20,7 @@ from backend.app.core.svg_utils import (
     svg_parallel_transversal,
     svg_polygon_diagram,
     svg_right_triangle,
+    svg_solid_3d,
 )
 from backend.app.generators.topic_generators_adv import gen_adv_problem
 from backend.app.generators.topic_generators_alg_geo import (
@@ -1337,7 +1338,7 @@ def _gen_decoupled_subtopic(
         b = rng.randint(-3, 3)
         return {
             "prompt_text": "Find the slope of the line shown on the coordinate plane.",
-            "equation_typst": f"\"Line passing through \" (0, {b}) \" and \" (1, {m + b})",
+            "equation_typst": "\"Find the slope \" m \" of the graphed line\"",
             "answer_typst": f"$ m = {m} $",
             "steps_typst": [
                 f"Pick two lattice points on the graphed line: $(0, {b})$ and $(1, {m + b})$.",
@@ -2462,6 +2463,239 @@ def _gen_decoupled_subtopic(
             ],
         }
 
+    if "volume of rectangular prism" in t_low or "solid figures: identifying" in t_low:
+        ln = rng.randint(3, 6 * scale)
+        w = rng.randint(2, 5 * scale)
+        h = rng.randint(2, 4 * scale)
+        vol = ln * w * h
+        sa = 2 * (ln * w + ln * h + w * h)
+        return {
+            "prompt_text": "Find the volume and surface area of the rectangular prism.",
+            "equation_typst": f"$ l = {ln}, quad w = {w}, quad h = {h} $",
+            "answer_typst": f"$ V = {vol}, quad \"SA\" = {sa} $",
+            "steps_typst": [
+                f"Compute volume: $V = l w h = ({ln})({w})({h}) = {vol}$.",
+                f"Compute surface area: $\"SA\" = 2(l w + l h + w h) = 2({ln * w} + {ln * h} + {w * h}) = {sa}$.",
+                f"Volume $V = {vol}$, Surface Area = ${sa}$.",
+            ],
+            "distractors": [
+                f"$ V = {sa}, quad \"SA\" = {vol} $",
+                f"$ V = {ln + w + h}, quad \"SA\" = {ln * w + ln * h + w * h} $",
+                f"$ V = {vol * 2}, quad \"SA\" = {sa} $",
+            ],
+            "diagram_svg": svg_solid_3d("prism", f"l={ln}", f"w={w}", f"h={h}"),
+            "answer_svg": svg_solid_3d("prism", f"V={vol}", f"SA={sa}", ""),
+        }
+
+    if "circumference and area" in t_low:
+        r = rng.randint(2, 6 * scale)
+        return {
+            "prompt_text": "Find the exact circumference and area of the circle in terms of pi.",
+            "equation_typst": f"$ r = {r} $",
+            "answer_typst": f"$ C = {2 * r}pi, quad A = {r * r}pi $",
+            "steps_typst": [
+                f"Use the circumference formula $C = 2 pi r = 2 pi ({r}) = {2 * r}pi$.",
+                f"Use the area formula $A = pi r^2 = pi ({r})^2 = {r * r}pi$.",
+                f"Circumference = ${2 * r}pi$, Area = ${r * r}pi$.",
+            ],
+            "distractors": [
+                f"$ C = {r * r}pi, quad A = {2 * r}pi $",
+                f"$ C = {r}pi, quad A = {2 * r}pi $",
+                f"$ C = {2 * r}pi, quad A = {4 * r * r}pi $",
+            ],
+            "diagram_svg": svg_circle_diagram(radius_label=f"r = {r}"),
+            "answer_svg": svg_circle_diagram(radius_label=f"C={2*r}pi, A={r*r}pi"),
+        }
+
+    if "angle bisectors" in t_low and "triangle" in c_low:
+        k = rng.randint(2, 4 * scale)
+        ab, ac = 3 * k, 5 * k
+        bd = 3 * rng.randint(1, 3)
+        dc = 5 * (bd // 3)
+        return {
+            "prompt_text": "Ray AD bisects angle BAC in triangle ABC. Use the Triangle Angle Bisector Theorem to find DC.",
+            "equation_typst": f"$ A B = {ab}, quad A C = {ac}, quad B D = {bd}, quad D C = x $",
+            "answer_typst": f"$ x = {dc} $",
+            "steps_typst": [
+                "By the Triangle Angle Bisector Theorem, $(B D)/(D C) = (A B)/(A C)$.",
+                f"Substitute the given side lengths: $({bd})/(x) = ({ab})/({ac})$.",
+                f"Cross-multiply and solve: ${ab}x = {bd * ac} arrow.r.double x = {dc}$.",
+            ],
+            "distractors": [f"$ x = {bd + 2} $", f"$ x = {ac} $", f"$ x = {ab} $"],
+            "diagram_svg": svg_general_triangle(side_c=f"AB={ab}", side_b=f"AC={ac}", side_a=f"BD={bd}, DC=x"),
+            "answer_svg": svg_general_triangle(side_c=f"AB={ab}", side_b=f"AC={ac}", side_a=f"DC={dc}"),
+        }
+
+    if "geometric diagrams and notation" in t_low:
+        deg = rng.randint(35, 75) + scale * 5
+        sup = 180 - deg
+        return {
+            "prompt_text": "Use geometric notation and the linear pair diagram to find m angle DBC.",
+            "equation_typst": f"$ angle A B D \" and \" angle D B C \" form a linear pair with \" m angle A B D = {deg}^circle $",
+            "answer_typst": f"$ m angle D B C = {sup}^circle $",
+            "steps_typst": [
+                "Angles in a linear pair are supplementary (sum to $180^circle$).",
+                f"Set up $m angle A B D + m angle D B C = 180^circle arrow.r.double {deg}^circle + m angle D B C = 180^circle$.",
+                f"Subtract ${deg}^circle$: $m angle D B C = {sup}^circle$.",
+            ],
+            "distractors": [f"$ {90 - deg if deg < 90 else deg - 45}^circle $", f"$ {deg}^circle $", f"$ {sup + 10}^circle $"],
+            "diagram_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{deg} deg", angle2_label="?"),
+            "answer_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{deg} deg", angle2_label=f"{sup} deg"),
+        }
+
+    if c_low in ("general functions", "functions"):
+        if t_low == "evaluating":
+            a = rng.randint(2, 4 * scale)
+            b = rng.randint(1, 6)
+            x0 = rng.randint(-3, 4)
+            val = a * x0 * x0 - b
+            return {
+                "prompt_text": "Evaluate the function at the indicated input.",
+                "equation_typst": f"$ f(x) = {a}x^2 - {b}; quad \"find \" f({x0}) $",
+                "answer_typst": f"$ f({x0}) = {val} $",
+                "steps_typst": [
+                    f"Substitute $x = {x0}$ into $f(x) = {a}x^2 - {b}$.",
+                    f"Compute ${a}({x0})^2 - {b} = {a * x0 * x0} - {b}$.",
+                    f"Simplify: $f({x0}) = {val}$.",
+                ],
+                "distractors": [f"$ {a * x0 - b} $", f"$ {-a * x0 * x0 - b} $", f"$ {val + 2 * b} $"],
+            }
+        if t_low == "operations":
+            a = rng.randint(2, 5 * scale)
+            b = rng.randint(1, 6)
+            c = rng.randint(2, 5)
+            return {
+                "prompt_text": "Perform the indicated function operation and simplify.",
+                "equation_typst": f"$ f(x) = {a}x + {b}, quad g(x) = x^2 - {c}; quad \"find \" (f + g)(x) $",
+                "answer_typst": f"$ x^2 + {a}x {'+ ' + str(b - c) if b - c >= 0 else '- ' + str(abs(b - c))} $",
+                "steps_typst": [
+                    "Use $(f + g)(x) = f(x) + g(x)$.",
+                    f"Substitute: $({a}x + {b}) + (x^2 - {c})$.",
+                    f"Combine constants in standard form: $x^2 + {a}x {'+ ' + str(b - c) if b - c >= 0 else '- ' + str(abs(b - c))}$.",
+                ],
+                "distractors": [
+                    f"$ {a}x^2 + {b - c} $",
+                    f"$ x^2 - {a}x {'+ ' + str(b + c)} $",
+                    f"$ {a}x^3 - {b * c} $",
+                ],
+            }
+        if t_low == "inverses":
+            m = rng.choice([2, 3, 4, 5]) * scale
+            b = rng.randint(1, 9)
+            return {
+                "prompt_text": "Find the inverse function f^-1(x).",
+                "equation_typst": f"$ f(x) = {m}x - {b} $",
+                "answer_typst": f"$ f^(-1)(x) = (x + {b})/({m}) $",
+                "steps_typst": [
+                    f"Replace $f(x)$ with $y$ and swap $x$ and $y$: $x = {m}y - {b}$.",
+                    f"Add ${b}$ to both sides: $x + {b} = {m}y$.",
+                    f"Divide by ${m}$: $f^(-1)(x) = (x + {b})/({m})$.",
+                ],
+                "distractors": [
+                    f"$ f^(-1)(x) = (x - {b})/({m}) $",
+                    f"$ f^(-1)(x) = (1)/({m}x - {b}) $",
+                    f"$ f^(-1)(x) = {m}x + {b} $",
+                ],
+            }
+
+    if "complex numbers" in c_low:
+        if "rationalizing" in t_low:
+            a = rng.randint(2, 5 * scale)
+            b = rng.randint(1, 4)
+            c = rng.randint(1, 4)
+            denom = b * b + c * c
+            re_f = Fraction(a * b, denom)
+            im_f = Fraction(-a * c, denom)
+            im_s = f"- {_fmt_frac( abs(im_f) )}i" if im_f < 0 else f"+ {_fmt_frac(im_f)}i"
+            return {
+                "prompt_text": "Divide the complex numbers by multiplying numerator and denominator by the complex conjugate.",
+                "equation_typst": f"$ ({a})/({b} + {c}i) $",
+                "answer_typst": f"$ {_fmt_frac(re_f)} {im_s} $",
+                "steps_typst": [
+                    f"Multiply numerator and denominator by the conjugate $({b} - {c}i)$.",
+                    f"Denominator: $({b})^2 + ({c})^2 = {denom}$; Numerator: ${a}({b} - {c}i) = {a * b} - {a * c}i$.",
+                    f"Write in standard form $a + b i$: ${_fmt_frac(re_f)} {im_s}$.",
+                ],
+                "distractors": [
+                    f"$ {_fmt_frac(re_f)} + {_fmt_frac(abs(im_f))}i $",
+                    f"$ ({a * b} - {a * c}i)/({b * b - c * c if b != c else 1}) $",
+                    f"$ {_fmt_frac(Fraction(a, b))} - {_fmt_frac(Fraction(a, c))}i $",
+                ],
+            }
+
+    if "gcf and lcm word problems" in t_low:
+        g = rng.choice([4, 6, 8, 12])
+        a, b = 2 * g, 3 * g
+        lcm_v = 6 * g
+        return {
+            "prompt_text": "Solve the GCF and LCM word problem.",
+            "equation_typst": f"\"Bus A arrives every {a} minutes and Bus B arrives every {b} minutes. If both are at the station now, in how many minutes will both arrive together again?\"",
+            "answer_typst": f"$ {lcm_v} \" minutes\" $",
+            "steps_typst": [
+                f"Find the Least Common Multiple (LCM) of ${a}$ and ${b}$.",
+                f"Multiples of ${a}$: ${a}, {2 * a}, {3 * a}$; Multiples of ${b}$: ${b}, {2 * b}$.",
+                f"The smallest shared multiple is $\text{{LCM}}({a}, {b}) = {lcm_v}$ minutes.",
+            ],
+            "distractors": [f"$ {g} \" minutes\" $", f"$ {a + b} \" minutes\" $", f"$ {a * b} \" minutes\" $"],
+        }
+
+    if "properties of addition and multiplication" in t_low:
+        a = rng.randint(3, 9 * scale)
+        b = rng.randint(4, 11)
+        c = rng.randint(2, 8)
+        return {
+            "prompt_text": "Identify the property of operations illustrated by the equation.",
+            "equation_typst": f"$ ({a} + {b}) + {c} = {a} + ({b} + {c}) $",
+            "answer_typst": "$ \"Associative Property of Addition\" $",
+            "steps_typst": [
+                "Observe that the order of the addends does not change, only their grouping with parentheses.",
+                "Changing the grouping of addends illustrates the Associative Property of Addition.",
+                "Answer: Associative Property of Addition.",
+            ],
+            "distractors": [
+                "$ \"Commutative Property of Addition\" $",
+                "$ \"Distributive Property\" $",
+                "$ \"Identity Property of Addition\" $",
+            ],
+        }
+
+    if "equations word problems" in t_low or "inequalities word problems" in t_low or "equations for other relationships" in t_low:
+        rate = rng.randint(4, 9 * scale)
+        fixed = rng.randint(5, 15)
+        x_val = rng.randint(3, 8)
+        tot = rate * x_val + fixed
+        if "inequalit" in t_low:
+            return {
+                "prompt_text": "Write and solve an inequality to model the word problem.",
+                "equation_typst": f"\"A club has ${fixed} and earns ${rate} per car washed. How many cars (x) must they wash to have at least ${tot}?\"",
+                "answer_typst": f"$ {rate}x + {fixed} >= {tot}; quad x >= {x_val} $",
+                "steps_typst": [
+                    f"Set up the inequality: ${rate}x + {fixed} >= {tot}$.",
+                    f"Subtract ${fixed}$ from both sides: ${rate}x >= {tot - fixed}$.",
+                    f"Divide by ${rate}$: $x >= {x_val}$.",
+                ],
+                "distractors": [
+                    f"$ x <= {x_val} $",
+                    f"$ x >= {x_val + 2} $",
+                    f"$ x >= {(tot + fixed) // rate} $",
+                ],
+            }
+        return {
+            "prompt_text": "Write and solve an equation for the relationship between the quantities.",
+            "equation_typst": f"\"A service charges a ${fixed} base fee plus ${rate} per hour (x). For a total bill of y = ${tot}, find the hours x.\"",
+            "answer_typst": f"$ y = {rate}x + {fixed}; quad x = {x_val} $",
+            "steps_typst": [
+                f"Write the two-variable relationship: $y = {rate}x + {fixed}$.",
+                f"Substitute $y = {tot}$: ${rate}x + {fixed} = {tot} arrow.r.double {rate}x = {tot - fixed}$.",
+                f"Divide by ${rate}$: $x = {x_val}$.",
+            ],
+            "distractors": [
+                f"$ y = {fixed}x + {rate}; quad x = {x_val} $",
+                f"$ y = {rate}x + {fixed}; quad x = {x_val + 2} $",
+                f"$ y = {rate}x - {fixed}; quad x = {(tot + fixed) // rate} $",
+            ],
+        }
+
     return None
 
 
@@ -2533,6 +2767,7 @@ class CurriculumTopicGenerator(BaseGenerator):
                     standards=self.standards,
                     diagram_svg=data.get("diagram_svg"),
                     answer_svg=data.get("answer_svg"),
+                    generator_id=self.generator_id,
                     metadata={"topic_id": self.topic_id, "topic_name": self.topic_name},
                 )
                 prob.question_type = config.question_type
@@ -2554,6 +2789,9 @@ class CurriculumTopicGenerator(BaseGenerator):
                     )
                     base_probs[diff] = base_cls().generate(sub_cfg)
                 bp = base_probs[diff][idx % len(base_probs[diff])]
+                bp.generator_id = self.generator_id
+                bp.metadata["topic_id"] = self.topic_id
+                bp.metadata["topic_name"] = self.topic_name
                 problems.append(bp)
 
         return problems

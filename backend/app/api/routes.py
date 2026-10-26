@@ -14,7 +14,7 @@ from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from backend.app.core.base import GeneratorConfig, ProblemDifficulty
+from backend.app.core.base import BaseProblem, GeneratorConfig, ProblemDifficulty
 from backend.app.core.compiler import TypstCompiler
 from backend.app.core.rate_limiter import TokenBucketRateLimiter
 from backend.app.export.qti_builder import QTIBuilder
@@ -41,7 +41,7 @@ class GeneratePDFRequest(BaseModel):
     generator_id: str = Field(default="algebra_1.quadratics")
     title: str = Field(default="Quadratic Equations Worksheet")
     form_id: str = Field(default="A")
-    problem_count: int = Field(default=8, ge=2, le=50)
+    problem_count: int = Field(default=8, ge=1, le=50)
     seed: Optional[int] = Field(default=None)
     difficulty_distribution: Optional[Dict[str, float]] = None
     allow_negatives: bool = Field(default=True)
@@ -58,7 +58,7 @@ class MultiFormRequest(BaseModel):
     generator_id: str = Field(default="algebra_1.quadratics")
     title: str = Field(default="Quadratic Equations Multi-Form Exam")
     base_seed: int = Field(default=42)
-    problem_count: int = Field(default=8, ge=2, le=50)
+    problem_count: int = Field(default=8, ge=1, le=50)
     forms: List[str] = Field(default_factory=lambda: ["A", "B", "C", "D"])
     topics: Optional[List[Dict[str, Any]]] = None
 
@@ -74,6 +74,63 @@ class QTIExportRequest(BaseModel):
 class StepVerifyRequest(BaseModel):
     problem_id: str
     steps: List[str]
+
+
+def _generate_problems_for_request(
+    generator_id: str,
+    problem_count: int,
+    seed: int,
+    topics: Optional[List[Dict[str, Any]]] = None,
+    difficulty_distribution: Optional[Dict[str, float]] = None,
+    allow_negatives: bool = True,
+    question_type: str = "free_response",
+) -> List[BaseProblem]:
+    """Shared helper to generate single-topic or multi-topic problem batches deterministically."""
+    problems: List[BaseProblem] = []
+    if topics:
+        item_seed = seed
+        for t in topics:
+            t_gen_id = t.get("generator_id", generator_id)
+            t_gen = get_generator(t_gen_id)
+            t_count = t.get("count", 4)
+            t_diff = t.get("difficulty", "medium")
+            t_qtype = t.get("question_type", question_type)
+            diff_dist = {
+                ProblemDifficulty.MILD: 1.0 if t_diff == "mild" else 0.0,
+                ProblemDifficulty.MEDIUM: 1.0 if t_diff == "medium" else 0.0,
+                ProblemDifficulty.SPICY: 1.0 if t_diff == "spicy" else 0.0,
+            }
+            cfg = GeneratorConfig(
+                problem_count=t_count,
+                seed=item_seed,
+                difficulty_distribution=diff_dist,
+                allow_negatives=allow_negatives,
+                question_type=t_qtype,
+            )
+            problems.extend(t_gen.generate(cfg))
+            item_seed += 113
+    else:
+        gen = get_generator(generator_id)
+        diff_dist = {
+            ProblemDifficulty(k): v
+            for k, v in (
+                difficulty_distribution
+                or {
+                    "mild": 0.4,
+                    "medium": 0.4,
+                    "spicy": 0.2,
+                }
+            ).items()
+        }
+        cfg = GeneratorConfig(
+            problem_count=problem_count,
+            seed=seed,
+            difficulty_distribution=diff_dist,
+            allow_negatives=allow_negatives,
+            question_type=question_type,
+        )
+        problems = gen.generate(cfg)
+    return problems
 
 
 @router.get("/catalog")
@@ -113,46 +170,15 @@ def get_standards() -> Any:
 def preview_problems(req: GeneratePDFRequest) -> Dict[str, Any]:
     """Generate problem data for live frontend KaTeX preview."""
     active_seed = req.seed if req.seed is not None else 42
-    problems = []
-    if req.topics:
-        item_seed = active_seed
-        for t in req.topics:
-            t_gen = get_generator(t.get("generator_id", req.generator_id))
-            t_count = t.get("count", 4)
-            t_diff = t.get("difficulty", "medium")
-            t_qtype = t.get("question_type", req.question_type)
-            diff_dist = {
-                ProblemDifficulty.MILD: 1.0 if t_diff == "mild" else 0.0,
-                ProblemDifficulty.MEDIUM: 1.0 if t_diff == "medium" else 0.0,
-                ProblemDifficulty.SPICY: 1.0 if t_diff == "spicy" else 0.0,
-            }
-            cfg = GeneratorConfig(
-                problem_count=t_count,
-                seed=item_seed,
-                difficulty_distribution=diff_dist,
-                allow_negatives=req.allow_negatives,
-                question_type=t_qtype,
-            )
-            problems.extend(t_gen.generate(cfg))
-            item_seed += 113
-    else:
-        gen = get_generator(req.generator_id)
-        diff_dist = {
-            ProblemDifficulty(k): v
-            for k, v in (req.difficulty_distribution or {
-                "mild": 0.4,
-                "medium": 0.4,
-                "spicy": 0.2,
-            }).items()
-        }
-        cfg = GeneratorConfig(
-            problem_count=req.problem_count,
-            seed=active_seed,
-            difficulty_distribution=diff_dist,
-            allow_negatives=req.allow_negatives,
-            question_type=req.question_type,
-        )
-        problems = gen.generate(cfg)
+    problems = _generate_problems_for_request(
+        generator_id=req.generator_id,
+        problem_count=req.problem_count,
+        seed=active_seed,
+        topics=req.topics,
+        difficulty_distribution=req.difficulty_distribution,
+        allow_negatives=req.allow_negatives,
+        question_type=req.question_type,
+    )
     return {
         "worksheet_id": f"WS-{uuid.uuid4().hex[:6].upper()}",
         "generator_id": req.generator_id,
@@ -166,48 +192,15 @@ def generate_pdf(req: GeneratePDFRequest) -> Response:
     ArUco markers and QR code.
     """
     active_seed = req.seed if req.seed is not None else 42
-    problems = []
-
-    if req.topics:
-        item_seed = active_seed
-        for t in req.topics:
-            t_gen = get_generator(t.get("generator_id", req.generator_id))
-            t_count = t.get("count", 4)
-            t_diff = t.get("difficulty", "medium")
-            t_qtype = t.get("question_type", req.question_type)
-            diff_dist = {
-                ProblemDifficulty.MILD: 1.0 if t_diff == "mild" else 0.0,
-                ProblemDifficulty.MEDIUM: 1.0 if t_diff == "medium" else 0.0,
-                ProblemDifficulty.SPICY: 1.0 if t_diff == "spicy" else 0.0,
-            }
-            cfg = GeneratorConfig(
-                problem_count=t_count,
-                seed=item_seed,
-                difficulty_distribution=diff_dist,
-                allow_negatives=req.allow_negatives,
-                question_type=t_qtype,
-            )
-            probs = t_gen.generate(cfg)
-            problems.extend(probs)
-            item_seed += 113
-    else:
-        gen = get_generator(req.generator_id)
-        diff_dist = {
-            ProblemDifficulty(k): v
-            for k, v in (req.difficulty_distribution or {
-                "mild": 0.4,
-                "medium": 0.4,
-                "spicy": 0.2,
-            }).items()
-        }
-        cfg = GeneratorConfig(
-            problem_count=req.problem_count,
-            seed=active_seed,
-            difficulty_distribution=diff_dist,
-            allow_negatives=req.allow_negatives,
-            question_type=req.question_type,
-        )
-        problems = gen.generate(cfg)
+    problems = _generate_problems_for_request(
+        generator_id=req.generator_id,
+        problem_count=req.problem_count,
+        seed=active_seed,
+        topics=req.topics,
+        difficulty_distribution=req.difficulty_distribution,
+        allow_negatives=req.allow_negatives,
+        question_type=req.question_type,
+    )
 
     worksheet_id = f"WS-{active_seed % 10000:04d}"
 
@@ -250,43 +243,17 @@ def generate_multi_form(req: MultiFormRequest) -> Response:
     """
     worksheet_id = f"MF-{req.base_seed % 10000:04d}"
 
-    forms_problems: Dict[str, List] = {}
+    forms_problems: Dict[str, List[BaseProblem]] = {}
     forms_pdfs: Dict[str, bytes] = {}
 
     for idx, form_id in enumerate(req.forms):
         form_seed = req.base_seed + (idx * 1337)
-        probs = []
-
-        if req.topics:
-            item_seed = form_seed
-            for t in req.topics:
-                t_gen = get_generator(t.get("generator_id", req.generator_id))
-                t_count = t.get("count", 4)
-                t_diff = t.get("difficulty", "medium")
-                diff_dist = {
-                    ProblemDifficulty.MILD: 1.0 if t_diff == "mild" else 0.0,
-                    ProblemDifficulty.MEDIUM: (
-                        1.0 if t_diff == "medium" else 0.0
-                    ),
-                    ProblemDifficulty.SPICY: (
-                        1.0 if t_diff == "spicy" else 0.0
-                    ),
-                }
-                cfg = GeneratorConfig(
-                    problem_count=t_count,
-                    seed=item_seed,
-                    difficulty_distribution=diff_dist,
-                )
-                probs.extend(t_gen.generate(cfg))
-                item_seed += 113
-        else:
-            gen = get_generator(req.generator_id)
-            cfg = GeneratorConfig(
-                problem_count=req.problem_count,
-                seed=form_seed,
-            )
-            probs = gen.generate(cfg)
-
+        probs = _generate_problems_for_request(
+            generator_id=req.generator_id,
+            problem_count=req.problem_count,
+            seed=form_seed,
+            topics=req.topics,
+        )
         forms_problems[form_id] = probs
 
         pdf_bytes = compiler.compile_worksheet_pdf(
@@ -408,29 +375,12 @@ def verify_steps(req: StepVerifyRequest) -> Any:
 @router.post("/export/qti")
 def export_qti(req: QTIExportRequest) -> Response:
     """Generate and download Canvas / Schoology QTI 2.1 quiz ZIP package."""
-    problems = []
-    if req.topics:
-        item_seed = req.seed or 123
-        for t in req.topics:
-            t_gen = get_generator(t.get("generator_id", req.generator_id))
-            t_count = t.get("count", 4)
-            t_diff = t.get("difficulty", "medium")
-            diff_dist = {
-                ProblemDifficulty.MILD: 1.0 if t_diff == "mild" else 0.0,
-                ProblemDifficulty.MEDIUM: 1.0 if t_diff == "medium" else 0.0,
-                ProblemDifficulty.SPICY: 1.0 if t_diff == "spicy" else 0.0,
-            }
-            cfg = GeneratorConfig(
-                problem_count=t_count,
-                seed=item_seed,
-                difficulty_distribution=diff_dist,
-            )
-            problems.extend(t_gen.generate(cfg))
-            item_seed += 113
-    else:
-        gen = get_generator(req.generator_id)
-        cfg = GeneratorConfig(problem_count=req.problem_count, seed=req.seed)
-        problems = gen.generate(cfg)
+    problems = _generate_problems_for_request(
+        generator_id=req.generator_id,
+        problem_count=req.problem_count,
+        seed=req.seed or 123,
+        topics=req.topics,
+    )
 
     zip_bytes = qti_builder.create_canvas_zip(
         quiz_title=req.title,

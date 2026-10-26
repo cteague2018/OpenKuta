@@ -35,6 +35,8 @@ export interface Problem {
   standards: string[];
   diagram_svg?: string | null;
   answer_svg?: string | null;
+  generator_id?: string | null;
+  metadata?: Record<string, any>;
 }
 
 export const DEFAULT_COURSE_CATALOG: Record<string, Course> = {

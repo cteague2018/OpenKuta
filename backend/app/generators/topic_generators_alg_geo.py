@@ -195,7 +195,7 @@ def gen_alg_geo_problem(
                         f"Answer: ${v}$",
                     ],
                     "distractors": [f"$ {-v} $", f"$ {abs(v) + 1} $", "$ 0 $"],
-                    "diagram_svg": svg_number_line(points=[(v, "P")]),
+                    "diagram_svg": svg_number_line(),
                     "answer_svg": svg_number_line(points=[(v, str(v)), (-v, str(-v))]),
                 }
             return {
@@ -208,7 +208,7 @@ def gen_alg_geo_problem(
                     f"Answer: ${-v}$",
                 ],
                 "distractors": [f"$ {v} $", f"$ 1/{abs(v)} $", "$ 0 $"],
-                "diagram_svg": svg_number_line(points=[(v, "A")]),
+                "diagram_svg": svg_number_line(),
                 "answer_svg": svg_number_line(points=[(v, str(v)), (-v, f"opp={-v}")]),
             }
         if "comparing" in t_low:
@@ -278,7 +278,7 @@ def gen_alg_geo_problem(
                         f"Answer: ${res}$",
                     ],
                     "distractors": [f"$ {abs(v) + w} $", f"$ {-res} $", f"$ {v - w} $"],
-                    "diagram_svg": svg_number_line(points=[(v, str(v)), (-w, str(-w))]),
+                    "diagram_svg": svg_number_line(),
                     "answer_svg": svg_number_line(points=[(res, str(res))]),
                 }
             return {
@@ -291,7 +291,7 @@ def gen_alg_geo_problem(
                     f"Answer: ${abs(v)}$",
                 ],
                 "distractors": [f"$ {-abs(v)} $", "$ 0 $", f"$ {abs(v) + 1} $"],
-                "diagram_svg": svg_number_line(points=[(v, str(v))]),
+                "diagram_svg": svg_number_line(),
                 "answer_svg": svg_number_line(points=[(0, "0"), (v, f"dist={abs(v)}")]),
             }
         # Numbers on a number line / word problems
@@ -890,7 +890,7 @@ def gen_alg_geo_problem(
         y1, y2 = rng.randint(-5, -1), rng.randint(1, 6)
         return {
             "prompt_text": "Find the domain and range of the continuous relation shown on the coordinate plane and state whether it is a function.",
-            "equation_typst": f"\"Continuous segment from \" ({x1}, {y1}) \" to \" ({x2}, {y2})",
+            "equation_typst": "\"Determine the domain and range of the graphed relation\"",
             "answer_typst": f"$ \"Domain\": [{x1}, {x2}], quad \"Range\": [{y1}, {y2}], quad \"Function\" $",
             "steps_typst": [
                 f"Read the horizontal extent from left to right for the domain: ${x1} <= x <= {x2}$, or $[{x1}, {x2}]$.",
@@ -902,7 +902,7 @@ def gen_alg_geo_problem(
                 f"$ \"Domain\": ({x1}, {x2}), quad \"Range\": ({y1}, {y2}), quad \"Not a function\" $",
                 f"$ \"Domain\": [{x1}, {y2}], quad \"Range\": [{y1}, {x2}], quad \"Function\" $",
             ],
-            "diagram_svg": svg_coordinate_plane(polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#2563eb", "fill": "none"}], points=[(x1, y1, f"({x1},{y1})", True), (x2, y2, f"({x2},{y2})", True)]),
+            "diagram_svg": svg_coordinate_plane(polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#2563eb", "fill": "none"}], points=[(x1, y1, "", True), (x2, y2, "", True)]),
             "answer_svg": svg_coordinate_plane(polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#2563eb", "fill": "none"}], points=[(x1, y1, f"({x1},{y1})", True), (x2, y2, f"({x2},{y2})", True)]),
         }
 
@@ -1130,7 +1130,7 @@ def gen_alg_geo_problem(
                 f"$ P({-x}, {y}), quad \"Quadrant {'II' if quad == 'Quadrant I' else 'I'}\" $",
                 f"$ P({x}, {-y}), quad \"Quadrant {'IV' if quad == 'Quadrant I' else 'III'}\" $",
             ],
-            "diagram_svg": svg_coordinate_plane(points=[(x, y, "P", True)]),
+            "diagram_svg": svg_coordinate_plane(),
             "answer_svg": svg_coordinate_plane(points=[(x, y, f"P({x},{y})", True)]),
         }
 
@@ -1181,7 +1181,7 @@ def gen_alg_geo_problem(
             "distractors": [f"$ d = {dx + dy} $", f"$ d = sqrt({dx + dy}) $", f"$ d = {d + 2} $"],
             "diagram_svg": svg_coordinate_plane(
                 polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#2563eb", "fill": "none"}],
-                points=[(x1, y1, f"({x1},{y1})", True), (x2, y2, f"({x2},{y2})", True)],
+                points=[(x1, y1, "A", True), (x2, y2, "B", True)],
             ),
             "answer_svg": svg_coordinate_plane(
                 polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#dc2626", "fill": "none"}],
@@ -1711,7 +1711,7 @@ def gen_alg_geo_problem(
                     f"$ (x + {h})^2 + (y + {k})^2 = {r * r} $",
                     f"$ {hx} - {ky} = {r * r} $",
                 ],
-                "diagram_svg": svg_coordinate_plane(points=[(h, k, f"C({h},{k})", True)]),
+                "diagram_svg": svg_coordinate_plane(),
                 "answer_svg": svg_coordinate_plane(circles=[{"h": h, "k": k, "r": r, "color": "#2563eb"}], points=[(h, k, f"C({h},{k})", True)]),
             }
 
@@ -1747,7 +1747,7 @@ def gen_alg_geo_problem(
             tot = f1 + f2 + f3 + f4
             return {
                 "prompt_text": "Use the histogram to determine the total frequency and the modal interval.",
-                "equation_typst": f"\"Frequencies — 0-9: {f1}, 10-19: {f2}, 20-29: {f3}, 30-39: {f4}\"",
+                "equation_typst": "\"Analyze the frequency distribution in the histogram below\"",
                 "answer_typst": f"$ \"Total\" = {tot}, quad \"Modal interval\" = 10\"-\"19 $",
                 "steps_typst": [
                     f"Add the bar heights: ${f1} + {f2} + {f3} + {f4} = {tot}$.",
@@ -1772,7 +1772,7 @@ def gen_alg_geo_problem(
             rng_v = mx - mn
             return {
                 "prompt_text": "Read the five-number summary from the box-and-whisker plot and compute the median and interquartile range (IQR).",
-                "equation_typst": f"\"Min\" = {mn}, Q_1 = {q1}, \"Med\" = {med}, Q_3 = {q3}, \"Max\" = {mx}",
+                "equation_typst": "\"Read the five-number summary from the box-and-whisker plot below\"",
                 "answer_typst": f"$ \"Median\" = {med}, quad \"IQR\" = {iqr}, quad \"Range\" = {rng_v} $",
                 "steps_typst": [
                     f"The vertical line inside the box marks the median: ${med}$.",

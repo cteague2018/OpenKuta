@@ -36,6 +36,7 @@ class BaseProblem(BaseModel):
     standards: List[str] = Field(default_factory=list, description="Curriculum standard codes (e.g., CCSS.MATH.CONTENT.HSA.REI.B.4)")
     diagram_svg: Optional[str] = Field(default=None, description="Optional SVG diagram/graph/table rendered in the problem prompt area")
     answer_svg: Optional[str] = Field(default=None, description="Optional SVG diagram/graph/plot rendered in the answer key")
+    generator_id: Optional[str] = Field(default=None, description="Generator ID that produced this problem")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Arbitrary generator metadata")
 
     @property
@@ -118,6 +119,7 @@ class BaseGenerator(ABC):
                 problem_idx=idx,
                 allow_negatives=config.allow_negatives
             )
+            prob.generator_id = self.generator_id
             prob.question_type = config.question_type
             if config.question_type == "multiple_choice":
                 self._populate_multiple_choice_choices(prob, rng)

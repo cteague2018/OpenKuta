@@ -190,3 +190,36 @@ def test_typst_pdf_compilation_with_embedded_svgs():
         show_answers=True,
     )
     assert pdf_key.startswith(b"%PDF-") and len(pdf_key) > 2000
+
+
+def test_single_problem_regeneration_and_student_view_graph_separation():
+    """Verify single-problem preview (problem_count=1) succeeds and that Student View
+    graphs never leak Answer Key graphs.
+    """
+    from backend.app.api.routes import GeneratePDFRequest, preview_problems
+
+    # 1. Verify problem_count=1 succeeds in GeneratePDFRequest / preview_problems
+    res1 = preview_problems(
+        GeneratePDFRequest(
+            generator_id="algebra_1.linear_equation.slope",
+            problem_count=1,
+            seed=42,
+            question_type="multiple_choice",
+        )
+    )
+    assert len(res1["problems"]) == 1
+    p1 = res1["problems"][0]
+    assert p1["generator_id"] == "algebra_1.linear_equation.slope"
+    assert p1["diagram_svg"] is None, "Slope from two points must not show plotted line in Student View"
+    assert p1["answer_svg"] is not None and p1["answer_svg"].startswith("<svg")
+
+    # 2. Verify regenerating with a different seed produces a new distinct problem
+    res2 = preview_problems(
+        GeneratePDFRequest(
+            generator_id="algebra_1.linear_equation.slope",
+            problem_count=4,
+            seed=777,
+            question_type="multiple_choice",
+        )
+    )
+    assert any(p["equation_typst"] != p1["equation_typst"] for p in res2["problems"])

@@ -507,7 +507,15 @@ export default function OpenMathForgeApp() {
 
           if (res.ok) {
             const data = await res.json();
-            if (data.problems) allProblems.push(...data.problems);
+            if (data.problems) {
+              allProblems.push(
+                ...data.problems.map((p: Problem) => ({
+                  ...p,
+                  generator_id: p.generator_id || item.generatorId,
+                  question_type: p.question_type || item.questionType,
+                }))
+              );
+            }
           }
         } catch {
           // backend not reachable
@@ -648,15 +656,17 @@ export default function OpenMathForgeApp() {
     setAssignmentItems((prev) => prev.filter((i) => i.id !== id));
   };
 
+  const buildTopicsPayload = () =>
+    assignmentItems.map((item) => ({
+      generator_id: item.generatorId,
+      count: item.count,
+      difficulty: item.difficulty,
+      question_type: item.questionType,
+    }));
+
   // Multi-Topic PDF Download
   const handleDownloadPDF = async () => {
     try {
-      const topicsPayload = assignmentItems.map((item) => ({
-        generator_id: item.generatorId,
-        count: item.count,
-        difficulty: item.difficulty,
-      }));
-
       const res = await fetch("/api/worksheet/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -665,7 +675,7 @@ export default function OpenMathForgeApp() {
           form_id: "A",
           seed: baseSeed,
           columns: columns,
-          topics: topicsPayload,
+          topics: buildTopicsPayload(),
         }),
       });
 
@@ -687,12 +697,6 @@ export default function OpenMathForgeApp() {
   // Export Answer Key PDF Download
   const handleDownloadAnswerKey = async () => {
     try {
-      const topicsPayload = assignmentItems.map((item) => ({
-        generator_id: item.generatorId,
-        count: item.count,
-        difficulty: item.difficulty,
-      }));
-
       const res = await fetch("/api/worksheet/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -702,7 +706,7 @@ export default function OpenMathForgeApp() {
           seed: baseSeed,
           columns: columns,
           show_answers: true,
-          topics: topicsPayload,
+          topics: buildTopicsPayload(),
         }),
       });
 
@@ -739,41 +743,90 @@ export default function OpenMathForgeApp() {
 
   // Regenerate Single Problem
   const handleRegenerateSingleProblem = async (targetIdx: number) => {
+    const targetProb = worksheetProblems[targetIdx];
+    if (!targetProb) return;
+
+    // Locate the assignment item corresponding to targetIdx
+    let cumulative = 0;
+    let ownerItem: AssignmentItem | undefined = assignmentItems[0];
+    for (const item of assignmentItems) {
+      if (targetIdx < cumulative + item.count) {
+        ownerItem = item;
+        break;
+      }
+      cumulative += item.count;
+    }
+
+    const genId =
+      targetProb.generator_id ||
+      targetProb.metadata?.topic_id ||
+      ownerItem?.generatorId ||
+      "algebra_1.quadratics";
+    const diff: "mild" | "medium" | "spicy" =
+      targetProb.difficulty || ownerItem?.difficulty || "medium";
+    const qType: "free_response" | "multiple_choice" =
+      targetProb.question_type ||
+      ownerItem?.questionType ||
+      (targetProb.choices && targetProb.choices.length >= 4
+        ? "multiple_choice"
+        : "free_response");
+    const diffMap = {
+      mild: { mild: 1.0, medium: 0.0, spicy: 0.0 },
+      medium: { mild: 0.0, medium: 1.0, spicy: 0.0 },
+      spicy: { mild: 0.0, medium: 0.0, spicy: 1.0 },
+    }[diff];
+
     try {
-      const targetProb = worksheetProblems[targetIdx];
-      const genId = (targetProb as any).generator_id || assignmentItems[0]?.generatorId || "algebra_1.quadratics";
       const res = await fetch("/api/worksheet/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           generator_id: genId,
-          problem_count: 1,
-          seed: Math.floor(Math.random() * 999999) + targetIdx * 31,
+          problem_count: 4,
+          seed: Math.floor(Math.random() * 900000) + 10000 + targetIdx * 131,
+          difficulty_distribution: diffMap,
           allow_negatives: true,
+          question_type: qType,
         }),
       });
       if (res.ok) {
         const data = await res.json();
         if (data.problems && data.problems.length > 0) {
-          const newProb = data.problems[0];
+          const candidates: Problem[] = data.problems;
+          const distinctProb =
+            candidates.find((p) => p.equation_typst !== targetProb.equation_typst) ||
+            candidates[0];
           setWorksheetProblems((prev) => {
             const next = [...prev];
-            next[targetIdx] = { ...newProb, id: `prob_regen_${Date.now()}` };
+            next[targetIdx] = {
+              ...distinctProb,
+              id: `prob_regen_${Date.now()}_${targetIdx}`,
+              generator_id: genId,
+              question_type: qType,
+            };
             return next;
           });
           return;
         }
       }
     } catch {
-      // Fallback
+      // Offline fallback below
     }
+
+    // Offline fallback: pick a distinct sample problem with matching answer and steps
+    const altSamples = DEFAULT_SAMPLE_PROBLEMS.filter(
+      (p) => p.equation_typst !== targetProb.equation_typst
+    );
+    const chosen =
+      altSamples[Math.floor(Math.random() * altSamples.length)] ||
+      DEFAULT_SAMPLE_PROBLEMS[0];
     setWorksheetProblems((prev) => {
       const next = [...prev];
-      const cur = next[targetIdx];
       next[targetIdx] = {
-        ...cur,
+        ...chosen,
         id: `prob_regen_${Date.now()}_${targetIdx}`,
-        equation_typst: cur.equation_typst ? `${cur.equation_typst} + 0` : "x = 1",
+        generator_id: genId,
+        question_type: qType,
       };
       return next;
     });
@@ -782,12 +835,6 @@ export default function OpenMathForgeApp() {
   // Multi-Form Scramble Bundle (A-D)
   const handleScrambleMultiForm = async () => {
     try {
-      const topicsPayload = assignmentItems.map((item) => ({
-        generator_id: item.generatorId,
-        count: item.count,
-        difficulty: item.difficulty,
-      }));
-
       const res = await fetch("/api/worksheet/multi-form", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -795,7 +842,7 @@ export default function OpenMathForgeApp() {
           title: worksheetTitle,
           base_seed: baseSeed,
           forms: ["A", "B", "C", "D"],
-          topics: topicsPayload,
+          topics: buildTopicsPayload(),
         }),
       });
 
@@ -817,11 +864,7 @@ export default function OpenMathForgeApp() {
   // Canvas QTI Export
   const handleExportQTI = async () => {
     try {
-      const topicsPayload = assignmentItems.map((item) => ({
-        generator_id: item.generatorId,
-        count: item.count,
-        difficulty: item.difficulty,
-      }));
+      const topicsPayload = buildTopicsPayload();
 
       const res = await fetch("/api/export/qti", {
         method: "POST",
