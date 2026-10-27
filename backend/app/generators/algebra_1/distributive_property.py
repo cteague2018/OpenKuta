@@ -100,12 +100,35 @@ class DistributivePropertyGenerator(BaseGenerator):
                 f"{tot_x}{var} + {c + f_val}",
             ]
 
-        steps = [
-            f"Given expression: $ {eq_str} $",
-            "Multiply the outer term across each term inside the parentheses.",
-            "Combine any like algebraic terms.",
-            f"Final expanded expression: $ {ans_str} $"
-        ]
+        if difficulty == ProblemDifficulty.MILD:
+            steps = [
+                f"Given expression: $ {eq_str} $",
+                f"Distribute ${a}$ to each term inside parentheses: $ ({a}) dot ({b_str}) {sign} ({a}) dot ({c}) $",
+                f"Multiply coefficients: $ {ans_str} $"
+            ]
+        elif difficulty == ProblemDifficulty.MEDIUM:
+            if flavor == "negative_multiplier":
+                steps = [
+                    f"Given expression: $ {eq_str} $",
+                    f"Distribute ${-a}$ to each term inside parentheses: $ ({-a}) dot ({b}{var}) + ({-a}) dot ({c if sign == '+' else -c}) $",
+                    f"Multiply and simplify signs: $ {ans_str} $"
+                ]
+            else:
+                steps = [
+                    f"Given expression: $ {eq_str} $",
+                    f"Distribute monomial ${a}{var}$ to each term: $ ({a}{var}) dot ({b}{var}) {sign} ({a}{var}) dot ({c}) $",
+                    f"Multiply coefficients and add exponents: $ {ans_str} $"
+                ]
+        else:  # SPICY
+            s_t2x = f"- {abs(term2_x)}{var}" if term2_x < 0 else f"+ {term2_x}{var}"
+            s_t2c = f"+ {term2_c}" if term2_c >= 0 else f"- {abs(term2_c)}"
+            steps = [
+                f"Given expression: $ {eq_str} $",
+                f"Apply distributive property to clear parentheses: $ ({term1_x}{var} + {term1_c}) - ({d * e}{var} - {d * f_val}) $",
+                f"Distribute negative sign: $ {term1_x}{var} + {term1_c} {s_t2x} {s_t2c} $",
+                f"Group like terms: $ ({term1_x}{var} {s_t2x}) + ({term1_c} {s_t2c}) $",
+                f"Combine like terms to simplify: $ {ans_str} $"
+            ]
 
         return BaseProblem(
             id=f"distrib_{difficulty.value}_{problem_idx}",

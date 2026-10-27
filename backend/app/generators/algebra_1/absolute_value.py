@@ -92,13 +92,21 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
                 f"{var} = {target // d}",
             ]
 
-        steps = [
-            f"$ {eq_str} $",
-            "Set up two linear cases: positive and negative.",
-            f"Case 1: $ {step_pos} $",
-            f"Case 2: $ {step_neg} $",
-            f"Solution set: $ {ans_str} $"
-        ]
+        if difficulty == ProblemDifficulty.SPICY:
+            steps = [
+                f"Given equation: $ {eq_str} $",
+                f"Isolate absolute value expression: $ |{a}{var} + {b}| = ({target} + {k}) / {d} = {inner_val} $",
+                f"Set up Case 1 (positive): $ {a}{var} + {b} = {inner_val} arrow.r.double {a}{var} = {inner_val - b} arrow.r.double {var} = {r_pos} $",
+                f"Set up Case 2 (negative): $ {a}{var} + {b} = -{inner_val} arrow.r.double {a}{var} = {-inner_val - b} arrow.r.double {var} = {r_neg} $",
+                f"Solution set: $ {ans_str} $"
+            ]
+        else:
+            steps = [
+                f"Given equation: $ {eq_str} $",
+                f"Case 1 (positive): $ {step_pos} $",
+                f"Case 2 (negative): $ {step_neg} $",
+                f"Solution set: $ {ans_str} $"
+            ]
 
         return BaseProblem(
             id=f"abs_val_{difficulty.value}_{problem_idx}",

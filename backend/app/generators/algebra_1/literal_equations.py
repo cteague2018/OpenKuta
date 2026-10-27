@@ -71,13 +71,18 @@ class LiteralEquationsGenerator(BaseGenerator):
                 ),
             ]
 
-        prompt_prefix, eq_typst, ans_typst, distractors = rng.choice(patterns)
-        steps = [
-            f"Equation: $ {eq_typst} $, {prompt_prefix}.",
-            "Isolate terms containing the target variable on one side.",
-            "Factor or divide by the coefficient to solve completely.",
-            f"Result: $ {ans_typst} $"
-        ]
+        pattern_tuple = rng.choice(patterns)
+        if len(pattern_tuple) == 5:
+            prompt_prefix, eq_typst, ans_typst, distractors, custom_steps = pattern_tuple
+            steps = custom_steps
+        else:
+            prompt_prefix, eq_typst, ans_typst, distractors = pattern_tuple
+            steps = [
+                f"Given equation: $ {eq_typst} $",
+                f"Goal: {prompt_prefix}.",
+                "Isolate the target variable on one side of the equation.",
+                f"Result: $ {ans_typst} $"
+            ]
 
         return BaseProblem(
             id=f"literal_{difficulty.value}_{problem_idx}",

@@ -197,18 +197,69 @@ class PolynomialAddSubGenerator(BaseGenerator):
             p1 = a * x**3 + b * x**2 + c
             p2 = d * x**3 + e * x + rng.randint(-6, 6)
 
-        if op == "+":
-            ans_expr = sp.simplify(p1 + p2)
-            eq_typst = f"({format_polynomial_typst(p1, x)}) + ({format_polynomial_typst(p2, x)})"
-        else:
-            ans_expr = sp.simplify(p1 - p2)
-            eq_typst = f"({format_polynomial_typst(p1, x)}) - ({format_polynomial_typst(p2, x)})"
+        p2_dist = p2 if op == "+" else -p2
+        ans_expr = sp.simplify(p1 + p2_dist)
 
+        poly1 = sp.Poly(p1, x)
+        poly2_dist = sp.Poly(p2_dist, x)
+
+        eq_typst = f"({format_polynomial_typst(p1, x)}) {op} ({format_polynomial_typst(p2, x)})"
+
+        # 1. Unparenthesized expression
+        p1_str = format_polynomial_typst(p1, x)
+        terms2 = []
+        for deg in sorted(poly2_dist.as_dict().keys(), reverse=True):
+            c = int(poly2_dist.as_dict()[deg])
+            d = deg[0]
+            sign_str = "+" if c >= 0 else "-"
+            val = abs(c)
+            var_p = f"x^{d}" if d > 1 else ("x" if d == 1 else "")
+            if val == 1 and var_p:
+                t = f"{sign_str} {var_p}"
+            elif var_p:
+                t = f"{sign_str} {val}{var_p}"
+            else:
+                t = f"{sign_str} {val}"
+            terms2.append(t)
+        unparenthesized = f"{p1_str} " + " ".join(terms2)
+
+        # 2. Grouped by degree
+        all_degs = sorted(set(list(poly1.as_dict().keys()) + list(poly2_dist.as_dict().keys())), reverse=True)
+        grouped = []
+        for deg in all_degs:
+            d = deg[0]
+            c1 = int(poly1.as_dict().get(deg, 0))
+            c2 = int(poly2_dist.as_dict().get(deg, 0))
+            var_part = f"x^{d}" if d > 1 else ("x" if d == 1 else "")
+            if c1 != 0 and c2 != 0:
+                c1_val = abs(c1)
+                c1_pre = "-" if c1 < 0 else ""
+                c1_str = f"{c1_pre}{var_part}" if (c1_val == 1 and var_part) else (f"{c1}{var_part}" if var_part else str(c1))
+
+                sign2 = "+" if c2 >= 0 else "-"
+                c2_val = abs(c2)
+                c2_str = f"{sign2} {var_part}" if (c2_val == 1 and var_part) else (f"{sign2} {c2_val}{var_part}" if var_part else f"{sign2} {c2_val}")
+                grouped.append(f"({c1_str} {c2_str})")
+            elif c1 != 0:
+                c1_val = abs(c1)
+                c1_pre = "-" if c1 < 0 else ""
+                c1_str = f"{c1_pre}{var_part}" if (c1_val == 1 and var_part) else (f"{c1}{var_part}" if var_part else str(c1))
+                grouped.append(c1_str)
+            elif c2 != 0:
+                c2_val = abs(c2)
+                c2_pre = "-" if c2 < 0 else ""
+                c2_str = f"{c2_pre}{var_part}" if (c2_val == 1 and var_part) else (f"{c2}{var_part}" if var_part else str(c2))
+                grouped.append(c2_str)
+
+        grouped_str = " + ".join(grouped).replace("+ -", "- ")
         ans_typst = format_polynomial_typst(ans_expr, x)
+
+        step2_phrase = "Distribute negative sign to second polynomial" if op == "-" else "Remove parentheses"
         steps = [
             f"Given expression: $ {eq_typst} $",
-            f"Distribute signs: remove parentheses and {'distribute negative sign through the second polynomial' if op == '-' else 'keep signs'}.",
-            f"Group like terms and combine: $ {ans_typst} $"
+            f"{step2_phrase}: $ {unparenthesized} $",
+            f"Group like terms by degree: $ {grouped_str} $",
+            f"Combine like terms to simplify: $ {ans_typst} $",
         ]
 
         # Distractors
@@ -269,13 +320,17 @@ class PolynomialMultiplyGenerator(BaseGenerator):
             c_s = f"{c}x" if c != 1 else "x"
             eq_typst = f"({a_s} {b_s})({c_s} {d_s})"
             ans_expr = sp.expand((a * x + b) * (c * x + d))
+            ad = a * d
+            bc = b * c
+            bd = b * d
+            s_ad = f"+ {ad}x" if ad >= 0 else f"- {abs(ad)}x"
+            s_bc = f"+ {bc}x" if bc >= 0 else f"- {abs(bc)}x"
+            s_bd = f"+ {bd}" if bd >= 0 else f"- {abs(bd)}"
             steps = [
-                "Use the FOIL method (First, Outside, Inside, Last):",
-                f"First: $ ({a_s}) dot ({c_s}) = {a*c}x^2 $",
-                f"Outside: $ ({a_s}) dot ({d}) = {a*d}x $",
-                f"Inside: $ ({b}) dot ({c_s}) = {b*c}x $",
-                f"Last: $ ({b}) dot ({d}) = {b*d} $",
-                f"Combine middle terms: $ {format_polynomial_typst(ans_expr, x)} $"
+                f"Given expression: $ {eq_typst} $",
+                f"Apply FOIL: First $({a_s})({c_s}) = {a*c}x^2$, Outside $({a_s})({d}) = {ad}x$, Inside $({b})({c_s}) = {bc}x$, Last $({b})({d}) = {bd}$.",
+                f"Write assembled expansion: $ {a*c}x^2 {s_ad} {s_bc} {s_bd} $",
+                f"Combine middle like terms: $ {format_polynomial_typst(ans_expr, x)} $"
             ]
         else:  # SPICY: Special products or Binomial x Trinomial
             # Special case: (ax +/- b)^2 or (ax + b)(cx^2 + dx + e)
