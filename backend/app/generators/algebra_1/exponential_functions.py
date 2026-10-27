@@ -118,19 +118,17 @@ class GraphingExponentialGenerator(BaseGenerator):
         allow_negatives: bool = True
     ) -> BaseProblem:
         if difficulty == ProblemDifficulty.MILD:
-            base: float = float(rng.choice([2, 3]))
-            c = rng.choice([-3, -2, -1, 1, 2, 3])
-            a = 1
+            base, base_s = rng.choice([(2.0, "2"), (3.0, "3"), (4.0, "4"), (0.5, "(1/2)")])
+            c = rng.choice([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
+            a = rng.choice([1, -1])
         elif difficulty == ProblemDifficulty.MEDIUM:
-            base = float(rng.choice([2, 3, 0.5]))
-            c = rng.randint(-3, 3)
-            a = rng.choice([2, 3, -1])
+            base, base_s = rng.choice([(2.0, "2"), (3.0, "3"), (4.0, "4"), (5.0, "5"), (0.5, "(1/2)"), (1/3, "(1/3)"), (0.25, "(1/4)")])
+            c = rng.choice([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6])
+            a = rng.choice([-3, -2, -1, 2, 3])
         else:
-            base = float(rng.choice([2, 3, 4, 0.5]))
-            c = rng.choice([-4, -3, 2, 3, 4])
-            a = rng.choice([-3, -2, 2, 4])
-
-        base_s = "(1/2)" if base == 0.5 else str(int(base))
+            base, base_s = rng.choice([(2.0, "2"), (3.0, "3"), (4.0, "4"), (5.0, "5"), (0.5, "(1/2)"), (1/3, "(1/3)"), (0.25, "(1/4)")])
+            c = rng.choice([-7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7])
+            a = rng.choice([-4, -3, -2, 2, 3, 4])
         a_s = "" if a == 1 else ("-" if a == -1 else f"{a} dot ")
         c_s = f"+ {c}" if c > 0 else (f"- {abs(c)}" if c < 0 else "")
         eq = f"y = {a_s}{base_s}^x {c_s}".strip()

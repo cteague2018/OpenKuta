@@ -26,6 +26,7 @@ def gen_adv_problem(
     """Generate a topic-specific problem for Algebra 2, Precalculus, or Calculus subtopics."""
     t_low = topic_name.lower()
     c_low = category_name.lower()
+    scale = 1 if difficulty == ProblemDifficulty.MILD else (2 if difficulty == ProblemDifficulty.MEDIUM else 3)
     a: Any
     b: Any
     c: Any
@@ -65,9 +66,14 @@ def gen_adv_problem(
         }
 
     if t_low == "planes":
-        ix, iy, iz = rng.choice([(2, 3, 6), (3, 4, 6), (2, 4, 8), (3, 5, 15)])
-        d_val = math.lcm(ix, iy, iz)
+        pool = [-6, -5, -4, -3, -2, 2, 3, 4, 5, 6]
+        ix = rng.choice(pool)
+        iy = rng.choice([x for x in pool if x != ix])
+        iz = rng.choice([x for x in pool if x not in (ix, iy)])
+        d_val = abs(math.lcm(ix, iy, iz))
         a, b, c = d_val // ix, d_val // iy, d_val // iz
+        if a < 0:
+            a, b, c, d_val = -a, -b, -c, -d_val
         return {
             "prompt_text": "Find the x-, y-, and z-intercepts of the given plane in three dimensions.",
             "equation_typst": f"$ {a}x + {b}y + {c}z = {d_val} $",
@@ -370,32 +376,44 @@ def gen_adv_problem(
             ],
         }
 
-    if "end behavior" in t_low or ("polynomial" in c_low and "graph" in t_low):
-        r1, r2, r3 = -3, 0, 3
+    if "end behavior" in t_low or ("polynomial" in c_low and "graph" in t_low and "rational" not in t_low):
+        r1 = rng.randint(-4, -1)
+        r2 = rng.choice([0, rng.randint(-1, 1)])
+        if r2 == r1:
+            r2 = 0
+        r3 = rng.randint(max(r1 + 1, r2 + 1), 5)
+        roots = sorted(list({r1, r2, r3}))
+        if len(roots) < 3:
+            roots = [-3, 0, 3]
+        r1, r2, r3 = roots
         sgn = rng.choice([1, -1])
 
-        def _fn_poly(x, _s=sgn):
-            return _s * 0.15 * (x + 3) * x * (x - 3)
+        def _fn_poly(x, _s=sgn, _r1=r1, _r2=r2, _r3=r3):
+            return _s * 0.12 * (x - _r1) * (x - _r2) * (x - _r3)
         eb_left = "-infinity" if sgn > 0 else "+infinity"
         eb_right = "+infinity" if sgn > 0 else "-infinity"
+        p1 = f"(x {'+' if r1 < 0 else '-'} {abs(r1)})" if r1 != 0 else "x"
+        p2 = f"(x {'+' if r2 < 0 else '-'} {abs(r2)})" if r2 != 0 else "x"
+        p3 = f"(x {'+' if r3 < 0 else '-'} {abs(r3)})" if r3 != 0 else "x"
+        fac_str = f"{p1}{p2}{p3}"
         return {
             "prompt_text": "Describe the end behavior, find the real zeros, and sketch the graph of the polynomial function.",
-            "equation_typst": f"$ f(x) = {'-' if sgn < 0 else ''}x(x + 3)(x - 3) $",
-            "answer_typst": f"$ \"Zeros\": x = -3, 0, 3; quad x arrow.r -infinity, f(x) arrow.r {eb_left}; quad x arrow.r +infinity, f(x) arrow.r {eb_right} $",
+            "equation_typst": f"$ f(x) = {'-' if sgn < 0 else ''}{fac_str} $",
+            "answer_typst": f"$ \"Zeros\": x = {r1}, {r2}, {r3}; quad x arrow.r -infinity, f(x) arrow.r {eb_left}; quad x arrow.r +infinity, f(x) arrow.r {eb_right} $",
             "steps_typst": [
-                "Set each factor to zero to find the $x$-intercepts: $x = -3, 0, 3$.",
+                f"Set each factor to zero to find the $x$-intercepts: $x = {r1}, {r2}, {r3}$.",
                 f"The degree is $3$ (odd) and leading coefficient is ${sgn}$, so as $x arrow.r -infinity, f(x) arrow.r {eb_left}$.",
                 f"As $x arrow.r +infinity, f(x) arrow.r {eb_right}$.",
             ],
             "distractors": [
-                f"$ \"Zeros\": x = -3, 0, 3; quad x arrow.r -infinity, f(x) arrow.r {eb_right}; quad x arrow.r +infinity, f(x) arrow.r {eb_left} $",
-                "$ \"Zeros\": x = -3, 3; quad x arrow.r plus.minus infinity, f(x) arrow.r +infinity $",
-                "$ \"Zeros\": x = 0, 9; quad x arrow.r plus.minus infinity, f(x) arrow.r -infinity $",
+                f"$ \"Zeros\": x = {r1}, {r2}, {r3}; quad x arrow.r -infinity, f(x) arrow.r {eb_right}; quad x arrow.r +infinity, f(x) arrow.r {eb_left} $",
+                f"$ \"Zeros\": x = {r1}, {r3}; quad x arrow.r plus.minus infinity, f(x) arrow.r +infinity $",
+                f"$ \"Zeros\": x = {r2}, {r1 * r3}; quad x arrow.r plus.minus infinity, f(x) arrow.r -infinity $",
             ],
             "diagram_svg": svg_coordinate_plane(),
             "answer_svg": svg_coordinate_plane(
                 functions=[{"fn": _fn_poly, "color": "#2563eb"}],
-                points=[(-3, 0, "(-3,0)", True), (0, 0, "(0,0)", True), (3, 0, "(3,0)", True)],
+                points=[(r1, 0, f"({r1},0)", True), (r2, 0, f"({r2},0)", True), (r3, 0, f"({r3},0)", True)],
             ),
         }
 
@@ -581,91 +599,144 @@ def gen_adv_problem(
                 ),
             }
         if "hyperbola" in t_low:
-            a, b = rng.choice([(3, 4), (4, 3), (3, 2), (4, 2)])
+            a = rng.randint(2, 6)
+            b = rng.randint(2, 6)
+            h = rng.choice([-3, -2, -1, 0, 0, 1, 2, 3]) if scale >= 2 else 0
+            k = rng.choice([-3, -2, -1, 0, 0, 1, 2, 3]) if scale >= 2 else 0
             c_sq = a * a + b * b
+            x_term = "x^2" if h == 0 else f"(x {'+' if h < 0 else '-'} {abs(h)})^2"
+            y_term = "y^2" if k == 0 else f"(y {'+' if k < 0 else '-'} {abs(k)})^2"
 
-            def fn_r(x, _a=a, _b=b):
-                return _b * math.sqrt(max(0.0, (x / _a) ** 2 - 1.0)) if abs(x) >= _a else float("nan")
+            def fn_r(x, _a=a, _b=b, _h=h, _k=k):
+                val = ((x - _h) / _a) ** 2 - 1.0
+                return _k + _b * math.sqrt(val) if abs(x - _h) >= _a and val >= 0 else float("nan")
 
-            def fn_rb(x, _a=a, _b=b):
-                return -_b * math.sqrt(max(0.0, (x / _a) ** 2 - 1.0)) if abs(x) >= _a else float("nan")
+            def fn_rb(x, _a=a, _b=b, _h=h, _k=k):
+                val = ((x - _h) / _a) ** 2 - 1.0
+                return _k - _b * math.sqrt(val) if abs(x - _h) >= _a and val >= 0 else float("nan")
             return {
-                "prompt_text": "Identify the vertices, foci, and asymptotes of the hyperbola and sketch its graph.",
-                "equation_typst": f"$ x^2/({a * a}) - y^2/({b * b}) = 1 $",
-                "answer_typst": f"$ \"Vertices\": (plus.minus {a}, 0), quad \"Foci\": (plus.minus sqrt({c_sq}), 0), quad y = plus.minus ({b})/({a})x $",
+                "prompt_text": "Identify the center, vertices, foci, and asymptotes of the hyperbola and sketch its graph.",
+                "equation_typst": f"$ {x_term}/({a * a}) - {y_term}/({b * b}) = 1 $",
+                "answer_typst": f"$ \"Center\": ({h}, {k}), quad \"Vertices\": ({h} plus.minus {a}, {k}), quad \"Foci\": ({h} plus.minus sqrt({c_sq}), {k}) $",
                 "steps_typst": [
-                    f"From $x^2/a^2 - y^2/b^2 = 1$, $a = {a}$ and $b = {b}$, so vertices are $(plus.minus {a}, 0)$.",
-                    f"Compute $c^2 = a^2 + b^2 = {a * a} + {b * b} = {c_sq}$, giving foci $(plus.minus sqrt({c_sq}), 0)$.",
-                    f"Asymptotes have slopes $plus.minus b/a = plus.minus ({b})/({a})$.",
+                    f"From $(x - h)^2/a^2 - (y - k)^2/b^2 = 1$, center is $({h}, {k})$ with $a = {a}$ and $b = {b}$.",
+                    f"Vertices are at $({h} plus.minus {a}, {k}) = ({h + a}, {k})$ and $({h - a}, {k})$.",
+                    f"Compute $c^2 = a^2 + b^2 = {a * a} + {b * b} = {c_sq}$, giving foci $({h} plus.minus sqrt({c_sq}), {k})$.",
+                    f"Asymptotes have slopes $plus.minus b/a = plus.minus ({b})/({a})$ passing through $({h}, {k})$.",
                 ],
                 "distractors": [
-                    f"$ \"Vertices\": (0, plus.minus {b}), quad \"Foci\": (0, plus.minus sqrt({c_sq})), quad y = plus.minus ({a})/({b})x $",
-                    f"$ \"Vertices\": (plus.minus {a * a}, 0), quad \"Foci\": (plus.minus {c_sq}, 0), quad y = plus.minus {b}x $",
-                    f"$ \"Vertices\": (plus.minus {a}, 0), quad \"Foci\": (plus.minus sqrt({abs(a*a - b*b)}), 0), quad y = plus.minus ({b})/({a})x $",
+                    f"$ \"Center\": ({k}, {h}), quad \"Vertices\": ({k}, {h} plus.minus {a}), quad \"Foci\": ({k}, {h} plus.minus sqrt({c_sq})) $",
+                    f"$ \"Center\": ({h}, {k}), quad \"Vertices\": ({h} plus.minus {a * a}, {k}), quad \"Foci\": ({h} plus.minus {c_sq}, {k}) $",
+                    f"$ \"Center\": (0, 0), quad \"Vertices\": (plus.minus {b}, 0), quad \"Foci\": (plus.minus sqrt({c_sq}), 0) $",
                 ],
                 "diagram_svg": svg_coordinate_plane(),
                 "answer_svg": svg_coordinate_plane(
                     functions=[{"fn": fn_r, "color": "#2563eb"}, {"fn": fn_rb, "color": "#2563eb"}],
-                    lines=[{"m": b / a, "b": 0, "color": "#94a3b8", "dashed": True}, {"m": -b / a, "b": 0, "color": "#94a3b8", "dashed": True}],
-                    points=[(a, 0, f"({a},0)", True), (-a, 0, f"(-{a},0)", True)],
+                    lines=[{"m": b / a, "b": k - (b / a) * h, "color": "#94a3b8", "dashed": True}, {"m": -b / a, "b": k + (b / a) * h, "color": "#94a3b8", "dashed": True}],
+                    points=[(h + a, k, f"({h+a},{k})", True), (h - a, k, f"({h-a},{k})", True)],
                 ),
             }
         if "ellipse" in t_low:
-            a, b = rng.choice([(5, 3), (5, 4), (6, 4), (4, 2)])
+            a = rng.randint(3, 8)
+            b = rng.randint(2, a - 1)
+            h = rng.choice([-3, -2, -1, 0, 0, 1, 2, 3]) if scale >= 2 else 0
+            k = rng.choice([-3, -2, -1, 0, 0, 1, 2, 3]) if scale >= 2 else 0
             c_sq = a * a - b * b
+            x_term = "x^2" if h == 0 else f"(x {'+' if h < 0 else '-'} {abs(h)})^2"
+            y_term = "y^2" if k == 0 else f"(y {'+' if k < 0 else '-'} {abs(k)})^2"
             return {
                 "prompt_text": "Identify the center, vertices, co-vertices, and foci of the ellipse and sketch its graph.",
-                "equation_typst": f"$ x^2/({a * a}) + y^2/({b * b}) = 1 $",
-                "answer_typst": f"$ \"Vertices\": (plus.minus {a}, 0), quad \"Co-vertices\": (0, plus.minus {b}), quad \"Foci\": (plus.minus sqrt({c_sq}), 0) $",
+                "equation_typst": f"$ {x_term}/({a * a}) + {y_term}/({b * b}) = 1 $",
+                "answer_typst": f"$ \"Center\": ({h}, {k}), quad \"Vertices\": ({h} plus.minus {a}, {k}), quad \"Co-vertices\": ({h}, {k} plus.minus {b}) $",
                 "steps_typst": [
-                    f"Here $a^2 = {a * a} arrow.r.double a = {a}$ and $b^2 = {b * b} arrow.r.double b = {b}$.",
-                    f"Major vertices are $(plus.minus {a}, 0)$ and co-vertices are $(0, plus.minus {b})$.",
-                    f"Compute $c^2 = a^2 - b^2 = {c_sq}$, so foci are $(plus.minus sqrt({c_sq}), 0)$.",
+                    f"Here center is $({h}, {k})$, $a^2 = {a * a} arrow.r.double a = {a}$ and $b^2 = {b * b} arrow.r.double b = {b}$.",
+                    f"Major vertices are $({h} plus.minus {a}, {k})$ and co-vertices are $({h}, {k} plus.minus {b})$.",
+                    f"Compute $c^2 = a^2 - b^2 = {c_sq}$, so foci are $({h} plus.minus sqrt({c_sq}), {k})$.",
                 ],
                 "distractors": [
-                    f"$ \"Vertices\": (0, plus.minus {a}), quad \"Co-vertices\": (plus.minus {b}, 0), quad \"Foci\": (0, plus.minus sqrt({c_sq})) $",
-                    f"$ \"Vertices\": (plus.minus {a}, 0), quad \"Co-vertices\": (0, plus.minus {b}), quad \"Foci\": (plus.minus sqrt({a*a + b*b}), 0) $",
-                    f"$ \"Vertices\": (plus.minus {a*a}, 0), quad \"Co-vertices\": (0, plus.minus {b*b}), quad \"Foci\": (plus.minus {c_sq}, 0) $",
+                    f"$ \"Center\": ({h}, {k}), quad \"Vertices\": ({h}, {k} plus.minus {a}), quad \"Co-vertices\": ({h} plus.minus {b}, {k}) $",
+                    f"$ \"Center\": (0, 0), quad \"Vertices\": (plus.minus {a}, 0), quad \"Co-vertices\": (0, plus.minus {b}) $",
+                    f"$ \"Center\": ({h}, {k}), quad \"Vertices\": ({h} plus.minus {a * a}, {k}), quad \"Co-vertices\": ({h}, {k} plus.minus {b * b}) $",
                 ],
                 "diagram_svg": svg_coordinate_plane(),
                 "answer_svg": svg_coordinate_plane(
-                    circles=[{"h": 0, "k": 0, "rx": a, "ry": b, "color": "#2563eb"}],
-                    points=[(a, 0, f"({a},0)", True), (-a, 0, f"(-{a},0)", True), (0, b, f"(0,{b})", True), (0, -b, f"(0,-{b})", True)],
+                    circles=[{"h": h, "k": k, "rx": a, "ry": b, "color": "#2563eb"}],
+                    points=[(h + a, k, f"({h+a},{k})", True), (h - a, k, f"({h-a},{k})", True), (h, k + b, f"({h},{k+b})", True), (h, k - b, f"({h},{k-b})", True)],
                 ),
             }
         if "classifying" in t_low:
             kind = rng.choice(["Circle", "Ellipse", "Parabola", "Hyperbola"])
-            eq_map = {
-                "Circle": "x^2 + y^2 - 4x + 6y - 3 = 0",
-                "Ellipse": "4x^2 + 9y^2 - 16x + 18y - 11 = 0",
-                "Parabola": "x^2 - 6x - 8y + 17 = 0",
-                "Hyperbola": "4x^2 - 9y^2 + 8x + 36y - 68 = 0",
-            }
-            others = [k for k in eq_map if k != kind]
+            h_c, k_c = rng.randint(-5, 5), rng.randint(-5, 5)
+            if kind == "Circle":
+                A = C = rng.choice([1, 2, 3])
+                D = -2 * A * h_c
+                E = -2 * A * k_c
+                r_val = rng.randint(2, 6)
+                F = A * (h_c ** 2 + k_c ** 2 - r_val ** 2)
+            elif kind == "Ellipse":
+                A = rng.choice([2, 3, 4, 9])
+                C = rng.choice([x for x in [1, 2, 4, 5, 16] if x != A])
+                D = -2 * A * h_c
+                E = -2 * C * k_c
+                F = A * h_c ** 2 + C * k_c ** 2 - 36
+            elif kind == "Parabola":
+                if rng.choice([True, False]):
+                    A, C = 0, rng.choice([1, 2, 3])
+                    D = rng.choice([-8, -6, -4, 4, 6, 8])
+                    E = -2 * C * k_c
+                    F = C * k_c ** 2 + rng.randint(-15, 15)
+                else:
+                    A, C = rng.choice([1, 2, 3]), 0
+                    D = -2 * A * h_c
+                    E = rng.choice([-8, -6, -4, 4, 6, 8])
+                    F = A * h_c ** 2 + rng.randint(-15, 15)
+            else:  # Hyperbola
+                A = rng.choice([1, 2, 4, 9])
+                C = -rng.choice([1, 2, 4, 9])
+                D = -2 * A * h_c
+                E = -2 * C * k_c
+                F = A * h_c ** 2 + C * k_c ** 2 - 36
+
+            terms = []
+            if A != 0:
+                terms.append(f"{A if A != 1 else ''}x^2")
+            if C != 0:
+                terms.append(f"{'+' if C > 0 else '-'} {abs(C) if abs(C) != 1 else ''}y^2")
+            if D != 0:
+                terms.append(f"{'+' if D > 0 else '-'} {abs(D)}x")
+            if E != 0:
+                terms.append(f"{'+' if E > 0 else '-'} {abs(E)}y")
+            if F != 0:
+                terms.append(f"{'+' if F > 0 else '-'} {abs(F)}")
+            conic_eq = " ".join(terms).lstrip("+ ").replace("+ -", "- ") + " = 0"
+            others = [k for k in ["Circle", "Ellipse", "Parabola", "Hyperbola"] if k != kind]
             return {
                 "prompt_text": "Classify the conic section from its general second-degree equation.",
-                "equation_typst": f"$ {eq_map[kind]} $",
+                "equation_typst": f"$ {conic_eq} $",
                 "answer_typst": f"$ \"{kind}\" $",
                 "steps_typst": [
                     "Examine the coefficients $A$ and $C$ of $x^2$ and $y^2$ in $A x^2 + C y^2 + D x + E y + F = 0$.",
-                    "Circle: $A = C$; Ellipse: $A C > 0, A != C$; Parabola: $A C = 0$; Hyperbola: $A C < 0$.",
+                    f"Here $A = {A}$ and $C = {C}$.",
+                    "Circle: $A = C != 0$; Ellipse: $A C > 0, A != C$; Parabola: $A C = 0$; Hyperbola: $A C < 0$.",
                     f"Classification: {kind}.",
                 ],
                 "distractors": [f"$ \"{o}\" $" for o in others],
             }
 
     if "parametric" in c_low:
-        v0 = rng.choice([32, 48, 64])
         if "projectile" in t_low:
-            t_peak = v0 // 32
-            h_max = v0 * t_peak - 16 * (t_peak ** 2)
+            t_peak = rng.randint(2, 7)
+            h0 = rng.choice([0, 16, 32, 48, 64, 80])
+            v0 = 32 * t_peak
+            h_max = h0 + v0 * t_peak - 16 * (t_peak ** 2)
+            eq_str = f"y(t) = {h0} + {v0}t - 16t^2" if h0 > 0 else f"y(t) = {v0}t - 16t^2"
             return {
-                "prompt_text": "A projectile is launched vertically with height y(t) = v0*t - 16t^2. Find the time to reach maximum height and the maximum height.",
-                "equation_typst": f"$ y(t) = {v0}t - 16t^2 $",
+                "prompt_text": f"A projectile is launched vertically with height {eq_str}. Find the time to reach maximum height and the maximum height.",
+                "equation_typst": f"$ {eq_str} $",
                 "answer_typst": f"$ t = {t_peak} \" s\", quad h_\"max\" = {h_max} \" ft\" $",
                 "steps_typst": [
                     f"Find the vertex time $t = -b/(2a) = -{v0}/(2(-16)) = {t_peak}$ seconds.",
-                    f"Evaluate $y({t_peak}) = {v0}({t_peak}) - 16({t_peak})^2 = {h_max}$ feet.",
+                    f"Evaluate $y({t_peak}) = {h0 + v0 * t_peak} - 16({t_peak})^2 = {h_max}$ feet.",
                     f"Answer: $t = {t_peak}$ s, $h_\"max\" = {h_max}$ ft.",
                 ],
                 "distractors": [
@@ -949,73 +1020,121 @@ def gen_adv_problem(
         }
 
     if "mathematical induction" in t_low:
-        k = rng.randint(2, 5)
-        return {
-            "prompt_text": "State the base case (n = 1) and the inductive step target for the mathematical induction proof.",
-            "equation_typst": f"$ 1 + 2 + 3 + dots.c + n = (n(n + 1))/(2); quad \"verify at \" n = {k} \" and state \" S_(k+1) $",
-            "answer_typst": f"$ S_({k}) = {k * (k + 1) // 2}, quad S_(k+1) = ((k + 1)(k + 2))/(2) $",
-            "steps_typst": [
+        family = rng.choice(["linear", "odd", "squares", "powers2"])
+        k = rng.randint(2, 8)
+        if family == "linear":
+            s_k = k * (k + 1) // 2
+            eq_t = f"$ 1 + 2 + 3 + dots.c + n = (n(n + 1))/(2); quad \"verify at \" n = {k} \" and state \" S_(k+1) $"
+            ans_t = f"$ S_({k}) = {s_k}, quad S_(k+1) = ((k + 1)(k + 2))/(2) $"
+            steps_t = [
                 "Base case $n = 1$: $1 = 1(2)/2 = 1$ holds true.",
-                f"At $n = {k}$, the sum is ${k}({k + 1})/2 = {k * (k + 1) // 2}$.",
+                f"At $n = {k}$, the sum is ${k}({k + 1})/2 = {s_k}$.",
                 "Inductive step: add $(k + 1)$ to $k(k + 1)/2$ to obtain $((k + 1)(k + 2))/2$.",
-            ],
-            "distractors": [
+            ]
+            dist_t = [
                 f"$ S_({k}) = {k * k}, quad S_(k+1) = (k(k + 2))/(2) $",
                 f"$ S_({k}) = {k * (k - 1) // 2}, quad S_(k+1) = ((k + 1)^2)/(2) $",
                 f"$ S_({k}) = {k + 1}, quad S_(k+1) = k + 2 $",
-            ],
+            ]
+        elif family == "odd":
+            s_k = k * k
+            eq_t = f"$ 1 + 3 + 5 + dots.c + (2n - 1) = n^2; quad \"verify at \" n = {k} \" and state \" S_(k+1) $"
+            ans_t = f"$ S_({k}) = {s_k}, quad S_(k+1) = (k + 1)^2 $"
+            steps_t = [
+                "Base case $n = 1$: $2(1) - 1 = 1 = 1^2$ holds true.",
+                f"At $n = {k}$, the sum is ${k}^2 = {s_k}$.",
+                "Inductive step: add $2(k + 1) - 1 = 2k + 1$ to $k^2$ to obtain $(k + 1)^2$.",
+            ]
+            dist_t = [
+                f"$ S_({k}) = {2 * k}, quad S_(k+1) = k^2 + 1 $",
+                f"$ S_({k}) = {s_k - 1}, quad S_(k+1) = (k + 2)^2 $",
+                f"$ S_({k}) = {k * (k + 1)}, quad S_(k+1) = 2(k + 1) $",
+            ]
+        elif family == "squares":
+            s_k = k * (k + 1) * (2 * k + 1) // 6
+            eq_t = f"$ 1^2 + 2^2 + 3^2 + dots.c + n^2 = (n(n + 1)(2n + 1))/(6); quad \"verify at \" n = {k} \" and state \" S_(k+1) $"
+            ans_t = f"$ S_({k}) = {s_k}, quad S_(k+1) = ((k + 1)(k + 2)(2k + 3))/(6) $"
+            steps_t = [
+                "Base case $n = 1$: $1^2 = (1)(2)(3)/6 = 1$ holds true.",
+                f"At $n = {k}$, the sum is ${k}({k + 1})({2 * k + 1})/6 = {s_k}$.",
+                "Inductive step: add $(k + 1)^2$ to $S_k$ to obtain $((k + 1)(k + 2)(2k + 3))/6$.",
+            ]
+            dist_t = [
+                f"$ S_({k}) = {k ** 3}, quad S_(k+1) = ((k + 1)^3)/(3) $",
+                f"$ S_({k}) = {s_k + k}, quad S_(k+1) = ((k + 1)(k + 2)(2k + 1))/(6) $",
+                f"$ S_({k}) = {k * (k + 1)}, quad S_(k+1) = (k + 1)^2 $",
+            ]
+        else:
+            s_k = (2 ** k) - 1
+            eq_t = f"$ 1 + 2 + 4 + dots.c + 2^(n - 1) = 2^n - 1; quad \"verify at \" n = {k} \" and state \" S_(k+1) $"
+            ans_t = f"$ S_({k}) = {s_k}, quad S_(k+1) = 2^(k + 1) - 1 $"
+            steps_t = [
+                "Base case $n = 1$: $2^0 = 1 = 2^1 - 1$ holds true.",
+                f"At $n = {k}$, the sum is $2^{k} - 1 = {s_k}$.",
+                "Inductive step: add $2^k$ to $(2^k - 1)$ to obtain $2 dot 2^k - 1 = 2^(k + 1) - 1$.",
+            ]
+            dist_t = [
+                f"$ S_({k}) = {2 * k}, quad S_(k+1) = 2^(k + 2) - 1 $",
+                f"$ S_({k}) = {s_k + 1}, quad S_(k+1) = 2^k $",
+                f"$ S_({k}) = {2 ** (k - 1)}, quad S_(k+1) = 2^(k + 1) $",
+            ]
+        return {
+            "prompt_text": "State the base case (n = 1) and the inductive step target for the mathematical induction proof.",
+            "equation_typst": eq_t,
+            "answer_typst": ans_t,
+            "steps_typst": steps_t,
+            "distractors": dist_t,
         }
 
     # ------------------------------------------------------------------
     # 7. CALCULUS: LIMITS, DERIVATIVES, TABLES, APPLICATIONS, INTEGRALS, SLOPE FIELDS
     # ------------------------------------------------------------------
     if "rules, using tables" in t_low:
-        a = rng.randint(1, 4)
-        fa, fpa = rng.randint(2, 6), rng.randint(-4, 5) or 2
-        ga, gpa = rng.randint(2, 5), rng.randint(1, 5)
+        a = rng.randint(1, 5)
+        fa = rng.randint(2, 6)
+        fpa = rng.choice([-4, -3, -2, -1, 2, 3, 4, 5])
+        ga = rng.randint(2, 6)
+        gpa = rng.choice([-4, -3, -2, -1, 2, 3, 4, 5])
+        table_hdr = f"\"Given: \" f({a}) = {fa}, quad f'({a}) = {fpa}, quad g({a}) = {ga}, quad g'({a}) = {gpa}"
         if difficulty == ProblemDifficulty.MILD:
-            # Product rule at x = a
             ans_v = fpa * ga + fa * gpa
-            eq = f"\"Find \" (d)/(d x)[f(x) g(x)] \" at \" x = {a}"
+            eq = f"{table_hdr}. quad \"Find \" (d)/(d x)[f(x) g(x)] \" at \" x = {a}"
             steps = [
                 f"Apply the Product Rule: $(f g)'({a}) = f'({a}) g({a}) + f({a}) g'({a})$.",
                 f"Read values from the table: $({fpa})({ga}) + ({fa})({gpa})$.",
                 f"Compute: ${fpa * ga} + {fa * gpa} = {ans_v}$.",
             ]
+            dists = [f"$ {fpa * gpa} $", f"$ {fa * ga} $", f"$ {fpa * ga - fa * gpa} $"]
         elif difficulty == ProblemDifficulty.MEDIUM:
-            # Quotient rule numerator at x = a
             num = fpa * ga - fa * gpa
             den = ga * ga
             ans_v = f"({num})/({den})"
-            eq = f"\"Find \" (d)/(d x)[f(x) / g(x)] \" at \" x = {a}"
+            eq = f"{table_hdr}. quad \"Find \" (d)/(d x)[f(x) / g(x)] \" at \" x = {a}"
             steps = [
                 f"Apply the Quotient Rule: $(f/g)'({a}) = (f'({a})g({a}) - f({a})g'({a})) / (g({a}))^2$.",
                 f"Substitute table values: $(({fpa})({ga}) - ({fa})({gpa})) / ({ga})^2$.",
                 f"Result: $({num})/({den})$.",
             ]
+            dists = [f"$ ({fpa * ga + fa * gpa})/({den}) $", f"$ ({fpa})/({gpa}) $", f"$ ({fa * gpa - fpa * ga})/({den}) $"]
         else:
-            # Chain rule h(x) = (f(x))^2 at x = a
             ans_v = 2 * fa * fpa
-            eq = f"\"If \" h(x) = [f(x)]^2, \" find \" h'({a})"
+            eq = f"{table_hdr}. quad \"Find \" (d)/(d x)[(f(x))^2] \" at \" x = {a}"
             steps = [
-                "Apply the Chain Rule: $h'(x) = 2 f(x) f'(x)$.",
-                f"Substitute $x = {a}$ from the table: $h'({a}) = 2({fa})({fpa})$.",
+                f"Apply the Chain Rule: $[(f(x))^2]' = 2 f({a}) f'({a})$.",
+                f"Substitute table values: $2({fa})({fpa}) = {ans_v}$.",
                 f"Result: ${ans_v}$.",
             ]
+            dists = [f"$ {fpa * fpa} $", f"$ {2 * fa} $", f"$ {fa * fpa} $"]
         tbl = svg_data_table(
             ["x", "f(x)", "f'(x)", "g(x)", "g'(x)"],
             [[str(a), str(fa), str(fpa), str(ga), str(gpa)]],
         )
         return {
             "prompt_text": "Use the given table of function and derivative values to evaluate the derivative.",
-            "equation_typst": eq,
+            "equation_typst": f"$ {eq} $",
             "answer_typst": f"$ {ans_v} $",
             "steps_typst": steps,
-            "distractors": [
-                f"$ {fpa * gpa} $",
-                f"$ {fa * ga} $",
-                f"$ {fpa + gpa} $",
-            ],
+            "distractors": dists,
             "diagram_svg": tbl,
             "answer_svg": tbl,
         }

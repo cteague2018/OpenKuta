@@ -1403,30 +1403,42 @@ def gen_alg_geo_problem(
                 "answer_svg": svg_general_triangle(side_a=str(a * k), side_b=f"x = {ans_v}", side_c=f"k = {k}"),
             }
         if "congruence" in t_low or "proving triangles congruent" in t_low:
+            tri_names = rng.choice([
+                ("A", "B", "C", "D", "E", "F"),
+                ("P", "Q", "R", "X", "Y", "Z"),
+                ("J", "K", "L", "M", "N", "P"),
+                ("U", "V", "W", "R", "S", "T"),
+                ("G", "H", "I", "J", "K", "L"),
+            ])
+            T1, T2, T3, U1, U2, U3 = tri_names
             thm = rng.choice(["SSS", "SAS", "ASA", "AAS", "HL"])
-            desc = {
-                "SSS": "Three pairs of corresponding sides are congruent",
-                "SAS": "Two pairs of sides and the included angle are congruent",
-                "ASA": "Two pairs of angles and the included side are congruent",
-                "AAS": "Two pairs of angles and a non-included side are congruent",
-                "HL": "The hypotenuse and a leg of two right triangles are congruent",
-            }[thm]
+            if thm == "SSS":
+                desc = f"{T1}{T2} cong {U1}{U2}, {T2}{T3} cong {U2}{U3}, and {T1}{T3} cong {U1}{U3}"
+            elif thm == "SAS":
+                desc = f"{T1}{T2} cong {U1}{U2}, angle {T2} cong angle {U2}, and {T2}{T3} cong {U2}{U3}"
+            elif thm == "ASA":
+                desc = f"angle {T1} cong angle {U1}, {T1}{T2} cong {U1}{U2}, and angle {T2} cong angle {U2}"
+            elif thm == "AAS":
+                desc = f"angle {T1} cong angle {U1}, angle {T2} cong angle {U2}, and {T2}{T3} cong {U2}{U3}"
+            else:
+                desc = f"Right triangles with hypotenuses {T1}{T3} cong {U1}{U3} and legs {T1}{T2} cong {U1}{U2}"
+
             others = [t for t in ["SSS", "SAS", "ASA", "AAS", "SSA"] if t != thm][:3]
             return {
                 "prompt_text": "State the triangle congruence theorem that proves the two triangles are congruent.",
-                "equation_typst": f"\"{desc} in \" triangle A B C \" and \" triangle D E F",
+                "equation_typst": f"\"Given: {desc} in \" triangle {T1}{T2}{T3} \" and \" triangle {U1}{U2}{U3}",
                 "answer_typst": f"$ \"{thm} Congruence Theorem\" $",
                 "steps_typst": [
-                    f"Identify the marked congruent parts: {desc.lower()}.",
+                    f"Identify the given congruent parts: {desc}.",
                     "Match the configuration of sides (S) and angles (A) to the valid congruence postulates.",
                     f"Conclusion: {thm} Congruence Theorem.",
                 ],
                 "distractors": [f"$ \"{o} Congruence Theorem\" $" for o in others],
-                "diagram_svg": svg_general_triangle(angle_a="A", angle_b="B", angle_c="C", side_a="cong", side_b="cong"),
-                "answer_svg": svg_general_triangle(angle_a="A", angle_b="B", angle_c="C", side_c=thm),
+                "diagram_svg": svg_general_triangle(angle_a=T1, angle_b=T2, angle_c=T3, side_a="cong", side_b="cong"),
+                "answer_svg": svg_general_triangle(angle_a=T1, angle_b=T2, angle_c=T3, side_c=thm),
             }
         if "isosceles and equilateral" in t_low:
-            vertex_ang = rng.choice([40, 50, 64, 70, 80, 100])
+            vertex_ang = rng.choice([24, 28, 30, 32, 36, 40, 44, 48, 50, 52, 54, 56, 64, 70, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 130, 136, 140])
             base_ang = (180 - vertex_ang) // 2
             return {
                 "prompt_text": "In isosceles triangle ABC with AB = BC, find the measure of each base angle.",
@@ -1487,10 +1499,32 @@ def gen_alg_geo_problem(
                 "diagram_svg": svg_polygon_diagram(shape_name, dim1=f"d1 = {d1}", dim2=f"d2 = {d2}"),
                 "answer_svg": svg_polygon_diagram(shape_name, dim1=f"d1 = {d1}", dim2=f"A = {area}"),
             }
-        if "regular polygon" in t_low or "polygon basics" in t_low or ("angles" in t_low and "quadrilateral" in c_low):
-            n = rng.choice([5, 6, 8, 10, 12])
-            s = rng.randint(6, 14)
-            a = rng.randint(4, 10)
+        if "angles" in t_low and "quadrilateral" in c_low:
+            a1 = rng.randint(50, 115)
+            a2 = rng.randint(60, 120)
+            a3 = rng.randint(55, 115)
+            a4 = 360 - (a1 + a2 + a3)
+            return {
+                "prompt_text": "Three interior angles of quadrilateral ABCD are given. Find the measure of the fourth angle.",
+                "equation_typst": f"$ m angle A = {a1}^circle, quad m angle B = {a2}^circle, quad m angle C = {a3}^circle $",
+                "answer_typst": f"$ m angle D = {a4}^circle $",
+                "steps_typst": [
+                    "The sum of interior angles in any quadrilateral is $(4 - 2) times 180^circle = 360^circle$.",
+                    f"Add the three given angles: ${a1}^circle + {a2}^circle + {a3}^circle = {a1 + a2 + a3}^circle$.",
+                    f"Subtract from $360^circle$: $360^circle - {a1 + a2 + a3}^circle = {a4}^circle$.",
+                ],
+                "distractors": [
+                    f"$ m angle D = {180 - a1}^circle $",
+                    f"$ m angle D = {a4 + 10}^circle $",
+                    f"$ m angle D = {360 - a1 - a2}^circle $",
+                ],
+                "diagram_svg": svg_polygon_diagram("quad", dim1=f"A={a1}, B={a2}", dim2=f"C={a3}, D=?"),
+                "answer_svg": svg_polygon_diagram("quad", dim1=f"A={a1}, B={a2}", dim2=f"C={a3}, D={a4}"),
+            }
+        if "regular polygon" in t_low or "polygon basics" in t_low or "polygons" in t_low:
+            n = rng.choice([3, 4, 5, 6, 7, 8, 9, 10, 12])
+            s = rng.randint(4, 18)
+            a = rng.randint(3, 14)
             if "area" in t_low:
                 perim = n * s
                 area = (perim * a) // 2
@@ -1503,28 +1537,35 @@ def gen_alg_geo_problem(
                         f"Use the regular polygon area formula $A = 1/2 a P$: $A = 1/2({a})({perim}) = {area}$.",
                         f"Answer: $P = {perim}, A = {area}$.",
                     ],
-                    "distractors": [f"$ P = {perim}, quad A = {perim * a} $", f"$ P = {s * a}, quad A = {area} $", f"$ P = {perim}, quad A = {area + s} $"],
+                    "distractors": [
+                        f"$ P = {perim}, quad A = {perim * a} $",
+                        f"$ P = {s * a}, quad A = {area} $",
+                        f"$ P = {perim}, quad A = {area + s} $",
+                    ],
                     "diagram_svg": svg_polygon_diagram("regular", dim1=f"a = {a}", dim2=f"s = {s} (n={n})"),
                     "answer_svg": svg_polygon_diagram("regular", dim1=f"a = {a}", dim2=f"A = {area}"),
                 }
             sum_int = (n - 2) * 180
-            each_int = sum_int // n
+            each_int = round(sum_int / n, 1)
+            each_ext = round(360 / n, 1)
+            poly_names = {3: "triangle", 4: "quadrilateral", 5: "pentagon", 6: "hexagon", 7: "heptagon", 8: "octagon", 9: "nonagon", 10: "decagon", 12: "dodecagon"}
+            p_name = poly_names.get(n, f"{n}-gon")
             return {
-                "prompt_text": "Find the sum of the interior angles and each interior angle of the regular polygon.",
-                "equation_typst": f"$ \"Regular \" {n}\"-gon\" $",
-                "answer_typst": f"$ \"Sum\" = {sum_int}^circle, quad \"Each angle\" = {each_int}^circle $",
+                "prompt_text": f"Find the sum of the interior angles of a regular {p_name} (n = {n} sides) and the measure of each interior angle.",
+                "equation_typst": f"$ \"Regular \" {p_name} quad (n = {n}) $",
+                "answer_typst": f"$ \"Sum\" = {sum_int}^circle, quad \"Each angle\" = {each_int:g}^circle $",
                 "steps_typst": [
                     f"Use the Polygon Interior Angles Theorem: $\"Sum\" = (n - 2) times 180^circle = ({n} - 2) times 180^circle = {sum_int}^circle$.",
-                    f"Divide by $n = {n}$ for a regular polygon: ${sum_int}^circle div {n} = {each_int}^circle$.",
-                    f"Sum = ${sum_int}^circle$, Each angle = ${each_int}^circle$.",
+                    f"Divide by $n = {n}$ for a regular polygon: ${sum_int}^circle div {n} = {each_int:g}^circle$.",
+                    f"Sum = ${sum_int}^circle$, Each angle = ${each_int:g}^circle$.",
                 ],
                 "distractors": [
                     f"$ \"Sum\" = {n * 180}^circle, quad \"Each angle\" = 180^circle $",
-                    f"$ \"Sum\" = {sum_int}^circle, quad \"Each angle\" = {360 // n}^circle $",
-                    f"$ \"Sum\" = {(n - 1) * 180}^circle, quad \"Each angle\" = {each_int + 15}^circle $",
+                    f"$ \"Sum\" = {sum_int}^circle, quad \"Each angle\" = {each_ext:g}^circle $",
+                    f"$ \"Sum\" = {(n - 1) * 180}^circle, quad \"Each angle\" = {each_int + 15:g}^circle $",
                 ],
                 "diagram_svg": svg_polygon_diagram("regular", dim1=f"n = {n}", dim2="Interior angles = ?"),
-                "answer_svg": svg_polygon_diagram("regular", dim1=f"Sum = {sum_int}", dim2=f"Each = {each_int} deg"),
+                "answer_svg": svg_polygon_diagram("regular", dim1=f"Sum = {sum_int}", dim2=f"Each = {each_int:g} deg"),
             }
         # Parallelogram / triangle area
         b = rng.randint(6, 16)
@@ -1568,23 +1609,27 @@ def gen_alg_geo_problem(
                 "answer_svg": svg_polygon_diagram("net", dim1=f"{ln}x{w}x{h}", dim2=f"SA = {sa}"),
             }
         if "similar solids" in t_low:
-            k = rng.choice([2, 3, 4])
+            pairs = [(1, 2), (1, 3), (1, 4), (1, 5), (2, 3), (2, 5), (3, 4), (3, 5), (4, 5), (5, 6), (3, 7), (5, 7), (2, 7), (3, 8), (5, 8)]
+            a_sc, b_sc = rng.choice(pairs)
+            solid_name = rng.choice(["solids", "prisms", "cylinders", "cones", "pyramids", "spheres"])
+            sa_a, sa_b = a_sc * a_sc, b_sc * b_sc
+            v_a, v_b = a_sc ** 3, b_sc ** 3
             return {
-                "prompt_text": "Two solids are similar with the given scale factor. Find the ratio of their surface areas and the ratio of their volumes.",
-                "equation_typst": f"$ \"Scale factor\" = 1 : {k} $",
-                "answer_typst": f"$ \"SA Ratio\" = 1 : {k * k}, quad \"Volume Ratio\" = 1 : {k ** 3} $",
+                "prompt_text": f"Two {solid_name} are similar with the given linear scale factor. Find the ratio of their surface areas and the ratio of their volumes.",
+                "equation_typst": f"$ \"Scale factor\" = {a_sc} : {b_sc} $",
+                "answer_typst": f"$ \"SA Ratio\" = {sa_a} : {sa_b}, quad \"Volume Ratio\" = {v_a} : {v_b} $",
                 "steps_typst": [
-                    f"If the linear scale factor is $a:b = 1:{k}$, the surface area ratio is $a^2:b^2 = 1:{k * k}$.",
-                    f"The volume ratio is $a^3:b^3 = 1:{k ** 3}$.",
-                    f"SA Ratio = $1:{k * k}$, Volume Ratio = $1:{k ** 3}$.",
+                    f"If the linear scale factor is $a:b = {a_sc}:{b_sc}$, the surface area ratio is $a^2:b^2 = {sa_a}:{sa_b}$.",
+                    f"The volume ratio is $a^3:b^3 = {v_a}:{v_b}$.",
+                    f"SA Ratio = ${sa_a}:{sa_b}$, Volume Ratio = ${v_a}:{v_b}$.",
                 ],
                 "distractors": [
-                    f"$ \"SA Ratio\" = 1 : {k}, quad \"Volume Ratio\" = 1 : {k * k} $",
-                    f"$ \"SA Ratio\" = 1 : {2 * k}, quad \"Volume Ratio\" = 1 : {3 * k} $",
-                    f"$ \"SA Ratio\" = 1 : {k ** 3}, quad \"Volume Ratio\" = 1 : {k * k} $",
+                    f"$ \"SA Ratio\" = {a_sc} : {b_sc}, quad \"Volume Ratio\" = {sa_a} : {sa_b} $",
+                    f"$ \"SA Ratio\" = {2 * a_sc} : {2 * b_sc}, quad \"Volume Ratio\" = {3 * a_sc} : {3 * b_sc} $",
+                    f"$ \"SA Ratio\" = {v_a} : {v_b}, quad \"Volume Ratio\" = {sa_a} : {sa_b} $",
                 ],
-                "diagram_svg": svg_solid_3d("prism", dim1="1", dim2="1", dim3=f"k = 1:{k}"),
-                "answer_svg": svg_solid_3d("prism", dim1=f"SA 1:{k*k}", dim2=f"V 1:{k**3}", dim3=""),
+                "diagram_svg": svg_solid_3d("prism", dim1=f"{a_sc}", dim2=f"{a_sc}", dim3=f"{a_sc}:{b_sc}"),
+                "answer_svg": svg_solid_3d("prism", dim1=f"SA {sa_a}:{sa_b}", dim2=f"V {v_a}:{v_b}", dim3=""),
             }
         return {
             "prompt_text": "Find the surface area and volume of the polyhedron.",
@@ -1720,22 +1765,25 @@ def gen_alg_geo_problem(
     # ------------------------------------------------------------------
     if c_low in ("data sets and distributions", "statistics"):
         if "dot plot" in t_low or "visualizing data" in t_low:
-            base = rng.randint(2, 6)
-            counts = {base: 2, base + 1: 4, base + 2: 3, base + 3: 1, base + 4: 2}
+            base = rng.randint(1, 20)
+            num_vals = rng.randint(4, 7)
+            counts = {base + i: rng.randint(1, 4) for i in range(num_vals)}
+            mode_idx = rng.randint(0, num_vals - 1)
+            mode_v = base + mode_idx
+            counts[mode_v] = max(counts.values()) + rng.randint(2, 4)
             total_n = sum(counts.values())
-            mode_v = base + 1
             return {
                 "prompt_text": "Use the dot plot to find the total number of observations and the mode of the distribution.",
-                "equation_typst": f"\"Dot plot over values \" {base} \" to \" {base + 4}",
+                "equation_typst": f"\"Dot plot over values \" {base} \" to \" {base + num_vals - 1} (n = {total_n})",
                 "answer_typst": f"$ n = {total_n}, quad \"Mode\" = {mode_v} $",
                 "steps_typst": [
-                    f"Count all dots above the number line: $2 + 4 + 3 + 1 + 2 = {total_n}$ observations.",
-                    f"Find the value with the tallest stack of dots ($4$ dots at ${mode_v}$).",
+                    f"Count all dots above the number line: {' + '.join(str(c) for c in counts.values())} = {total_n}$ observations.",
+                    f"Find the value with the tallest stack of dots ({counts[mode_v]} dots at ${mode_v}$).",
                     f"Total $n = {total_n}$, Mode = ${mode_v}$.",
                 ],
                 "distractors": [
-                    f"$ n = {total_n + 2}, quad \"Mode\" = {base + 2} $",
-                    "$ n = 5, quad \"Mode\" = 4 $",
+                    f"$ n = {total_n + 2}, quad \"Mode\" = {base + (mode_idx + 1) % num_vals} $",
+                    f"$ n = {num_vals}, quad \"Mode\" = {counts[mode_v]} $",
                     f"$ n = {total_n}, quad \"Mode\" = {base} $",
                 ],
                 "diagram_svg": svg_dot_plot(counts),

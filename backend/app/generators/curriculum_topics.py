@@ -292,10 +292,54 @@ def _gen_decoupled_subtopic(
     # ------------------------------------------------------------------
     if "applications of differentiation" in c_low or ("functions" in c_low and "extrema" in t_low):
         if "increase and decrease" in t_low or "extrema" in t_low:
-            c = rng.randint(1, 3 * scale)
+            c = rng.randint(1, 6)
+            d = rng.randint(-15, 15)
+            d_str = f"+ {d}" if d > 0 else (f"- {abs(d)}" if d < 0 else "")
+            if "absolute" in t_low:
+                L, R = -c - 1, c + 1
+                y_L = (L ** 3) - 3 * c * c * L + d
+                y_R = (R ** 3) - 3 * c * c * R + d
+                y_neg_c = ((-c) ** 3) - 3 * c * c * (-c) + d
+                y_pos_c = (c ** 3) - 3 * c * c * c + d
+                vals = [(y_L, L), (y_R, R), (y_neg_c, -c), (y_pos_c, c)]
+                abs_max_y, abs_max_x = max(vals, key=lambda p: p[0])
+                abs_min_y, abs_min_x = min(vals, key=lambda p: p[0])
+                return {
+                    "prompt_text": f"Find the absolute maximum and minimum values of f(x) on the closed interval [{L}, {R}].",
+                    "equation_typst": f"$ f(x) = x^3 - {3 * c * c}x {d_str} quad [ {L}, {R} ] $",
+                    "answer_typst": f"$ \"Abs Max\": {abs_max_y} \" at \" x = {abs_max_x}, quad \"Abs Min\": {abs_min_y} \" at \" x = {abs_min_x} $",
+                    "steps_typst": [
+                        f"Find critical points in the interval: $f'(x) = 3x^2 - {3 * c * c} = 0 arrow.r.double x = plus.minus {c}$.",
+                        f"Evaluate $f(x)$ at critical points and endpoints: $f({L}) = {y_L}, f({-c}) = {y_neg_c}, f({c}) = {y_pos_c}, f({R}) = {y_R}$.",
+                        f"The absolute maximum is ${abs_max_y}$ (at $x = {abs_max_x}$) and the absolute minimum is ${abs_min_y}$ (at $x = {abs_min_x}$).",
+                    ],
+                    "distractors": [
+                        f"$ \"Abs Max\": {abs_max_y + 4} \" at \" x = {abs_max_x}, quad \"Abs Min\": {abs_min_y - 4} \" at \" x = {abs_min_x} $",
+                        f"$ \"Abs Max\": {y_R} \" at \" x = {R}, quad \"Abs Min\": {y_L} \" at \" x = {L} $",
+                        f"$ \"Abs Max\": {abs_max_y} \" at \" x = {abs_max_x} \" only\" $",
+                    ],
+                }
+            elif "relative" in t_low:
+                local_max_y = ((-c) ** 3) - 3 * c * c * (-c) + d
+                local_min_y = (c ** 3) - 3 * c * c * c + d
+                return {
+                    "prompt_text": "Find all relative (local) extrema for the function using the First or Second Derivative Test.",
+                    "equation_typst": f"$ f(x) = x^3 - {3 * c * c}x {d_str} $",
+                    "answer_typst": f"$ \"Local Max at \" (-{c}, {local_max_y}), quad \"Local Min at \" ({c}, {local_min_y}) $",
+                    "steps_typst": [
+                        f"Differentiate: $f'(x) = 3x^2 - {3 * c * c} = 3(x + {c})(x - {c})$.",
+                        f"Critical points occur at $x = -{c}$ and $x = {c}$.",
+                        f"Second derivative $f''(x) = 6x$: $f''(-{c}) = -{6 * c} < 0$ (Local Max), $f''({c}) = {6 * c} > 0$ (Local Min).",
+                    ],
+                    "distractors": [
+                        f"$ \"Local Max at \" ({c}, {local_min_y}), quad \"Local Min at \" (-{c}, {local_max_y}) $",
+                        f"$ \"Local Extrema at \" x = 0, {c * c} $",
+                        f"$ \"Local Max at \" (-{c}, {local_max_y + 2}) $",
+                    ],
+                }
             return {
-                "prompt_text": "Find the critical numbers and intervals of increase/decrease (or local extrema) for f(x).",
-                "equation_typst": f"$ f(x) = x^3 - {3 * c * c}x $",
+                "prompt_text": "Find the critical numbers and intervals of increase and decrease for f(x).",
+                "equation_typst": f"$ f(x) = x^3 - {3 * c * c}x {d_str} $",
                 "answer_typst": f"$ \"Critical points\": x = plus.minus {c}; quad \"Inc\": (-infinity, -{c}) union ({c}, infinity), \" Dec\": (-{c}, {c}) $",
                 "steps_typst": [
                     f"Differentiate: $f'(x) = 3x^2 - {3 * c * c} = 3(x - {c})(x + {c})$.",
@@ -408,15 +452,24 @@ def _gen_decoupled_subtopic(
                 "distractors": [f"$ {a * c + b} $", f"$ {val - 2 * b} $", f"$ {2 * a * c} $"],
             }
         if "removable" in t_low:
-            a = rng.randint(2, 4 + scale)
+            a = rng.choice([-6, -5, -4, -3, -2, 2, 3, 4, 5, 6])
+            b = rng.choice([x for x in [-6, -5, -4, -3, -2, 1, 2, 3, 4, 5, 6] if x != -a])
+            mid_coeff = b - a
+            const_term = -a * b
+            mid_str = f"+ {mid_coeff}x" if mid_coeff > 0 else (f"- {abs(mid_coeff)}x" if mid_coeff < 0 else "")
+            const_str = f"+ {const_term}" if const_term > 0 else (f"- {abs(const_term)}" if const_term < 0 else "")
+            num_str = f"x^2 {mid_str} {const_str}".strip()
+            ans_val = a + b
+            denom_str = f"x {'+' if a < 0 else '-'} {abs(a)}"
+            num_factored = f"(x {'+' if a < 0 else '-'} {abs(a)})(x {'+' if b < 0 else '+'} {abs(b)}).replace('+-', '-')"
             return {
                 "prompt_text": "Evaluate the limit at the removable discontinuity by factoring and canceling.",
-                "equation_typst": f"$ lim_(x arrow.r {a}) (x^2 - {a * a})/(x - {a}) $",
-                "answer_typst": f"$ {2 * a} $",
+                "equation_typst": f"$ lim_(x arrow.r {a}) ({num_str})/({denom_str}) $",
+                "answer_typst": f"$ {ans_val} $",
                 "steps_typst": [
-                    f"Direct substitution gives $0/0$. Factor the numerator: $(x - {a})(x + {a}) / (x - {a})$.",
-                    f"Cancel $(x - {a})$ for $x != {a}$ to obtain $lim_(x arrow.r {a}) (x + {a})$.",
-                    f"Substitute $x = {a}$: ${a} + {a} = {2 * a}$.",
+                    f"Direct substitution gives $0/0$. Factor the numerator: $(x - {a})(x + {b}) / (x - {a})$.",
+                    f"Cancel common factor $(x - {a})$ to obtain $lim_(x arrow.r {a}) (x + {b})$.",
+                    f"Substitute $x = {a}$: ${a} + {b} = {ans_val}$.",
                 ],
                 "distractors": ["$ 0 $", f"$ {a} $", "$ \"DNE\" $"],
             }
@@ -507,20 +560,21 @@ def _gen_decoupled_subtopic(
                 "distractors": [f"$ {b * b} $", f"$ {_fmt_frac(Fraction(b ** 3, 2))} $", f"$ {b ** 3} $"],
             }
         if "second fundamental theorem" in t_low:
-            k = rng.randint(2, 3 + scale)
+            k = rng.randint(2, 6)
+            c = rng.choice([1, 2, 4, 5, 9])
             return {
                 "prompt_text": "Use the Second Fundamental Theorem of Calculus to differentiate the integral function.",
-                "equation_typst": f"$ (d)/(d x) integral_1^(x^{k}) sqrt(t^3 + 1) d t $",
-                "answer_typst": f"$ {k}x^{k - 1} sqrt(x^({3 * k}) + 1) $",
+                "equation_typst": f"$ (d)/(d x) integral_1^(x^{k}) sqrt(t^3 + {c}) d t $",
+                "answer_typst": f"$ {k}x^{k - 1} sqrt(x^({3 * k}) + {c}) $",
                 "steps_typst": [
                     "By the Second Fundamental Theorem of Calculus with Chain Rule, $d/(d x) integral_a^(g(x)) f(t) d t = f(g(x)) dot g'(x)$.",
-                    f"Substitute $t = x^{k}$ into $sqrt(t^3 + 1)$ to get $sqrt(x^({3 * k}) + 1)$.",
+                    f"Substitute $t = x^{k}$ into $sqrt(t^3 + {c})$ to get $sqrt(x^({3 * k}) + {c})$.",
                     f"Multiply by $g'(x) = {k}x^{k - 1}$.",
                 ],
                 "distractors": [
-                    f"$ sqrt(x^({3 * k}) + 1) $",
-                    f"$ {k}x^{k - 1} sqrt(x^3 + 1) $",
-                    "$ (3x^2)/(2 sqrt(x^3 + 1)) $",
+                    f"$ sqrt(x^({3 * k}) + {c}) $",
+                    f"$ {k}x^{k - 1} sqrt(x^3 + {c}) $",
+                    f"$ (3x^2)/(2 sqrt(x^3 + {c})) $",
                 ],
             }
         if "mean value theorem" in t_low:
@@ -779,23 +833,32 @@ def _gen_decoupled_subtopic(
                 "distractors": [f"$ {a * d + b * c} $", f"$ {-det} $", f"$ {a + d - b - c} $"],
             }
         if "inverse" in t_low:
-            # Ensure det = 1 so inverse has clean entries
-            a, b, c = 2 * scale, 1, 2 * scale - 1
-            d = 1
+            target_det = rng.choice([1, -1, 2, -2])
+            a = rng.choice([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
+            d = rng.choice([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
+            prod = a * d - target_det
+            divs = [k for k in range(-6, 7) if k != 0 and prod % k == 0 and abs(prod // k) <= 6]
+            if divs:
+                b = rng.choice(divs)
+                c = prod // b
+            else:
+                b = 1
+                c = prod
             det = a * d - b * c
+            det_prefix = "" if det == 1 else ("-" if det == -1 else f"(1)/({det}) ")
             return {
                 "prompt_text": "Find the inverse of the 2x2 matrix.",
                 "equation_typst": f"$ A = mat({a}, {b}; {c}, {d}) $",
-                "answer_typst": f"$ A^(-1) = (1)/({det}) mat({d}, -{b}; -{c}, {a}) $",
+                "answer_typst": f"$ A^(-1) = {det_prefix}mat({d}, -{b}; -{c}, {a}) $",
                 "steps_typst": [
                     f"Compute the determinant: $det(A) = ({a})({d}) - ({b})({c}) = {det} != 0$.",
                     f"Swap the main diagonal entries and negate the off-diagonal entries: $mat({d}, -{b}; -{c}, {a})$.",
-                    f"Divide by $det(A) = {det}$.",
+                    f"Multiply by $1/det(A) = 1/{det}$ to obtain the inverse.",
                 ],
                 "distractors": [
-                    f"$ (1)/({det}) mat({a}, -{b}; -{c}, {d}) $",
+                    f"$ {det_prefix}mat({a}, -{b}; -{c}, {d}) $",
                     f"$ mat({d}, {b}; {c}, {a}) $",
-                    f"$ (1)/({a * d + b * c}) mat({d}, -{b}; -{c}, {a}) $",
+                    f"$ (1)/({a * d + b * c if a * d + b * c != 0 else 1}) mat({d}, -{b}; -{c}, {a}) $",
                 ],
             }
         if "equation" in t_low:
@@ -955,19 +1018,21 @@ def _gen_decoupled_subtopic(
         r1 = rng.randint(1, 3 + scale)
         r2 = rng.randint(r1 + 1, r1 + 4)
         if "complex fractions" in t_low:
+            c1 = rng.randint(2, 9)
+            c2 = rng.randint(2, 9)
             return {
                 "prompt_text": "Simplify the complex fraction.",
-                "equation_typst": f"$ ((1)/(x) + (1)/({r1})) / ((1)/(x) - (1)/({r1})) $",
-                "answer_typst": f"$ ({r1} + x)/({r1} - x), quad x != 0, {r1} $",
+                "equation_typst": f"$ ((1)/(x) + ({c1})/({c2})) / ((1)/(x) - ({c1})/({c2})) $",
+                "answer_typst": f"$ ({c2} + {c1}x)/({c2} - {c1}x), quad x != 0, {c2}/{c1} $",
                 "steps_typst": [
-                    f"Multiply the main numerator and denominator by the LCD ${r1}x$.",
-                    f"Numerator becomes ${r1} + x$ and denominator becomes ${r1} - x$.",
-                    f"Result: $({r1} + x)/({r1} - x)$ for $x != 0, {r1}$.",
+                    f"Multiply the numerator and denominator by the LCD ${c2}x$.",
+                    f"Numerator becomes ${c2} + {c1}x$ and denominator becomes ${c2} - {c1}x$.",
+                    f"Result: $({c2} + {c1}x)/({c2} - {c1}x)$ for $x != 0, {c2}/{c1}$.",
                 ],
                 "distractors": [
-                    f"$ ({r1} - x)/({r1} + x) $",
+                    f"$ ({c2} - {c1}x)/({c2} + {c1}x) $",
                     "$ -1 $",
-                    f"$ (x + {r1})/(x - {r1}) $",
+                    f"$ ({c1}x + {c2})/({c1}x - {c2}) $",
                 ],
             }
         if "equations" in t_low:
@@ -1117,8 +1182,32 @@ def _gen_decoupled_subtopic(
     # M. GEOMETRY TRIANGLES, ANGLES, CIRCLES DECOUPLED SUBTOPICS
     # ------------------------------------------------------------------
     if "classifying triangles" in t_low:
-        a, b = rng.choice([(60, 60), (90, 45), (110, 35), (50, 60)])
-        c = 180 - a - b
+        kind = rng.choice(["equilateral", "iso_acute", "iso_right", "iso_obtuse", "scal_right", "scal_acute", "scal_obtuse"])
+        if kind == "equilateral":
+            a, b, c = 60, 60, 60
+        elif kind == "iso_acute":
+            b_ang = rng.choice([48, 50, 52, 54, 55, 65, 70, 72, 75, 80])
+            a, b, c = b_ang, b_ang, 180 - 2 * b_ang
+        elif kind == "iso_right":
+            a, b, c = 45, 45, 90
+        elif kind == "iso_obtuse":
+            v_ang = rng.choice([96, 100, 104, 110, 116, 120, 130, 140])
+            a, b, c = (180 - v_ang) // 2, (180 - v_ang) // 2, v_ang
+        elif kind == "scal_right":
+            a_ang = rng.choice([20, 25, 30, 35, 40, 50, 55, 60, 65, 70])
+            a, b, c = a_ang, 90 - a_ang, 90
+        elif kind == "scal_acute":
+            a = rng.choice([40, 45, 50, 55])
+            b = rng.choice([x for x in [55, 60, 65, 70] if x != a])
+            c = 180 - a - b
+        else:
+            c = rng.choice([95, 100, 105, 115, 120, 125, 135])
+            rem = 180 - c
+            a = rng.randint(15, rem - 20)
+            b = rem - a
+        angs = [a, b, c]
+        rng.shuffle(angs)
+        a, b, c = angs
         ang_type = "Equiangular" if a == b == c else ("Right" if 90 in (a, b, c) else ("Obtuse" if max(a, b, c) > 90 else "Acute"))
         side_type = "Equilateral" if a == b == c else ("Isosceles" if len({a, b, c}) == 2 else "Scalene")
         return {
@@ -1354,9 +1443,15 @@ def _gen_decoupled_subtopic(
     # P. PYTHAGOREAN THEOREM & SPECIAL RIGHT TRIANGLES (WITH RIGHT TRIANGLE SVGS)
     # ------------------------------------------------------------------
     if "pythagorean" in t_low:
-        triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25)]
+        triples = [
+            (3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25), (9, 12, 15),
+            (12, 16, 20), (6, 8, 10), (10, 24, 26), (15, 20, 25), (9, 40, 41),
+            (11, 60, 61), (12, 35, 37), (13, 84, 85), (16, 63, 65), (20, 21, 29),
+            (28, 45, 53), (33, 56, 65), (36, 77, 85), (39, 80, 89), (48, 55, 73),
+        ]
         a0, b0, c0 = rng.choice(triples)
-        a, b, c = a0 * scale, b0 * scale, c0 * scale
+        mult = rng.choice([1, 2, 3])
+        a, b, c = a0 * mult, b0 * mult, c0 * mult
         if "multi-step" in t_low or scale == 3:
             # Find missing leg b given a and c, then find area or perimeter
             perim = a + b + c
@@ -1723,7 +1818,24 @@ def _gen_decoupled_subtopic(
                 ],
             }
         if "inverse trigonometric" in t_low:
-            a = rng.randint(2, 4 + scale)
+            a = rng.randint(2, 12)
+            is_atan = rng.choice([True, False])
+            if is_atan:
+                return {
+                    "prompt_text": "Evaluate the indefinite integral using inverse trigonometric forms.",
+                    "equation_typst": f"$ integral (1)/({a * a} + x^2) d x $",
+                    "answer_typst": f"$ (1)/({a}) arctan((x)/({a})) + C $",
+                    "steps_typst": [
+                        f"Match the integrand with $integral (1)/(a^2 + x^2) d x = (1/a) arctan(x/a) + C$ where $a = {a}$.",
+                        f"Substitute $a = {a}$ into the formula.",
+                        f"Result: $(1)/({a}) arctan(x/{a}) + C$.",
+                    ],
+                    "distractors": [
+                        f"$ arcsin((x)/({a})) + C $",
+                        f"$ arctan(x) + C $",
+                        f"$ (1)/({a * a}) arctan(x) + C $",
+                    ],
+                }
             return {
                 "prompt_text": "Evaluate the indefinite integral using inverse trigonometric forms.",
                 "equation_typst": f"$ integral (1)/(sqrt({a * a} - x^2)) d x $",
@@ -1741,14 +1853,31 @@ def _gen_decoupled_subtopic(
             }
         if "trigonometric" in t_low:
             k = rng.randint(2, 4 * scale)
+            is_sin = rng.choice([True, False])
+            if is_sin:
+                return {
+                    "prompt_text": "Evaluate the trigonometric indefinite integral.",
+                    "equation_typst": f"$ integral {k} sin(x) d x $",
+                    "answer_typst": f"$ -{k} cos(x) + C $",
+                    "steps_typst": [
+                        f"Factor out the constant: ${k} integral sin(x) d x$.",
+                        "Recall that $(d)/(d x)[cos(x)] = -sin(x)$, so $integral sin(x) d x = -cos(x) + C$.",
+                        f"Multiply by the constant: $-{k} cos(x) + C$.",
+                    ],
+                    "distractors": [
+                        f"$ {k} cos(x) + C $",
+                        f"$ -{k} sin(x) + C $",
+                        f"$ {k} tan(x) + C $",
+                    ],
+                }
             return {
                 "prompt_text": "Evaluate the trigonometric indefinite integral.",
                 "equation_typst": f"$ integral {k} cos(x) d x $",
                 "answer_typst": f"$ {k} sin(x) + C $",
                 "steps_typst": [
-                    f"Factor out the constant ${k}$: ${k} integral cos(x) d x$.",
-                    "Since $(d)/(d x)[sin(x)] = cos(x)$, the antiderivative of $cos(x)$ is $sin(x) + C$.",
-                    f"Result: ${k} sin(x) + C$.",
+                    f"Factor out the constant: ${k} integral cos(x) d x$.",
+                    "Recall that $(d)/(d x)[sin(x)] = cos(x)$, so $integral cos(x) d x = sin(x) + C$.",
+                    f"Multiply by the constant: ${k} sin(x) + C$.",
                 ],
                 "distractors": [
                     f"$ -{k} sin(x) + C $",
@@ -1757,7 +1886,21 @@ def _gen_decoupled_subtopic(
                 ],
             }
         if "first fundamental theorem" in t_low:
-            b = rng.randint(2, 3 + scale)
+            b = rng.randint(1, 6)
+            k_power = rng.choice([2, 3])
+            if k_power == 3:
+                val = b ** 4
+                return {
+                    "prompt_text": "Evaluate the definite integral using the First Fundamental Theorem of Calculus.",
+                    "equation_typst": f"$ integral_0^{b} 4x^3 d x $",
+                    "answer_typst": f"$ {val} $",
+                    "steps_typst": [
+                        "Find an antiderivative $F(x)$ of $4x^3$: $F(x) = x^4$.",
+                        f"Apply $F({b}) - F(0) = {b}^4 - 0^4$.",
+                        f"Result: ${val}$.",
+                    ],
+                    "distractors": [f"$ {4 * b ** 3} $", f"$ {val // 4} $", f"$ {val + b} $"],
+                }
             val = b ** 3
             return {
                 "prompt_text": "Evaluate the definite integral using the First Fundamental Theorem of Calculus.",
@@ -1772,7 +1915,7 @@ def _gen_decoupled_subtopic(
             }
         if "motion along a line" in t_low:
             a = rng.randint(1, 3 * scale)
-            t1 = rng.randint(2, 4)
+            t1 = rng.randint(2, 7)
             disp = a * t1 * t1
             return {
                 "prompt_text": "Given the velocity function v(t), find the net displacement of the particle over [0, t_1].",
@@ -1786,7 +1929,24 @@ def _gen_decoupled_subtopic(
                 "distractors": [f"$ {2 * a * t1} $", f"$ {disp * 2} $", f"$ {a * t1} $"],
             }
         if "separable" in t_low or "introduction" in t_low:
-            k = rng.randint(2, 4 * scale)
+            k = rng.randint(1, 10)
+            is_y_sq = rng.choice([False, True])
+            if is_y_sq:
+                return {
+                    "prompt_text": "Find the general solution of the separable differential equation.",
+                    "equation_typst": f"$ (d y)/(d x) = {2 * k}x y^2 $",
+                    "answer_typst": f"$ y = -(1)/({k}x^2 + C) $",
+                    "steps_typst": [
+                        f"Separate variables: $(1)/(y^2) d y = {2 * k}x d x$.",
+                        f"Integrate both sides: $-(1)/(y) = {k}x^2 + C$.",
+                        f"Solve for $y$: $y = -(1)/({k}x^2 + C)$.",
+                    ],
+                    "distractors": [
+                        f"$ y = {k}x^2 + C $",
+                        f"$ y = C e^({k}x^2) $",
+                        f"$ y = (1)/({2 * k}x) $",
+                    ],
+                }
             return {
                 "prompt_text": "Find the general solution of the separable differential equation.",
                 "equation_typst": f"$ (d y)/(d x) = {k}x y $",
@@ -1804,10 +1964,39 @@ def _gen_decoupled_subtopic(
             }
 
         if "riemann sum table" in t_low:
-            dx = rng.choice([2, 3, 4])
-            xs = [0, dx, 2 * dx, 3 * dx]
-            ys = [rng.randint(2, 5 * scale) + 2 * i for i in range(4)]
-            lram = dx * (ys[0] + ys[1] + ys[2])
+            dx = rng.choice([1, 2, 3, 4, 5])
+            n_sub = rng.choice([3, 4])
+            xs = [i * dx for i in range(n_sub + 1)]
+            ys = [rng.randint(2, 20) for _ in range(n_sub + 1)]
+            method = rng.choice(["LRAM", "RRAM"])
+            if method == "LRAM":
+                approx = dx * sum(ys[:n_sub])
+                desc = "Left Riemann Sum"
+            else:
+                approx = dx * sum(ys[1:])
+                desc = "Right Riemann Sum"
+            tbl = svg_data_table(
+                headers=["x"] + [str(x) for x in xs],
+                rows=[["f(x)"] + [str(y) for y in ys]],
+                title="Values of f(x)",
+            )
+            return {
+                "prompt_text": f"Use a {desc} with {n_sub} subintervals indicated by the table to approximate integral_0^{xs[-1]} f(x) dx.",
+                "equation_typst": f"$ integral_0^({xs[-1]}) f(x) d x quad (\"{method}\", Delta x = {dx}) $",
+                "answer_typst": f"$ {method[0]}_{n_sub} = {approx} $",
+                "steps_typst": [
+                    f"Each subinterval has width $Delta x = {dx}$.",
+                    f"Sample values: {' + '.join(str(v) for v in (ys[:n_sub] if method == 'LRAM' else ys[1:]))}.",
+                    f"Multiply by $Delta x = {dx}$: ${approx}$.",
+                ],
+                "distractors": [
+                    f"$ {approx + dx * 2} $",
+                    f"$ {approx - dx} $",
+                    f"$ {sum(ys)} $",
+                ],
+                "diagram_svg": tbl,
+                "answer_svg": tbl,
+            }
             tbl = svg_data_table(
                 headers=["x"] + [str(x) for x in xs],
                 rows=[["f(x)"] + [str(y) for y in ys]],
@@ -2257,20 +2446,27 @@ def _gen_decoupled_subtopic(
         }
 
     if "solving polynomial equations" in t_low:
-        a = rng.randint(2, 4 + scale)
+        r1 = rng.randint(1, 7)
+        r2 = rng.choice([x for x in range(-7, 8) if x != 0 and x != r1 and x != -r1])
+        b_c = -(r1 + r2)
+        c_c = r1 * r2
+        b_str = f"+ {b_c}x^2" if b_c > 0 else (f"- {abs(b_c)}x^2" if b_c < 0 else "")
+        c_str = f"+ {c_c}x" if c_c > 0 else (f"- {abs(c_c)}x" if c_c < 0 else "")
+        eq_str = f"x^3 {b_str} {c_str} = 0".replace("  ", " ").strip()
+        ans_roots = sorted([0, r1, r2])
         return {
             "prompt_text": "Find all real solutions of the polynomial equation by factoring.",
-            "equation_typst": f"$ x^3 - {a * a}x = 0 $",
-            "answer_typst": f"$ x = 0, -{a}, {a} $",
+            "equation_typst": f"$ {eq_str} $",
+            "answer_typst": f"$ x = {', '.join(str(r) for r in ans_roots)} $",
             "steps_typst": [
-                f"Factor out the greatest common monomial factor $x$: $x(x^2 - {a * a}) = 0$.",
-                f"Factor the difference of squares: $x(x - {a})(x + {a}) = 0$.",
-                f"Apply the Zero Product Property: $x = 0, x = {a}, x = -{a}$.",
+                f"Factor out common factor $x$: $x(x^2 {'+' if b_c >= 0 else '-'} {abs(b_c)}x {'+' if c_c >= 0 else '-'} {abs(c_c)}) = 0$.",
+                f"Factor the quadratic factor: $x(x - {r1})(x - {r2}) = 0$.",
+                f"Apply Zero Product Property: $x = {', '.join(str(r) for r in ans_roots)}$.",
             ],
             "distractors": [
-                f"$ x = -{a}, {a} $",
-                f"$ x = 0, {a * a} $",
-                f"$ x = {a} $",
+                f"$ x = {-r1}, {-r2} $",
+                f"$ x = {r1}, {r2} $",
+                f"$ x = 0, {r1 * r2} $",
             ],
         }
 
@@ -2337,19 +2533,22 @@ def _gen_decoupled_subtopic(
         }
 
     if "systems of quadratic equations" in t_low:
-        r = rng.randint(2, 4 + scale)
+        r = rng.randint(1, 8)
+        c = rng.randint(-10, 10)
+        c_str = f"+ {c}" if c > 0 else (f"- {abs(c)}" if c < 0 else "")
+        y_val = r * r + c
         return {
             "prompt_text": "Solve the system of quadratic equations.",
-            "equation_typst": f"$ cases(y = x^2, y = {r * r}) $",
-            "answer_typst": f"$ (-{r}, {r * r}) \" and \" ({r}, {r * r}) $",
+            "equation_typst": f"$ cases(y = x^2 {c_str}, y = {y_val}) $",
+            "answer_typst": f"$ (-{r}, {y_val}) \" and \" ({r}, {y_val}) $",
             "steps_typst": [
-                f"Substitute $y = {r * r}$ into $y = x^2$: $x^2 = {r * r}$.",
-                f"Take square roots of both sides: $x = plus.minus {r}$.",
-                f"Intersection points: $(-{r}, {r * r})$ and $({r}, {r * r})$.",
+                f"Substitute $y = {y_val}$ into $y = x^2 {c_str}$: $x^2 {c_str} = {y_val}$.",
+                f"Isolate $x^2$: $x^2 = {r * r} arrow.r.double x = plus.minus {r}$.",
+                f"Intersection points: $(-{r}, {y_val})$ and $({r}, {y_val})$.",
             ],
             "distractors": [
-                f"$ ({r}, {r * r}) \" only\" $",
-                f"$ (plus.minus {r * r}, {r}) $",
+                f"$ ({r}, {y_val}) \" only\" $",
+                f"$ (plus.minus {y_val}, {r}) $",
                 "$ \"No real intersection\" $",
             ],
         }
@@ -2650,19 +2849,28 @@ def _gen_decoupled_subtopic(
             }
 
     if "gcf and lcm word problems" in t_low:
-        g = rng.choice([4, 6, 8, 12])
-        a, b = 2 * g, 3 * g
-        lcm_v = 6 * g
+        scenarios = [
+            ("Bus A arrives every {a} minutes and Bus B arrives every {b} minutes. If both arrive now, in how many minutes will both arrive together again?", "minutes"),
+            ("Traffic Light 1 changes every {a} seconds and Traffic Light 2 changes every {b} seconds. In how many seconds will they change together?", "seconds"),
+            ("Runner X laps the track every {a} seconds and Runner Y every {b} seconds. After how many seconds will they meet at the start line?", "seconds"),
+            ("Bell 1 chimes every {a} hours and Bell 2 chimes every {b} hours. In how many hours will both chime simultaneously?", "hours"),
+        ]
+        sc_tpl, unit = rng.choice(scenarios)
+        g = rng.choice([2, 3, 4, 5, 6, 7, 8, 9, 10])
+        m, n = rng.choice([(2, 3), (3, 4), (2, 5), (3, 5), (4, 5), (3, 7)])
+        a, b = m * g, n * g
+        lcm_v = (a * b) // math.gcd(a, b)
+        q_text = sc_tpl.format(a=a, b=b)
         return {
             "prompt_text": "Solve the GCF and LCM word problem.",
-            "equation_typst": f"\"Bus A arrives every {a} minutes and Bus B arrives every {b} minutes. If both are at the station now, in how many minutes will both arrive together again?\"",
-            "answer_typst": f"$ {lcm_v} \" minutes\" $",
+            "equation_typst": f"\"{q_text}\"",
+            "answer_typst": f"$ {lcm_v} \" {unit}\" $",
             "steps_typst": [
                 f"Find the Least Common Multiple (LCM) of ${a}$ and ${b}$.",
-                f"Multiples of ${a}$: ${a}, {2 * a}, {3 * a}$; Multiples of ${b}$: ${b}, {2 * b}$.",
-                f"The smallest shared multiple is $\text{{LCM}}({a}, {b}) = {lcm_v}$ minutes.",
+                f"Prime factorization / GCD: $\text{{gcd}}({a}, {b}) = {g}$.",
+                f"LCM: $({a} times {b}) / {g} = {lcm_v}$ {unit}.",
             ],
-            "distractors": [f"$ {g} \" minutes\" $", f"$ {a + b} \" minutes\" $", f"$ {a * b} \" minutes\" $"],
+            "distractors": [f"$ {g} \" {unit}\" $", f"$ {a + b} \" {unit}\" $", f"$ {a * b} \" {unit}\" $"],
         }
 
     if "properties of addition and multiplication" in t_low:
@@ -2806,7 +3014,7 @@ class CurriculumTopicGenerator(BaseGenerator):
                 elif base_cls is not None:
                     if diff not in base_probs:
                         sub_cfg = GeneratorConfig(
-                            problem_count=max(config.problem_count * 2, 12),
+                            problem_count=max(config.problem_count * 2, 4),
                             seed=(config.seed or 42) + idx * 31,
                             difficulty_distribution={
                                 ProblemDifficulty.MILD: 1.0 if diff == ProblemDifficulty.MILD else 0.0,
