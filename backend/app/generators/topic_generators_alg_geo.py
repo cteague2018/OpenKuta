@@ -689,56 +689,88 @@ def gen_alg_geo_problem(
     # 7. DEDICATED WORD PROBLEMS (MIXTURE, D=RT, WORK, SYSTEMS)
     # ------------------------------------------------------------------
     if "mixture word problems" in t_low:
-        v1 = rng.choice([4, 6, 8, 10])
-        c1 = rng.choice([10, 15, 20])
-        c2 = rng.choice([40, 50, 60])
-        v2 = rng.choice([2, 4, 6, 10])
+        scenarios_mix = [
+            ("acid solution", "liters", "L"),
+            ("saline solution", "milliliters", "mL"),
+            ("sugar syrup", "fluid ounces", "fl oz"),
+            ("antifreeze coolant", "gallons", "gal"),
+            ("cleaning solution", "liters", "L"),
+        ]
+        solute, unit_full, unit_abbr = rng.choice(scenarios_mix)
+        v1 = rng.choice([4, 6, 8, 10, 12])
+        c1 = rng.choice([10, 15, 20, 25])
+        c2 = rng.choice([40, 50, 60, 70])
+        v2 = rng.choice([2, 4, 6, 8, 10])
         total_solute = v1 * c1 + v2 * c2
-        if (total_solute) % (v1 + v2) != 0:
+        if total_solute % (v1 + v2) != 0:
             v2 = v1
             total_solute = v1 * (c1 + c2)
         c_mix = total_solute // (v1 + v2)
         return {
             "prompt_text": "Set up an algebraic equation and solve the mixture word problem.",
-            "equation_typst": f"How many liters of a {c2}% acid solution must be mixed with {v1} L of a {c1}% solution to obtain a {c_mix}% solution?",
-            "answer_typst": f"$ {v2} \" liters\" $",
+            "equation_typst": f"How many {unit_full} of a {c2}% {solute} must be mixed with {v1} {unit_abbr} of a {c1}% solution to obtain a {c_mix}% solution?",
+            "answer_typst": f"$ {v2} \" {unit_full}\" $",
             "steps_typst": [
-                f"Let $x$ be the liters of ${c2}%$ solution: $0.{c1:02d}({v1}) + 0.{c2:02d}x = 0.{c_mix:02d}({v1} + x)$.",
-                f"Multiply by $100$: ${c1 * v1} + {c2}x = {c_mix * v1} + {c_mix}x$.",
-                f"Solve for $x$: $({c2 - c_mix})x = {(c_mix - c1) * v1} arrow.r.double x = {v2}$ liters.",
+                f"Let $x$ be the {unit_full} of {c2}% solution: $0.{c1:02d}({v1}) + 0.{c2:02d}x = 0.{c_mix:02d}({v1} + x)$.",
+                f"Multiply both sides by $100$: ${c1 * v1} + {c2}x = {c_mix * v1} + {c_mix}x$.",
+                f"Solve for $x$: $({c2 - c_mix})x = {(c_mix - c1) * v1} arrow.r.double x = {v2}$ {unit_full}.",
             ],
-            "distractors": [f"$ {v1 + 2} \" liters\" $", f"$ {v2 + 3} \" liters\" $", f"$ {max(1, v2 - 2)} \" liters\" $"],
+            "distractors": [f"$ {v1 + 2} \" {unit_full}\" $", f"$ {v2 + 3} \" {unit_full}\" $", f"$ {max(1, v2 - 2)} \" {unit_full}\" $"],
         }
 
     if "distance, rate, time" in t_low:
-        r1 = rng.choice([40, 45, 50, 55, 60])
-        r2 = rng.choice([50, 55, 60, 65, 70])
+        motion_types = [
+            ("Two trains leave a station traveling in opposite directions at {r1} {speed_unit} and {r2} {speed_unit}. After how many {time_unit} are they {dist} {dist_unit} apart?", "opposite"),
+            ("Two cyclists start from the same point and ride in opposite directions at {r1} {speed_unit} and {r2} {speed_unit}. After how many {time_unit} are they {dist} {dist_unit} apart?", "opposite"),
+            ("Two passenger cars start from towns {dist} {dist_unit} apart and travel toward each other at {r1} {speed_unit} and {r2} {speed_unit}. In how many {time_unit} will they meet?", "toward"),
+            ("Two airplanes leave an airfield heading in opposite directions at {r1} {speed_unit} and {r2} {speed_unit}. How many {time_unit} will it take for them to be {dist} {dist_unit} apart?", "opposite"),
+        ]
+        sc_tpl, mode = rng.choice(motion_types)
+        speed_u, dist_u, time_u = rng.choice([("mph", "miles", "hours"), ("km/h", "kilometers", "hours")])
+        r1 = rng.choice([35, 40, 45, 50, 55, 60])
+        r2 = rng.choice([45, 50, 55, 60, 65, 70])
         t = rng.randint(2, 5)
         dist = (r1 + r2) * t
+        eq_text = sc_tpl.format(r1=r1, r2=r2, speed_unit=speed_u, time_unit=time_u, dist=dist, dist_unit=dist_u)
+        rel_phrase = "their combined rate of separation is" if mode == "opposite" else "their combined closing speed is"
         return {
             "prompt_text": "Use the distance-rate-time relationship d = rt to solve the word problem.",
-            "equation_typst": f"Two trains leave a station traveling in opposite directions at {r1} mph and {r2} mph. After how many hours are they {dist} miles apart?",
-            "answer_typst": f"$ t = {t} \" hours\" $",
+            "equation_typst": eq_text,
+            "answer_typst": f"$ t = {t} \" {time_u}\" $",
             "steps_typst": [
-                f"Since the trains travel in opposite directions, their combined rate of separation is ${r1} + {r2} = {r1 + r2}$ mph.",
-                f"Write the distance equation: $({r1 + r2})t = {dist}$.",
-                f"Divide by ${r1 + r2}$: $t = {t}$ hours.",
+                f"Calculate the combined rate: {rel_phrase} ${r1} + {r2} = {r1 + r2}$ {speed_u}.",
+                f"Write the distance formula: $d = r t arrow.r.double ({r1 + r2})t = {dist}$.",
+                f"Divide by ${r1 + r2}$: $t = {dist} / {r1 + r2} = {t}$ {time_u}.",
             ],
-            "distractors": [f"$ t = {t + 1} \" hours\" $", f"$ t = {t + 2} \" hours\" $", f"$ t = {max(1, t - 1)} \" hours\" $"],
+            "distractors": [f"$ t = {t + 1} \" {time_u}\" $", f"$ t = {t + 2} \" {time_u}\" $", f"$ t = {max(1, t - 1)} \" {time_u}\" $"],
         }
 
     if "work word problems" in t_low:
-        scenarios = [
-            ("Pump A", "Pump B", "fill a tank"),
-            ("Worker A", "Worker B", "paint a house"),
-            ("Machine 1", "Machine 2", "complete a print job"),
-            ("Pipe 1", "Pipe 2", "fill a reservoir"),
-            ("Carlos", "Maria", "clean an auditorium"),
-            ("Tractor A", "Tractor B", "plow a field"),
+        # Scenarios with varied entities, non-breaking tokens (\u00A0) preventing line-edge collisions, and varied units (hours, minutes, days)
+        scenarios_work = [
+            ("Pump\u00A0A", "Pump\u00A0B", "fill a water reservoir", "minutes", "per-minute work rates"),
+            ("Pump\u00A01", "Pump\u00A02", "empty a flooded basement", "hours", "hourly work rates"),
+            ("Worker\u00A0A", "Worker\u00A0B", "paint a large conference room", "hours", "hourly work rates"),
+            ("Painter\u00A01", "Painter\u00A02", "paint a two-story house", "days", "daily work rates"),
+            ("Machine\u00A0A", "Machine\u00A0B", "complete a commercial print run", "minutes", "per-minute work rates"),
+            ("Press\u00A01", "Press\u00A02", "stamp 10,000 automotive brackets", "hours", "hourly work rates"),
+            ("Pipe\u00A0A", "Pipe\u00A0B", "fill a municipal swimming pool", "hours", "hourly work rates"),
+            ("Carlos", "Maria", "clean the high school auditorium", "hours", "hourly work rates"),
+            ("David", "Sarah", "landscape a community park", "days", "daily work rates"),
+            ("Tractor\u00A0A", "Tractor\u00A0B", "plow an 80-acre farm field", "hours", "hourly work rates"),
+            ("Crew\u00A01", "Crew\u00A02", "pave a section of highway", "days", "daily work rates"),
+            ("Baker\u00A0A", "Baker\u00A0B", "decorate 250 artisan cupcakes", "hours", "hourly work rates"),
+            ("Printer\u00A01", "Printer\u00A02", "produce 500 spiral booklets", "minutes", "per-minute work rates"),
         ]
-        s_name1, s_name2, s_task = rng.choice(scenarios)
-        m = rng.randint(2, 6)
-        both = rng.randint(2, 18)
+        s_name1, s_name2, s_task, unit_name, rate_phrase = rng.choice(scenarios_work)
+        m = rng.randint(2, 5)
+        if unit_name == "days":
+            both = rng.randint(2, 6)
+        elif unit_name == "minutes":
+            both = rng.randint(10, 36)
+        else:  # hours
+            both = rng.randint(3, 16)
+
         t1 = both * (m + 1) // m
         t2 = m * t1
         # ensure integer or simplified fraction
@@ -746,35 +778,42 @@ def gen_alg_geo_problem(
         both_s = f"{both_f.numerator}/{both_f.denominator}" if both_f.denominator != 1 else str(both_f.numerator)
         return {
             "prompt_text": "Set up a rational work-rate equation and solve for the combined time.",
-            "equation_typst": f"{s_name1} can {s_task} in {t1} hours and {s_name2} can {s_task} in {t2} hours. How long will it take both working together?",
-            "answer_typst": f"$ t = {both_s} \" hours\" $",
+            "equation_typst": f"{s_name1} can {s_task} in {t1} {unit_name} and {s_name2} can {s_task} in {t2} {unit_name}. How long will it take both working together?",
+            "answer_typst": f"$ t = {both_s} \" {unit_name}\" $",
             "steps_typst": [
-                f"Combine hourly work rates: $1/({t1}) + 1/({t2}) = 1/t$.",
+                f"Combine {rate_phrase}: $1/({t1}) + 1/({t2}) = 1/t$.",
                 f"Find common denominator and sum rates: $({t1 + t2})/({t1 * t2}) = 1/t$.",
-                f"Take the reciprocal to solve for $t$: $t = ({t1 * t2})/({t1 + t2}) = {both_s}$ hours.",
+                f"Take the reciprocal to solve for $t$: $t = ({t1 * t2})/({t1 + t2}) = {both_s}$ {unit_name}.",
             ],
-            "distractors": [f"$ t = {round((t1 + t2) / 2, 1)} \" hours\" $", f"$ t = {t1 + t2} \" hours\" $", f"$ t = {both_f + 1} \" hours\" $"],
+            "distractors": [f"$ t = {round((t1 + t2) / 2, 1)} \" {unit_name}\" $", f"$ t = {t1 + t2} \" {unit_name}\" $", f"$ t = {both_f + 1} \" {unit_name}\" $"],
         }
 
     if "systems" in c_low and "word problems" in t_low:
-        adults = rng.randint(5, 15)
-        kids = rng.randint(6, 18)
-        pa, pk = rng.choice([(8, 5), (10, 6), (12, 7), (9, 4)])
-        tot_tickets = adults + kids
-        tot_rev = adults * pa + kids * pk
+        systems_scenarios = [
+            ("A theater sold {tot} tickets for a total of ${rev}. Adult tickets cost ${pa} and child tickets cost ${pk}. How many of each were sold?", "Adults", "Children", (8, 5)),
+            ("A school carnival sold {tot} admission wristbands for ${rev}. General admission wristbands cost ${pa} and student wristbands cost ${pk}. How many of each were sold?", "General", "Student", (10, 6)),
+            ("A farm stand sold {tot} baskets of fruit for ${rev}. Baskets of cherries cost ${pa} and baskets of peaches cost ${pk}. How many of each were sold?", "Cherries", "Peaches", (12, 7)),
+            ("A bakery packaged {tot} gift boxes totaling ${rev}. Deluxe boxes cost ${pa} and standard boxes cost ${pk}. How many of each were sold?", "Deluxe", "Standard", (15, 9)),
+        ]
+        s_tpl, item_a, item_b, (pa, pk) = rng.choice(systems_scenarios)
+        c_a = rng.randint(6, 16)
+        c_b = rng.randint(8, 20)
+        tot = c_a + c_b
+        rev = c_a * pa + c_b * pk
+        eq_text = s_tpl.format(tot=tot, rev=rev, pa=pa, pk=pk)
         return {
             "prompt_text": "Write and solve a system of two linear equations to answer the word problem.",
-            "equation_typst": f"A theater sold {tot_tickets} tickets for a total of ${tot_rev}. Adult tickets cost ${pa} and child tickets cost ${pk}. How many of each were sold?",
-            "answer_typst": f"$ \"Adults\" = {adults}, \" Children\" = {kids} $",
+            "equation_typst": eq_text,
+            "answer_typst": f"$ \"{item_a}\" = {c_a}, \" {item_b}\" = {c_b} $",
             "steps_typst": [
-                f"Let $a$ be adult tickets and $c$ be child tickets: $a + c = {tot_tickets}$ and ${pa}a + {pk}c = {tot_rev}$.",
-                f"Substitute $c = {tot_tickets} - a$: ${pa}a + {pk}({tot_tickets} - a) = {tot_rev}$.",
-                f"Solve: $({pa - pk})a = {tot_rev - pk * tot_tickets} arrow.r.double a = {adults}$ and $c = {kids}$.",
+                f"Let $x$ be {item_a.lower()} and $y$ be {item_b.lower()}: $x + y = {tot}$ and ${pa}x + ${pk}y = ${rev}$.",
+                f"Substitute $y = {tot} - x$: ${pa}x + ${pk}({tot} - x) = ${rev}$.",
+                f"Solve for $x$: $({pa - pk})x = {rev - pk * tot} arrow.r.double x = {c_a}$ and $y = {c_b}$.",
             ],
             "distractors": [
-                f"$ \"Adults\" = {kids}, \" Children\" = {adults} $",
-                f"$ \"Adults\" = {adults + 2}, \" Children\" = {kids - 2} $",
-                f"$ \"Adults\" = {adults - 1}, \" Children\" = {kids + 1} $",
+                f"$ \"{item_a}\" = {c_b}, \" {item_b}\" = {c_a} $",
+                f"$ \"{item_a}\" = {c_a + 2}, \" {item_b}\" = {c_b - 2} $",
+                f"$ \"{item_a}\" = {c_a - 1}, \" {item_b}\" = {c_b + 1} $",
             ],
         }
 

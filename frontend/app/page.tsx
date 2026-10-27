@@ -233,7 +233,7 @@ function ProblemEquation({
       const parts = protectedText.split("$");
       const Tag = inline ? "span" : "div";
       return (
-        <Tag className={`${inline ? "inline" : "text-left px-1"} text-slate-800 text-sm leading-relaxed ${className}`}>
+        <Tag className={`${inline ? "inline pr-1" : "text-left px-1"} text-slate-800 text-sm leading-relaxed break-words ${className}`}>
           {parts.map((p, idx) => {
             if (idx % 2 === 1) {
               const restoredMath = p.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
@@ -249,7 +249,7 @@ function ProblemEquation({
     const restoredText = protectedText.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
     const Tag = inline ? "span" : "div";
     return (
-      <Tag className={`${inline ? "inline" : "text-left px-1"} text-slate-800 text-sm font-normal leading-relaxed ${className}`}>
+      <Tag className={`${inline ? "inline pr-1" : "text-left px-1"} text-slate-800 text-sm font-normal leading-relaxed break-words ${className}`}>
         {restoredText}
       </Tag>
     );
@@ -2054,7 +2054,7 @@ export default function OpenMathForgeApp() {
                               >
                                 {isOneColVisual ? (
                                   /* 1-Column Horizontal Split Layout: Maximizes 736px width for large graphs & scratchwork */
-                                  <div className="flex flex-col justify-between h-full">
+                                  <div className="flex-1 flex flex-col justify-between min-h-0 h-full">
                                     <div className={`flex ${isWordProblem ? "items-start" : "items-center"} justify-between mb-1 pb-1 border-b border-slate-100 shrink-0`}>
                                       <div className={`flex items-center space-x-1.5 shrink-0 ${isWordProblem ? "mt-0.5" : ""}`}>
                                         <span className="font-bold text-slate-900">{displayIdx + 1})</span>
@@ -2153,7 +2153,7 @@ export default function OpenMathForgeApp() {
                                   </div>
                                 ) : (
                                   /* Multi-Column Layout: Fills Vertical Real Estate with Prominent, Crisp Graphs */
-                                  <div className="flex flex-col justify-between h-full">
+                                  <div className="flex-1 flex flex-col justify-between min-h-0 h-full">
                                     <div className="shrink-0">
                                       {/* Problem Header: Number + Equation */}
                                       <div className={`flex ${isWordProblem ? "items-start" : "items-center"} gap-2 mb-1`}>
@@ -2169,7 +2169,7 @@ export default function OpenMathForgeApp() {
                                             <RefreshCw className="w-3 h-3" />
                                           </button>
                                         </div>
-                                        <div className={`flex-1 ${isWordProblem ? "text-left font-normal text-slate-800" : "text-center font-medium text-slate-900"} text-sm min-w-0`}>
+                                        <div className={`flex-1 ${isWordProblem ? "text-left font-normal text-slate-800 pr-2 break-words" : "text-center font-medium text-slate-900"} text-sm min-w-0`}>
                                           <ProblemEquation raw={prob.equation_typst} inline />
                                         </div>
                                       </div>
@@ -2205,8 +2205,14 @@ export default function OpenMathForgeApp() {
 
                                      {/* Answer Key Overlay: Expands to Fill Real Estate with Highlighted Answer & Full Solution Steps (Zero Clipping) */}
                                      {showAnswerKey ? (
-                                       <div className="bg-amber-50/90 border border-amber-200 rounded p-1.5 px-2 text-xs text-amber-950 mt-1 flex-1 flex flex-col justify-start min-h-0">
-                                         <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60 shrink-0">
+                                       <div
+                                         className={`bg-amber-50/90 border border-amber-200 rounded mt-1.5 flex-1 flex flex-col min-h-0 ${
+                                           prob.diagram_svg || prob.answer_svg
+                                             ? "p-1.5 px-2 justify-start"
+                                             : "p-3 justify-between"
+                                         }`}
+                                       >
+                                         <div className="font-bold flex items-center gap-1.5 text-xs pb-1.5 border-b border-amber-200/80 shrink-0">
                                            <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
                                            {prob.correct_choice && (
                                              <span className="font-bold text-indigo-800 mr-1">
@@ -2218,13 +2224,23 @@ export default function OpenMathForgeApp() {
 
                                          {/* Solution Steps: Flow clearly below Ans with zero clipping */}
                                          {prob.steps_typst && prob.steps_typst.length > 0 && (
-                                           <div className="mt-1 space-y-0.5 text-[9.5px] leading-tight text-amber-950">
-                                             <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider mb-0.5">
+                                           <div
+                                             className={`${
+                                               prob.diagram_svg || prob.answer_svg
+                                                 ? "mt-1 space-y-0.5 text-[9.5px] leading-tight"
+                                                 : "mt-2.5 space-y-2 text-xs leading-relaxed"
+                                             } text-amber-950 flex-1 flex flex-col justify-evenly`}
+                                           >
+                                             <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider mb-0.5 shrink-0">
                                                Solution Steps:
                                              </div>
                                              {prob.steps_typst.map((st, sIdx) => (
                                                <div key={sIdx} className="flex items-start gap-1.5">
-                                                 <span className="text-amber-600 font-mono font-semibold shrink-0 mt-0.5 text-[9.5px]">
+                                                 <span
+                                                   className={`text-amber-600 font-mono font-semibold shrink-0 mt-0.5 ${
+                                                     prob.diagram_svg || prob.answer_svg ? "text-[9.5px]" : "text-xs"
+                                                   }`}
+                                                 >
                                                    {sIdx + 1}.
                                                  </span>
                                                  <div className="min-w-0 break-words">
