@@ -763,27 +763,51 @@ def gen_alg_geo_problem(
             ("Printer\u00A01", "Printer\u00A02", "produce 500 spiral booklets", "minutes", "per-minute work rates"),
         ]
         s_name1, s_name2, s_task, unit_name, rate_phrase = rng.choice(scenarios_work)
-        m = rng.randint(2, 5)
         if unit_name == "days":
-            both = rng.randint(2, 6)
+            pair_choices = [
+                (4, 6), (4, 12), (5, 10), (6, 9), (6, 12), (6, 18),
+                (8, 12), (8, 24), (9, 18), (10, 15), (12, 18), (12, 24), (14, 21),
+            ]
         elif unit_name == "minutes":
-            both = rng.randint(10, 36)
+            pair_choices = [
+                (12, 24), (15, 30), (15, 60), (20, 30), (20, 60), (24, 36),
+                (25, 50), (30, 45), (30, 60), (36, 72), (40, 60), (45, 90),
+            ]
         else:  # hours
-            both = rng.randint(3, 16)
+            pair_choices = [
+                (4, 6), (4, 12), (4, 24), (5, 20), (6, 9), (6, 12), (6, 18),
+                (8, 12), (8, 24), (9, 18), (10, 15), (10, 26), (12, 18), (12, 24),
+                (12, 36), (15, 30), (16, 24), (18, 36), (20, 30), (20, 60),
+            ]
+        t1, t2 = rng.choice(pair_choices)
+        if rng.random() < 0.5:
+            t1, t2 = t2, t1
 
-        t1 = both * (m + 1) // m
-        t2 = m * t1
-        # ensure integer or simplified fraction
+        # Mathematical LCD resolution
+        lcm_val = (t1 * t2) // math.gcd(t1, t2)
+        k1 = lcm_val // t1
+        k2 = lcm_val // t2
+        k_sum = k1 + k2
+        g = math.gcd(k_sum, lcm_val)
+        sim_num = k_sum // g
+        sim_den = lcm_val // g
+
         both_f = Fraction(t1 * t2, t1 + t2)
         both_s = f"{both_f.numerator}/{both_f.denominator}" if both_f.denominator != 1 else str(both_f.numerator)
+
+        if g > 1 and sim_num != k_sum:
+            sum_rate_expr = f"{k_sum}/({lcm_val}) = {sim_num}/({sim_den})"
+        else:
+            sum_rate_expr = f"{k_sum}/({lcm_val})"
+
         return {
             "prompt_text": "Set up a rational work-rate equation and solve for the combined time.",
             "equation_typst": f"{s_name1} can {s_task} in {t1} {unit_name} and {s_name2} can {s_task} in {t2} {unit_name}. How long will it take both working together?",
             "answer_typst": f"$ t = {both_s} \" {unit_name}\" $",
             "steps_typst": [
                 f"Combine {rate_phrase}: $1/({t1}) + 1/({t2}) = 1/t$.",
-                f"Find common denominator and sum rates: $({t1 + t2})/({t1 * t2}) = 1/t$.",
-                f"Take the reciprocal to solve for $t$: $t = ({t1 * t2})/({t1 + t2}) = {both_s}$ {unit_name}.",
+                f"Find least common denominator (LCD = {lcm_val}) and sum rates: ${k1}/({lcm_val}) + {k2}/({lcm_val}) = {sum_rate_expr} = 1/t$.",
+                f"Take the reciprocal to solve for $t$: $t = {both_s}$ {unit_name}.",
             ],
             "distractors": [f"$ t = {round((t1 + t2) / 2, 1)} \" {unit_name}\" $", f"$ t = {t1 + t2} \" {unit_name}\" $", f"$ t = {both_f + 1} \" {unit_name}\" $"],
         }
