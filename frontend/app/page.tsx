@@ -820,14 +820,21 @@ export default function OpenMathForgeApp() {
       spicy: { mild: 0.0, medium: 0.0, spicy: 1.0 },
     }[diff];
 
+    // Collect equations of all currently displayed problems to prevent worksheet duplicates
+    const existingEquations = new Set(
+      worksheetProblems
+        .filter((_, idx) => idx !== targetIdx)
+        .map((p) => p.equation_typst?.trim() || "")
+    );
+
     try {
       const res = await fetch("/api/worksheet/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           generator_id: genId,
-          problem_count: 4,
-          seed: Math.floor(Math.random() * 900000) + 10000 + targetIdx * 131,
+          problem_count: 8,
+          seed: Math.floor(Math.random() * 10000000) + (Date.now() % 100000) + targetIdx * 7919,
           difficulty_distribution: diffMap,
           allow_negatives: true,
           question_type: qType,
@@ -838,8 +845,16 @@ export default function OpenMathForgeApp() {
         if (data.problems && data.problems.length > 0) {
           const candidates: Problem[] = data.problems;
           const distinctProb =
-            candidates.find((p) => p.equation_typst !== targetProb.equation_typst) ||
+            candidates.find(
+              (p) =>
+                !existingEquations.has(p.equation_typst?.trim() || "") &&
+                p.equation_typst?.trim() !== targetProb.equation_typst?.trim()
+            ) ||
+            candidates.find(
+              (p) => p.equation_typst?.trim() !== targetProb.equation_typst?.trim()
+            ) ||
             candidates[0];
+
           setWorksheetProblems((prev) => {
             const next = [...prev];
             next[targetIdx] = {
@@ -857,12 +872,15 @@ export default function OpenMathForgeApp() {
       // Offline fallback below
     }
 
-    // Offline fallback: pick a distinct sample problem with matching answer and steps
+    // Offline fallback: pick a distinct sample problem that is not on the worksheet
     const altSamples = DEFAULT_SAMPLE_PROBLEMS.filter(
-      (p) => p.equation_typst !== targetProb.equation_typst
+      (p) =>
+        !existingEquations.has(p.equation_typst?.trim() || "") &&
+        p.equation_typst?.trim() !== targetProb.equation_typst?.trim()
     );
     const chosen =
       altSamples[Math.floor(Math.random() * altSamples.length)] ||
+      DEFAULT_SAMPLE_PROBLEMS.find((p) => p.equation_typst?.trim() !== targetProb.equation_typst?.trim()) ||
       DEFAULT_SAMPLE_PROBLEMS[0];
     setWorksheetProblems((prev) => {
       const next = [...prev];

@@ -141,18 +141,30 @@ class BaseGenerator(ABC):
             tiers = tiers[:config.problem_count]
 
         problems: List[BaseProblem] = []
+        seen_equations: set = set()
+
         for idx, difficulty in enumerate(tiers, start=1):
-            prob = self.generate_single(
-                rng=rng,
-                difficulty=difficulty,
-                problem_idx=idx,
-                allow_negatives=config.allow_negatives
-            )
-            prob.generator_id = self.generator_id
-            prob.question_type = config.question_type
-            if config.question_type == "multiple_choice":
-                self._populate_multiple_choice_choices(prob, rng)
-            problems.append(prob)
+            prob: Optional[BaseProblem] = None
+            # Retry up to 50 times with diverse RNG state to guarantee distinct problems in every batch
+            for attempt in range(50):
+                candidate = self.generate_single(
+                    rng=rng,
+                    difficulty=difficulty,
+                    problem_idx=idx + attempt * 17,
+                    allow_negatives=config.allow_negatives
+                )
+                eq_key = candidate.equation_typst.strip()
+                if eq_key not in seen_equations or attempt == 49:
+                    seen_equations.add(eq_key)
+                    prob = candidate
+                    break
+
+            if prob is not None:
+                prob.generator_id = self.generator_id
+                prob.question_type = config.question_type
+                if config.question_type == "multiple_choice":
+                    self._populate_multiple_choice_choices(prob, rng)
+                problems.append(prob)
 
         return problems
 

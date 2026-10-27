@@ -1118,26 +1118,31 @@ def gen_adv_problem(
         }
 
     if "curve sketching" in t_low or "graphical comparison of f" in t_low:
-        a = rng.choice([1, -1])
+        a = rng.choice([-2, -1, 1, 2])
+        k = rng.choice([1, 2, 3])
+        k2 = k * k
+        c3 = 3 * k2
+        f_expr = f"{'' if a == 1 else ('-' if a == -1 else a)}(x^3 - {c3}x)"
 
-        def fn_f(x, _a=a):
-            return _a * (0.25 * (x ** 3) - 1.5 * x)
+        def fn_f(x, _a=a, _k=k):
+            return _a * (0.15 * (x ** 3) - 0.45 * (_k ** 2) * x)
 
-        def fn_fp(x, _a=a):
-            return _a * (0.75 * (x ** 2) - 1.5)
+        def fn_fp(x, _a=a, _k=k):
+            return _a * (0.45 * (x ** 2) - 0.45 * (_k ** 2))
+
         return {
             "prompt_text": "Find the critical points, inflection point, and sketch f(x) and f'(x).",
-            "equation_typst": f"$ f(x) = {'-' if a < 0 else ''}x^3 - {'-' if a < 0 else ''}3x $",
-            "answer_typst": "$ \"Critical points\": x = plus.minus 1, quad \"Inflection point\": (0, 0) $",
+            "equation_typst": f"$ f(x) = {f_expr} $",
+            "answer_typst": f"$ \"Critical points\": x = plus.minus {k}, quad \"Inflection point\": (0, 0) $",
             "steps_typst": [
-                f"Compute $f'(x) = {'-3' if a < 0 else '3'}(x^2 - 1) = 0 arrow.r.double x = plus.minus 1$.",
-                f"Compute $f''(x) = {'-6' if a < 0 else '6'}x = 0 arrow.r.double x = 0$ (inflection point).",
-                "Plot $f(x)$ and its derivative $f'(x)$ on the coordinate plane.",
+                f"Compute $f'(x) = {3 * a}(x^2 - {k2}) = 0 ==> x = plus.minus {k}$.",
+                f"Compute $f''(x) = {6 * a}x = 0 ==> x = 0$ (inflection point at $(0, 0)$).",
+                f"Evaluate local extrema at $x = -{k}$ and $x = {k}$.",
             ],
             "distractors": [
-                "$ \"Critical points\": x = 0, plus.minus 3, quad \"Inflection point\": (1, -2) $",
-                "$ \"Critical points\": x = plus.minus 3, quad \"Inflection point\": (0, 3) $",
-                "$ \"Critical points\": x = 0, quad \"Inflection point\": (plus.minus 1, 0) $",
+                f"$ \"Critical points\": x = 0, plus.minus {k}, quad \"Inflection point\": (1, 0) $",
+                f"$ \"Critical points\": x = plus.minus {k + 1}, quad \"Inflection point\": (0, 0) $",
+                f"$ \"Critical points\": x = 0, quad \"Inflection point\": (plus.minus {k}, 0) $",
             ],
             "diagram_svg": svg_coordinate_plane(),
             "answer_svg": svg_coordinate_plane(
@@ -1145,101 +1150,355 @@ def gen_adv_problem(
                     {"fn": fn_f, "color": "#2563eb"},
                     {"fn": fn_fp, "color": "#dc2626", "dashed": True},
                 ],
-                points=[(-1, fn_f(-1), "x=-1", True), (1, fn_f(1), "x=1", True), (0, 0, "IP", True)],
+                points=[(-k, fn_f(-k), f"x=-{k}", True), (k, fn_f(k), f"x={k}", True), (0, 0, "IP", True)],
             ),
         }
 
     if "integration by parts" in t_low:
-        k = rng.randint(1, 5)
-        kx = "x" if k == 1 else f"{k}x"
-        return {
-            "prompt_text": "Evaluate the indefinite integral using integration by parts.",
-            "equation_typst": f"$ integral x e^({kx}) d x $",
-            "answer_typst": f"$ (x)/({k}) e^({kx}) - (1)/({k * k}) e^({kx}) + C $" if k > 1 else "$ x e^x - e^x + C $",
-            "steps_typst": [
-                f"Choose $u = x$ ($d u = d x$) and $d v = e^({kx}) d x$ ($v = (1/{k}) e^({kx})$).",
-                f"Apply $integral u d v = u v - integral v d u$: $(x/{k})e^({kx}) - integral (1/{k})e^({kx}) d x$.",
-                f"Integrate the remaining exponential: $(x/{k})e^({kx}) - (1/{k * k})e^({kx}) + C$.",
-            ],
-            "distractors": [
-                f"$ (x)/({k}) e^({kx}) + (1)/({k * k}) e^({kx}) + C $",
-                f"$ (x^2)/(2) e^({kx}) + C $",
-                f"$ {k} x e^({kx}) - e^({kx}) + C $",
-            ],
-        }
+        ibp_type = rng.choice(["x_exp", "x_sin", "x_cos", "ln_x", "x_ln"])
+        if ibp_type == "x_exp":
+            k = rng.choice([-3, -2, -1, 1, 2, 3, 4, 5])
+            kx = "x" if k == 1 else (f"-x" if k == -1 else f"{k}x")
+            return {
+                "prompt_text": "Evaluate the indefinite integral using integration by parts.",
+                "equation_typst": f"$ integral x e^({kx}) d x $",
+                "answer_typst": f"$ (x)/({k}) e^({kx}) - (1)/({k * k}) e^({kx}) + C $" if k != 1 else "$ x e^x - e^x + C $",
+                "steps_typst": [
+                    f"Choose $u = x$ ($d u = d x$) and $d v = e^({kx}) d x$ ($v = (1/{k}) e^({kx})$).",
+                    f"Apply $integral u d v = u v - integral v d u$: $(x/{k})e^({kx}) - integral (1/{k})e^({kx}) d x$.",
+                    f"Integrate remaining term: $(x/{k})e^({kx}) - (1/{k * k})e^({kx}) + C$.",
+                ],
+                "distractors": [
+                    f"$ (x)/({k}) e^({kx}) + (1)/({k * k}) e^({kx}) + C $",
+                    f"$ (x^2)/(2) e^({kx}) + C $",
+                    f"$ {k} x e^({kx}) - e^({kx}) + C $",
+                ],
+            }
+        elif ibp_type == "x_sin":
+            k = rng.choice([1, 2, 3, 4])
+            kx = "x" if k == 1 else f"{k}x"
+            return {
+                "prompt_text": "Evaluate the indefinite integral using integration by parts.",
+                "equation_typst": f"$ integral x sin({kx}) d x $",
+                "answer_typst": f"$ -(x)/({k}) cos({kx}) + (1)/({k * k}) sin({kx}) + C $" if k > 1 else "$ -x cos(x) + sin(x) + C $",
+                "steps_typst": [
+                    f"Choose $u = x$ ($d u = d x$) and $d v = sin({kx}) d x$ ($v = -(1/{k}) cos({kx})$).",
+                    f"Apply formula: $-(x/{k}) cos({kx}) - integral -(1/{k}) cos({kx}) d x$.",
+                    f"Evaluate: $-(x/{k}) cos({kx}) + (1/{k * k}) sin({kx}) + C$.",
+                ],
+                "distractors": [
+                    f"$ (x)/({k}) cos({kx}) - (1)/({k * k}) sin({kx}) + C $",
+                    f"$ -(x^2)/2 cos({kx}) + C $",
+                    f"$ -x sin({kx}) + cos({kx}) + C $",
+                ],
+            }
+        elif ibp_type == "x_cos":
+            k = rng.choice([1, 2, 3, 4])
+            kx = "x" if k == 1 else f"{k}x"
+            return {
+                "prompt_text": "Evaluate the indefinite integral using integration by parts.",
+                "equation_typst": f"$ integral x cos({kx}) d x $",
+                "answer_typst": f"$ (x)/({k}) sin({kx}) + (1)/({k * k}) cos({kx}) + C $" if k > 1 else "$ x sin(x) + cos(x) + C $",
+                "steps_typst": [
+                    f"Choose $u = x$ ($d u = d x$) and $d v = cos({kx}) d x$ ($v = (1/{k}) sin({kx})$).",
+                    f"Apply formula: $(x/{k}) sin({kx}) - integral (1/{k}) sin({kx}) d x$.",
+                    f"Evaluate: $(x/{k}) sin({kx}) + (1/{k * k}) cos({kx}) + C$.",
+                ],
+                "distractors": [
+                    f"$ -(x)/({k}) sin({kx}) + (1)/({k * k}) cos({kx}) + C $",
+                    f"$ (x^2)/2 sin({kx}) + C $",
+                    f"$ x cos({kx}) - sin({kx}) + C $",
+                ],
+            }
+        elif ibp_type == "ln_x":
+            return {
+                "prompt_text": "Evaluate the indefinite integral using integration by parts.",
+                "equation_typst": "$ integral ln(x) d x $",
+                "answer_typst": "$ x ln(x) - x + C $",
+                "steps_typst": [
+                    "Choose $u = ln(x)$ ($d u = (1/x) d x$) and $d v = d x$ ($v = x$).",
+                    "Apply $integral u d v = u v - integral v d u$: $x ln(x) - integral x (1/x) d x$.",
+                    "Simplify: $x ln(x) - integral 1 d x = x ln(x) - x + C$.",
+                ],
+                "distractors": [
+                    "$ (ln(x))^2 / 2 + C $",
+                    "$ 1/x + C $",
+                    "$ x ln(x) + x + C $",
+                ],
+            }
+        else:  # x_ln
+            return {
+                "prompt_text": "Evaluate the indefinite integral using integration by parts.",
+                "equation_typst": "$ integral x ln(x) d x $",
+                "answer_typst": "$ (x^2)/2 ln(x) - (x^2)/4 + C $",
+                "steps_typst": [
+                    "Choose $u = ln(x)$ ($d u = (1/x) d x$) and $d v = x d x$ ($v = x^2 / 2$).",
+                    "Apply formula: $(x^2 / 2) ln(x) - integral (x^2 / 2)(1/x) d x$.",
+                    "Integrate $(x/2)$: $(x^2 / 2) ln(x) - x^2 / 4 + C$.",
+                ],
+                "distractors": [
+                    "$ (x^2)/2 ln(x) + (x^2)/4 + C $",
+                    "$ x^2 ln(x) - x + C $",
+                    "$ (x^3)/3 ln(x) - (x^3)/9 + C $",
+                ],
+            }
 
     if "area between curves" in t_low or "area under a curve" in t_low:
-        b = rng.choice([2, 3, 4])
-        b2 = b * b
-        # Area between y = b^2 - x^2 and y = 0 on [-b, b] is 4/3 * b^3
-        area_f = Fraction(4 * (b ** 3), 3)
+        variant = rng.choice(["parabola_axis", "line_parabola", "shifted_line_parabola", "cubic_axis", "parabola_const"])
+        if variant == "parabola_axis":
+            b = rng.randint(2, 6)
+            a = rng.choice([1, 2])
+            b2 = b * b
+            c = a * b2
+            area_f = Fraction(4 * a * (b ** 3), 3)
+            quad_s = f"{c} - x^2" if a == 1 else f"{c} - {a}x^2"
 
-        def fn_top(x, _b2=b2):
-            return (_b2 - x * x) * 0.5
+            def fn_top_math(x, _c=c, _a=a):
+                return (_c - _a * x * x) * (6.0 / max(c, 1))
+
+            def fn_bot_math(x):
+                return 0.0
+
+            x_a, x_b = -b, b
+            eq_s = f"$ y = {quad_s} \" and \" y = 0 \" on \" [-{b}, {b}] $"
+            steps = [
+                f"Set up the integral: $A = integral_(-{b})^{b} ({quad_s}) d x$.",
+                f"Find the antiderivative: $[{c}x - ({a}x^3)/3]_(-{b})^{b}$.",
+                f"Evaluate: $2({c * b} - ({a * (b ** 3)})/3) = {area_f.numerator}/{area_f.denominator}$.",
+            ]
+        elif variant == "line_parabola":
+            m = rng.randint(2, 7)
+            area_f = Fraction(m ** 3, 6)
+
+            def fn_top_math(x, _m=m):
+                return _m * x * (6.0 / (_m * _m))
+
+            def fn_bot_math(x, _m=m):
+                return (x * x) * (6.0 / (_m * _m))
+
+            x_a, x_b = 0, m
+            eq_s = f"$ y = {m}x \" and \" y = x^2 \" on \" [0, {m}] $"
+            steps = [
+                f"Set up the integral: $A = integral_0^{m} ({m}x - x^2) d x$.",
+                f"Find the antiderivative: $[({m}x^2)/2 - x^3/3]_0^{m}$.",
+                f"Evaluate: $({m ** 3})/2 - ({m ** 3})/3 = {area_f.numerator}/{area_f.denominator}$.",
+            ]
+        elif variant == "shifted_line_parabola":
+            r1 = rng.choice([-3, -2, -1])
+            diff = rng.randint(2, 5)
+            r2 = r1 + diff
+            area_f = Fraction(diff ** 3, 6)
+            m_l = r1 + r2
+            c_l = - (r1 * r2)
+            m_str = f"{m_l}x" if m_l != 0 else ""
+            c_str = f"+ {c_l}" if c_l > 0 else (f"- {abs(c_l)}" if c_l < 0 else "")
+            line_expr = f"{m_str} {c_str}".strip() or "0"
+
+            def fn_top_math(x, _m=m_l, _c=c_l):
+                return _m * x + _c
+
+            def fn_bot_math(x):
+                return x * x
+
+            x_a, x_b = r1, r2
+            eq_s = f"$ y = {line_expr} \" and \" y = x^2 \" on \" [{r1}, {r2}] $"
+            steps = [
+                f"Find intersection points: $x^2 = {line_expr} ==> x = {r1}, x = {r2}$.",
+                f"Set up integral: $A = integral_({r1})^{r2} [({line_expr}) - x^2] d x$.",
+                f"Evaluate between limits: $A = {area_f.numerator}/{area_f.denominator}$.",
+            ]
+        elif variant == "cubic_axis":
+            k = rng.randint(2, 5)
+            k2 = k * k
+            area_f = Fraction(k ** 4, 4)
+
+            def fn_top_math(x, _k2=k2):
+                return (_k2 * x - x ** 3) * (6.0 / (_k2 * 1.5))
+
+            def fn_bot_math(x):
+                return 0.0
+
+            x_a, x_b = 0, k
+            eq_s = f"$ y = {k2}x - x^3 \" and \" y = 0 \" on \" [0, {k}] $"
+            steps = [
+                f"Set up the integral: $A = integral_0^{k} ({k2}x - x^3) d x$.",
+                f"Find the antiderivative: $[({k2}x^2)/2 - x^4/4]_0^{k}$.",
+                f"Evaluate: $({k ** 4})/2 - ({k ** 4})/4 = {area_f.numerator}/{area_f.denominator}$.",
+            ]
+        else:  # parabola_const
+            k = rng.randint(2, 5)
+            c = rng.randint(-3, 3)
+            c_top = c + k * k
+            area_f = Fraction(4 * (k ** 3), 3)
+
+            def fn_top_math(x, _ct=c_top):
+                return (_ct - x * x)
+
+            def fn_bot_math(x, _c=c):
+                return float(_c)
+
+            x_a, x_b = -k, k
+            eq_s = f"$ y = {c_top} - x^2 \" and \" y = {c} \" on \" [-{k}, {k}] $"
+            steps = [
+                f"Set up integral: $A = integral_(-{k})^{k} [({c_top} - x^2) - ({c})] d x = integral_(-{k})^{k} ({k * k} - x^2) d x$.",
+                f"Find the antiderivative: $[{k * k}x - x^3/3]_(-{k})^{k}$.",
+                f"Evaluate: $2({k ** 3} - ({k ** 3})/3) = {area_f.numerator}/{area_f.denominator}$.",
+            ]
+
+        d1 = f"$ A = {area_f.numerator + 2}/{area_f.denominator} $"
+        d2 = f"$ A = {(area_f * 2).numerator}/{(area_f * 2).denominator} $"
+        d3 = f"$ A = {(area_f / 2).numerator}/{(area_f / 2).denominator} $"
+        ans_s = f"$ A = {area_f.numerator}/{area_f.denominator} $" if area_f.denominator != 1 else f"$ A = {area_f.numerator} $"
+
         return {
             "prompt_text": "Set up and evaluate the definite integral for the shaded area under/between the curves.",
-            "equation_typst": f"$ y = {b2} - x^2 \" and \" y = 0 \" on \" [-{b}, {b}] $",
-            "answer_typst": f"$ A = {area_f.numerator}/{area_f.denominator} $",
-            "steps_typst": [
-                f"Set up the integral: $A = integral_(-{b})^{b} ({b2} - x^2) d x$.",
-                f"Find the antiderivative: $[{b2}x - x^3/3]_(-{b})^{b}$.",
-                f"Evaluate: $2({b ** 3} - ({b ** 3})/3) = {area_f.numerator}/{area_f.denominator}$.",
-            ],
-            "distractors": [
-                f"$ A = {b ** 3} $",
-                f"$ A = {(area_f / 2).numerator}/{(area_f / 2).denominator} $",
-                f"$ A = {2 * b2} $",
-            ],
+            "equation_typst": eq_s,
+            "answer_typst": ans_s,
+            "steps_typst": steps,
+            "distractors": [d1, d2, d3],
             "diagram_svg": svg_coordinate_plane(
-                shaded_between={"fn_top": fn_top, "fn_bot": lambda x: 0.0, "a": -b, "b": b, "color": "#3b82f6"},
-                functions=[{"fn": fn_top, "color": "#1d4ed8"}],
+                shaded_between={"fn_top": fn_top_math, "fn_bot": fn_bot_math, "a": x_a, "b": x_b, "color": "#3b82f6"},
+                functions=[{"fn": fn_top_math, "color": "#1d4ed8"}, {"fn": fn_bot_math, "color": "#64748b"}],
             ),
             "answer_svg": svg_coordinate_plane(
-                shaded_between={"fn_top": fn_top, "fn_bot": lambda x: 0.0, "a": -b, "b": b, "color": "#22c55e"},
-                functions=[{"fn": fn_top, "color": "#15803d"}],
+                shaded_between={"fn_top": fn_top_math, "fn_bot": fn_bot_math, "a": x_a, "b": x_b, "color": "#22c55e"},
+                functions=[{"fn": fn_top_math, "color": "#15803d"}, {"fn": fn_bot_math, "color": "#64748b"}],
             ),
         }
 
     if "volume by" in t_low or "volume of solids" in t_low:
-        b = rng.choice([2, 3, 4])
-        vol = Fraction(b ** 3, 3)
+        v_type = rng.choice(["disk_linear", "disk_sqrt", "disk_quad", "shell_quad", "cross_square"])
+        if v_type == "disk_linear":
+            m = rng.randint(1, 3)
+            b = rng.randint(2, 6)
+            vol = Fraction(m * m * (b ** 3), 3)
+            line_s = f"{m}x" if m > 1 else "x"
+            eq_s = f"$ y = {line_s}, quad y = 0, quad x = {b} quad (\"about the \" x\"-axis\") $"
+            steps = [
+                f"Use the Disk Method: $V = pi integral_0^{b} [R(x)]^2 d x = pi integral_0^{b} ({m * m}x^2) d x$.",
+                f"Find the antiderivative: $pi [({m * m}x^3) / 3]_0^{b}$.",
+                f"Evaluate at the limits: $V = ({m * m * (b ** 3)})/(3) pi = {vol.numerator}/{vol.denominator} pi$.",
+            ]
+        elif v_type == "disk_sqrt":
+            k = rng.choice([1, 2, 3])
+            b = rng.randint(2, 8)
+            vol = Fraction(k * (b ** 2), 2)
+            rad_s = f"sqrt({k}x)" if k > 1 else "sqrt(x)"
+            eq_s = f"$ y = {rad_s}, quad y = 0, quad x = {b} quad (\"about the \" x\"-axis\") $"
+            steps = [
+                f"Use the Disk Method: $V = pi integral_0^{b} [sqrt({k}x)]^2 d x = pi integral_0^{b} ({k}x) d x$.",
+                f"Find the antiderivative: $pi [({k}x^2)/2]_0^{b}$.",
+                f"Evaluate: $V = ({k * (b ** 2)})/(2) pi = {vol.numerator}/{vol.denominator} pi$.",
+            ]
+        elif v_type == "disk_quad":
+            b = rng.randint(1, 3)
+            vol = Fraction(b ** 5, 5)
+            eq_s = f"$ y = x^2, quad y = 0, quad x = {b} quad (\"about the \" x\"-axis\") $"
+            steps = [
+                f"Use the Disk Method: $V = pi integral_0^{b} [x^2]^2 d x = pi integral_0^{b} x^4 d x$.",
+                f"Find the antiderivative: $pi [x^5 / 5]_0^{b}$.",
+                f"Evaluate: $V = ({b ** 5})/(5) pi$.",
+            ]
+        elif v_type == "shell_quad":
+            b = rng.randint(2, 5)
+            vol = Fraction(b ** 4, 2)
+            eq_s = f"$ y = x^2, quad y = 0, quad x = {b} quad (\"about the \" y\"-axis using cylindrical shells\") $"
+            steps = [
+                f"Use Cylindrical Shells: $V = 2 pi integral_0^{b} x(x^2) d x = 2 pi integral_0^{b} x^3 d x$.",
+                f"Find antiderivative: $2 pi [x^4 / 4]_0^{b} = pi [x^4 / 2]_0^{b}$.",
+                f"Evaluate: $V = ({b ** 4})/(2) pi$.",
+            ]
+        else:  # cross_square
+            b = rng.randint(2, 5)
+            b2 = b * b
+            vol = Fraction(16 * (b ** 5), 15)
+            eq_s = f"$ \"Base: \" y = {b2} - x^2, y = 0; quad \"Cross-sections: squares \" perp x\"-axis\" $"
+            steps = [
+                f"Cross-section area at $x$ is $A(x) = [s(x)]^2 = ({b2} - x^2)^2 = {b2 * b2} - {2 * b2}x^2 + x^4$.",
+                f"Integrate from $-{b}$ to ${b}$: $V = integral_(-{b})^{b} ({b2 * b2} - {2 * b2}x^2 + x^4) d x$.",
+                f"Evaluate: $V = {vol.numerator}/{vol.denominator}$.",
+            ]
+
+        v_ans = f"$ V = ({vol.numerator})/({vol.denominator}) pi $" if vol.denominator != 1 and "squares" not in eq_s else (
+            f"$ V = {vol.numerator} pi $" if "squares" not in eq_s else f"$ V = {vol.numerator}/{vol.denominator} $"
+        )
         return {
-            "prompt_text": "Find the volume of the solid generated by revolving the region bounded by y = x, y = 0, and x = b about the x-axis.",
-            "equation_typst": f"$ y = x, quad y = 0, quad x = {b} quad (\"about the \" x\"-axis\") $",
-            "answer_typst": f"$ V = ({vol.numerator})/({vol.denominator}) pi $" if vol.denominator != 1 else f"$ V = {vol.numerator} pi $",
-            "steps_typst": [
-                f"Use the Disk Method: $V = pi integral_0^{b} [R(x)]^2 d x = pi integral_0^{b} x^2 d x$.",
-                f"Find the antiderivative: $pi [x^3 / 3]_0^{b}$.",
-                f"Evaluate at the limits: $V = ({b ** 3})/(3) pi$.",
-            ],
+            "prompt_text": "Find the volume of the solid generated by revolving the region or by known cross-sections.",
+            "equation_typst": eq_s,
+            "answer_typst": v_ans,
+            "steps_typst": steps,
             "distractors": [
-                f"$ V = ({b * b})/(2) pi $",
-                f"$ V = {b ** 3} pi $",
-                f"$ V = ({b ** 3})/(3) $",
+                f"$ V = {vol.numerator + 4} pi $" if "pi" in v_ans else f"$ V = {vol.numerator + 4} $",
+                f"$ V = {(vol / 2).numerator}/{(vol / 2).denominator} pi $" if "pi" in v_ans else f"$ V = {(vol / 2).numerator} $",
+                f"$ V = {2 * vol.numerator} pi $" if "pi" in v_ans else f"$ V = {2 * vol.numerator} $",
             ],
         }
 
     if "slope fields" in t_low:
-        k = rng.choice([1, -1, 2])
-
-        def fn_sf(x, y, _k=k):
-            return (_k * x) / 3.0
-
-        def fn_sol(x, _k=k):
-            return (_k * x * x) / 6.0
-        return {
-            "prompt_text": "Sketch the slope field for the differential equation and draw the particular solution passing through (0, 0).",
-            "equation_typst": f"$ (d y)/(d x) = {'' if k == 1 else ('-' if k == -1 else k)}x $",
-            "answer_typst": f"$ y = ({k})/(2) x^2 + C; quad \"Slopes depend only on \" x $",
-            "steps_typst": [
+        variant = rng.choice(["linear_x", "linear_y", "sum_xy", "circle_field", "quad_x"])
+        if variant == "linear_x":
+            k = rng.choice([-3, -2, -1, 1, 2, 3])
+            eq_typst = f"$ (d y)/(d x) = {'' if k == 1 else ('-' if k == -1 else k)}x $"
+            ans_typst = f"$ y = ({k})/(2) x^2 + C; quad \"Slopes depend only on \" x $"
+            steps = [
                 f"At each grid point $(x, y)$, the slope segment has slope $m = {k}x$.",
                 "Notice slopes are zero along the $y$-axis ($x = 0$) and equal along vertical lines.",
                 f"Antidifferentiate to find the family of parabolas $y = ({k})/2 x^2 + C$.",
-            ],
+            ]
+            fn_sf = lambda x, y, _k=k: (_k * x) / 3.0
+            fn_sol = lambda x, _k=k: (_k * x * x) / 6.0
+        elif variant == "linear_y":
+            k = rng.choice([-2, -1, 1, 2])
+            eq_typst = f"$ (d y)/(d x) = {'' if k == 1 else ('-' if k == -1 else k)}y $"
+            ans_typst = f"$ y = C e^({k}x); quad \"Slopes depend only on \" y $"
+            steps = [
+                f"At each grid point $(x, y)$, slope $m = {k}y$.",
+                "Slopes are zero along the $x$-axis ($y = 0$) and equal along horizontal lines.",
+                f"Separate variables and integrate: $y = C e^({k}x)$.",
+            ]
+            fn_sf = lambda x, y, _k=k: (_k * y) / 3.0
+            fn_sol = lambda x, _k=k: 0.5 * math.exp(_k * x * 0.4) if abs(_k * x * 0.4) < 4 else float('nan')
+        elif variant == "circle_field":
+            eq_typst = "$ (d y)/(d x) = -x / y $"
+            ans_typst = "$ x^2 + y^2 = C; quad \"Concentric circular trajectories\" $"
+            steps = [
+                "At each point $(x, y)$, slope is $m = -x/y$, perpendicular to the radial vector $(x, y)$.",
+                "Separate variables: $y d y = -x d x ==> x^2 + y^2 = C$.",
+                "The slope field represents concentric circles centered at $(0, 0)$.",
+            ]
+            fn_sf = lambda x, y: -x / y if abs(y) > 0.3 else 10.0
+            fn_sol = lambda x: math.sqrt(max(0.0, 16.0 - x * x))
+        elif variant == "sum_xy":
+            eq_typst = "$ (d y)/(d x) = x + y $"
+            ans_typst = "$ y = C e^x - x - 1 $"
+            steps = [
+                "Slopes are constant along diagonal isoclines $x + y = c$.",
+                "Along the line $y = -x$, $d y / d x = 0$ (horizontal tangents).",
+                "General solution: $y = C e^x - x - 1$.",
+            ]
+            fn_sf = lambda x, y: (x + y) / 4.0
+            fn_sol = lambda x: math.exp(x * 0.5) - x - 1
+        else:  # quad_x
+            k = rng.choice([-1, 1])
+            eq_typst = f"$ (d y)/(d x) = {'' if k == 1 else '-'}x^2 $"
+            ans_typst = f"$ y = {'' if k == 1 else '-'}x^3 / 3 + C $"
+            steps = [
+                f"At each point $(x, y)$, slopes are non-negative everywhere since $x^2 >= 0$." if k == 1 else "Slopes are non-positive everywhere.",
+                "Slopes depend only on $x$, forming vertical strip symmetry.",
+                f"Antidifferentiate to find cubic curves $y = {'' if k == 1 else '-'}x^3 / 3 + C$.",
+            ]
+            fn_sf = lambda x, y, _k=k: (_k * x * x) / 6.0
+            fn_sol = lambda x, _k=k: (_k * (x ** 3)) / 18.0
+
+        return {
+            "prompt_text": "Sketch the slope field for the differential equation and draw the particular solution.",
+            "equation_typst": eq_typst,
+            "answer_typst": ans_typst,
+            "steps_typst": steps,
             "distractors": [
-                f"$ y = {k}x + C; quad \"Slopes depend only on \" y $",
-                f"$ y = e^({k}x) + C $",
-                f"$ y = -({k})/(2) x^2 + C $",
+                "$ (d y)/(d x) = x^2 + y^2 $",
+                "$ (d y)/(d x) = y - x $",
+                "$ (d y)/(d x) = 2x $",
             ],
             "diagram_svg": svg_coordinate_plane(slope_field={"fn": fn_sf, "step": 2}),
             "answer_svg": svg_coordinate_plane(

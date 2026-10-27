@@ -890,7 +890,7 @@ def gen_alg_geo_problem(
         y1, y2 = rng.randint(-5, -1), rng.randint(1, 6)
         return {
             "prompt_text": "Find the domain and range of the continuous relation shown on the coordinate plane and state whether it is a function.",
-            "equation_typst": "\"Determine the domain and range of the graphed relation\"",
+            "equation_typst": f"\"Continuous relation on domain [\" {x1} \", \" {x2} \"]\"",
             "answer_typst": f"$ \"Domain\": [{x1}, {x2}], quad \"Range\": [{y1}, {y2}], quad \"Function\" $",
             "steps_typst": [
                 f"Read the horizontal extent from left to right for the domain: ${x1} <= x <= {x2}$, or $[{x1}, {x2}]$.",
@@ -1747,7 +1747,7 @@ def gen_alg_geo_problem(
             tot = f1 + f2 + f3 + f4
             return {
                 "prompt_text": "Use the histogram to determine the total frequency and the modal interval.",
-                "equation_typst": "\"Analyze the frequency distribution in the histogram below\"",
+                "equation_typst": f"\"Frequencies: 0-9: {f1}, 10-19: {f2}, 20-29: {f3}, 30-39: {f4} (n = {tot})\"",
                 "answer_typst": f"$ \"Total\" = {tot}, quad \"Modal interval\" = 10\"-\"19 $",
                 "steps_typst": [
                     f"Add the bar heights: ${f1} + {f2} + {f3} + {f4} = {tot}$.",
@@ -1772,7 +1772,7 @@ def gen_alg_geo_problem(
             rng_v = mx - mn
             return {
                 "prompt_text": "Read the five-number summary from the box-and-whisker plot and compute the median and interquartile range (IQR).",
-                "equation_typst": "\"Read the five-number summary from the box-and-whisker plot below\"",
+                "equation_typst": f"\"Box plot on [\" {mn} \", \" {mx} \"] with Q_1 = {q1}, Med = {med}, Q_3 = {q3}\"",
                 "answer_typst": f"$ \"Median\" = {med}, quad \"IQR\" = {iqr}, quad \"Range\" = {rng_v} $",
                 "steps_typst": [
                     f"The vertical line inside the box marks the median: ${med}$.",

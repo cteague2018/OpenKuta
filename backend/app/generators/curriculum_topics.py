@@ -1338,7 +1338,7 @@ def _gen_decoupled_subtopic(
         b = rng.randint(-3, 3)
         return {
             "prompt_text": "Find the slope of the line shown on the coordinate plane.",
-            "equation_typst": "\"Find the slope \" m \" of the graphed line\"",
+            "equation_typst": f"\"Line passing through \" (0, {b}) \" and \" (1, {m + b})",
             "answer_typst": f"$ m = {m} $",
             "steps_typst": [
                 f"Pick two lattice points on the graphed line: $(0, {b})$ and $(1, {m + b})$.",
@@ -2579,7 +2579,33 @@ def _gen_decoupled_subtopic(
                     f"$ {a}x^3 - {b * c} $",
                 ],
             }
-        if t_low == "inverses":
+        if t_low == "inverses" or ("inverse" in t_low and "matrices" in c_low):
+            if "matrix" in c_low or "matrices" in c_low:
+                candidate_mats = [
+                    (3, 1, 5, 2), (2, 5, 1, 3), (4, 3, 3, 2), (5, 2, 2, 1),
+                    (3, 2, 2, 2), (2, 1, 4, 3), (3, -1, -2, 1), (4, 1, 2, 1),
+                    (2, 3, 1, 2), (3, 4, 1, 2), (2, 4, 1, 3), (1, 3, 2, 5),
+                    (2, -1, 3, -1), (4, 2, 3, 2), (5, 3, 3, 2), (1, 4, 2, 7)
+                ]
+                a11, a12, a21, a22 = rng.choice(candidate_mats)
+                det = a11 * a22 - a12 * a21
+                inv_mat = f"mat({a22}, {-a12}; {-a21}, {a11})"
+                ans_str = f"$ A^(-1) = (1)/({det}) {inv_mat} $" if det != 1 else f"$ A^(-1) = {inv_mat} $"
+                return {
+                    "prompt_text": "Find the inverse matrix A^-1, or state if it does not exist.",
+                    "equation_typst": f"$ A = mat({a11}, {a12}; {a21}, {a22}) $",
+                    "answer_typst": ans_str,
+                    "steps_typst": [
+                        f"Compute determinant: $det(A) = ({a11})({a22}) - ({a12})({a21}) = {det}$.",
+                        "Since determinant is non-zero, the matrix is invertible.",
+                        f"Apply inverse formula: $A^(-1) = (1)/(det(A)) mat(d, -b; -c, a) = {ans_str.replace('$', '').strip()}$.",
+                    ],
+                    "distractors": [
+                        f"$ A^(-1) = mat({a11}, {-a12}; {-a21}, {a22}) $",
+                        f"$ A^(-1) = (1)/({det + 2}) {inv_mat} $",
+                        '$ "Does not exist" $',
+                    ],
+                }
             m = rng.choice([2, 3, 4, 5]) * scale
             b = rng.randint(1, 9)
             return {
@@ -2721,22 +2747,16 @@ class CurriculumTopicGenerator(BaseGenerator):
         base_cls = _BASE_GENERATOR_REGISTRY.get(self.fallback_generator_id)
         base_probs: Dict[ProblemDifficulty, List[BaseProblem]] = {}
 
+        seen_equations = set()
         for idx, diff in enumerate(difficulties):
-            if diff == ProblemDifficulty.MEDIUM:
-                rng.random()
-            elif diff == ProblemDifficulty.SPICY:
-                rng.random()
-                rng.random()
-            data = gen_alg_geo_problem(
-                self.topic_id,
-                self.topic_name,
-                self.category_name,
-                self.course_key,
-                diff,
-                rng,
-            )
-            if data is None:
-                data = gen_adv_problem(
+            prob = None
+            for attempt in range(50):
+                if diff == ProblemDifficulty.MEDIUM:
+                    rng.random()
+                elif diff == ProblemDifficulty.SPICY:
+                    rng.random()
+                    rng.random()
+                data = gen_alg_geo_problem(
                     self.topic_id,
                     self.topic_name,
                     self.category_name,
@@ -2744,55 +2764,73 @@ class CurriculumTopicGenerator(BaseGenerator):
                     diff,
                     rng,
                 )
-            if data is None:
-                data = _gen_decoupled_subtopic(
-                    self.topic_id,
-                    self.topic_name,
-                    self.category_name,
-                    self.course_key,
-                    diff,
-                    rng,
-                    self.fallback_generator_id,
-                )
+                if data is None:
+                    data = gen_adv_problem(
+                        self.topic_id,
+                        self.topic_name,
+                        self.category_name,
+                        self.course_key,
+                        diff,
+                        rng,
+                    )
+                if data is None:
+                    data = _gen_decoupled_subtopic(
+                        self.topic_id,
+                        self.topic_name,
+                        self.category_name,
+                        self.course_key,
+                        diff,
+                        rng,
+                        self.fallback_generator_id,
+                    )
 
-            if data is not None:
-                prob = BaseProblem(
-                    id=f"{self.topic_id.replace('.', '_')}_{idx + 1}_{rng.randint(1000, 9999)}",
-                    prompt_text=data["prompt_text"],
-                    equation_typst=data["equation_typst"],
-                    answer_typst=data["answer_typst"],
-                    steps_typst=data["steps_typst"],
-                    distractors=data["distractors"],
-                    difficulty=diff,
-                    standards=self.standards,
-                    diagram_svg=data.get("diagram_svg"),
-                    answer_svg=data.get("answer_svg"),
-                    generator_id=self.generator_id,
-                    metadata={"topic_id": self.topic_id, "topic_name": self.topic_name},
-                )
+                if data is not None:
+                    eq_key = data["equation_typst"].strip()
+                    if eq_key not in seen_equations or attempt == 49:
+                        seen_equations.add(eq_key)
+                        prob = BaseProblem(
+                            id=f"{self.topic_id.replace('.', '_')}_{idx + 1}_{rng.randint(1000, 9999)}",
+                            prompt_text=data["prompt_text"],
+                            equation_typst=data["equation_typst"],
+                            answer_typst=data["answer_typst"],
+                            steps_typst=data["steps_typst"],
+                            distractors=data["distractors"],
+                            difficulty=diff,
+                            standards=self.standards,
+                            diagram_svg=data.get("diagram_svg"),
+                            answer_svg=data.get("answer_svg"),
+                            generator_id=self.generator_id,
+                            metadata={"topic_id": self.topic_id, "topic_name": self.topic_name},
+                        )
+                        break
+                elif base_cls is not None:
+                    if diff not in base_probs:
+                        sub_cfg = GeneratorConfig(
+                            problem_count=max(config.problem_count * 2, 12),
+                            seed=(config.seed or 42) + idx * 31,
+                            difficulty_distribution={
+                                ProblemDifficulty.MILD: 1.0 if diff == ProblemDifficulty.MILD else 0.0,
+                                ProblemDifficulty.MEDIUM: 1.0 if diff == ProblemDifficulty.MEDIUM else 0.0,
+                                ProblemDifficulty.SPICY: 1.0 if diff == ProblemDifficulty.SPICY else 0.0,
+                            },
+                            allow_negatives=config.allow_negatives,
+                            question_type=config.question_type,
+                        )
+                        base_probs[diff] = base_cls().generate(sub_cfg)
+                    avail = [p for p in base_probs[diff] if p.equation_typst.strip() not in seen_equations]
+                    chosen_bp = avail[0] if avail else base_probs[diff][idx % len(base_probs[diff])]
+                    seen_equations.add(chosen_bp.equation_typst.strip())
+                    prob = chosen_bp.model_copy(deep=True)
+                    prob.generator_id = self.generator_id
+                    prob.metadata["topic_id"] = self.topic_id
+                    prob.metadata["topic_name"] = self.topic_name
+                    break
+
+            if prob is not None:
                 prob.question_type = config.question_type
-                if config.question_type == "multiple_choice":
+                if config.question_type == "multiple_choice" and not prob.choices:
                     self._populate_multiple_choice_choices(prob, rng)
                 problems.append(prob)
-            elif base_cls is not None:
-                if diff not in base_probs:
-                    sub_cfg = GeneratorConfig(
-                        problem_count=max(config.problem_count, 6),
-                        seed=(config.seed or 42) + idx * 31,
-                        difficulty_distribution={
-                            ProblemDifficulty.MILD: 1.0 if diff == ProblemDifficulty.MILD else 0.0,
-                            ProblemDifficulty.MEDIUM: 1.0 if diff == ProblemDifficulty.MEDIUM else 0.0,
-                            ProblemDifficulty.SPICY: 1.0 if diff == ProblemDifficulty.SPICY else 0.0,
-                        },
-                        allow_negatives=config.allow_negatives,
-                        question_type=config.question_type,
-                    )
-                    base_probs[diff] = base_cls().generate(sub_cfg)
-                bp = base_probs[diff][idx % len(base_probs[diff])]
-                bp.generator_id = self.generator_id
-                bp.metadata["topic_id"] = self.topic_id
-                bp.metadata["topic_name"] = self.topic_name
-                problems.append(bp)
 
         return problems
 
