@@ -1991,6 +1991,42 @@ export default function OpenMathForgeApp() {
                             const displayIdx = globalIdx !== -1 ? globalIdx : pageIdx * activePerPage + pIdx;
                             const isOneColVisual = activeColumns === 1 && Boolean(prob.diagram_svg || prob.answer_svg);
 
+                            const getDiagramSizeClasses = () => {
+                              if (activeColumns === 3) {
+                                return showAnswerKey
+                                  ? "[&>svg]:max-h-[145px] [&>svg]:h-[135px] [&>svg]:w-auto [&>svg]:max-w-[170px]"
+                                  : "[&>svg]:max-h-[165px] [&>svg]:h-[155px] [&>svg]:w-auto [&>svg]:max-w-[180px]";
+                              }
+                              if (pageRowCount <= 1) {
+                                return showAnswerKey
+                                  ? "[&>svg]:max-h-[260px] [&>svg]:h-[240px] [&>svg]:w-auto [&>svg]:max-w-[270px]"
+                                  : "[&>svg]:max-h-[300px] [&>svg]:h-[280px] [&>svg]:w-auto [&>svg]:max-w-[310px]";
+                              }
+                              if (pageRowCount === 2) {
+                                if (!showAnswerKey) {
+                                  // Student mode: prominent, textbook-standard coordinate plane (2.25 inches) for drawing/plotting
+                                  return "[&>svg]:max-h-[235px] [&>svg]:h-[220px] [&>svg]:w-auto [&>svg]:max-w-[245px]";
+                                }
+                                const hasChoices = Boolean(prob.choices && prob.choices.length >= 4);
+                                const hasManySteps = Boolean(prob.steps_typst && prob.steps_typst.length > 3);
+                                if (hasChoices || hasManySteps) {
+                                  return "[&>svg]:max-h-[185px] [&>svg]:h-[175px] [&>svg]:w-auto [&>svg]:max-w-[195px]";
+                                }
+                                return "[&>svg]:max-h-[205px] [&>svg]:h-[195px] [&>svg]:w-auto [&>svg]:max-w-[215px]";
+                              }
+                              if (pageRowCount === 3) {
+                                return showAnswerKey
+                                  ? "[&>svg]:max-h-[145px] [&>svg]:h-[135px] [&>svg]:w-auto [&>svg]:max-w-[150px]"
+                                  : "[&>svg]:max-h-[165px] [&>svg]:h-[155px] [&>svg]:w-auto [&>svg]:max-w-[170px]";
+                              }
+                              return "[&>svg]:max-h-[120px] [&>svg]:h-[110px] [&>svg]:w-auto [&>svg]:max-w-[125px]";
+                            };
+
+                            const oneColGraphSizeClasses =
+                              pageRowCount <= 1
+                                ? "[&>svg]:max-h-72 [&>svg]:h-64 [&>svg]:w-auto [&>svg]:max-w-[340px]"
+                                : "[&>svg]:max-h-60 [&>svg]:h-56 [&>svg]:w-auto [&>svg]:max-w-[300px]";
+
                             return (
                               <div
                                 key={`${prob.id}_${displayIdx}`}
@@ -2086,12 +2122,12 @@ export default function OpenMathForgeApp() {
                                       <div className="w-[320px] shrink-0 border-l border-slate-200 pl-3 flex items-center justify-center">
                                         {showAnswerKey && prob.answer_svg ? (
                                           <div
-                                            className="flex justify-center items-center bg-white rounded p-1.5 border border-amber-200/80 shadow-xs [&>svg]:max-h-60 [&>svg]:h-56 [&>svg]:w-auto [&>svg]:max-w-[300px]"
+                                            className={`flex justify-center items-center bg-white rounded p-1.5 border border-amber-200/80 shadow-xs ${oneColGraphSizeClasses}`}
                                             dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
                                           />
                                         ) : prob.diagram_svg ? (
                                           <div
-                                            className="flex justify-center items-center bg-white rounded p-1.5 border border-slate-200/80 shadow-xs [&>svg]:max-h-60 [&>svg]:h-56 [&>svg]:w-auto [&>svg]:max-w-[300px]"
+                                            className={`flex justify-center items-center bg-white rounded p-1.5 border border-slate-200/80 shadow-xs ${oneColGraphSizeClasses}`}
                                             dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
                                           />
                                         ) : null}
@@ -2127,7 +2163,7 @@ export default function OpenMathForgeApp() {
                                        {/* Primary Diagram Slot: 1:1 Teacher/Student Alignment. Shows blank diagram in student mode, or solved diagram with plotted lines in Answer Key mode */}
                                        {(prob.diagram_svg || (showAnswerKey && prob.answer_svg)) && (
                                          <div
-                                           className="my-1 flex justify-center items-center [&>svg]:max-h-36 [&>svg]:h-32 [&>svg]:w-auto [&>svg]:max-w-[160px]"
+                                           className={`my-1 flex justify-center items-center ${getDiagramSizeClasses()}`}
                                            dangerouslySetInnerHTML={{
                                              __html: showAnswerKey && prob.answer_svg
                                                ? prob.answer_svg
