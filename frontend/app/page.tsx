@@ -1880,6 +1880,10 @@ export default function OpenMathForgeApp() {
               ) : (
                 paginatedPages.map((pageProblems, pageIdx) => {
                   const pageRowCount = Math.max(1, Math.ceil(pageProblems.length / activeColumns));
+                  const uniquePrompts = Array.from(
+                    new Set(pageProblems.map((p) => p.prompt_text?.trim()).filter(Boolean))
+                  );
+                  const pageDirections = uniquePrompts.length > 0 ? uniquePrompts.join(" • ") : null;
                   return (
                     <div
                       key={pageIdx}
@@ -1979,6 +1983,11 @@ export default function OpenMathForgeApp() {
 
                       {/* Auto-Fitting Problem Grid: Fills 100% available vertical height within strict 8.5" x 11" bounds */}
                       <div className="flex-1 my-3 flex flex-col min-h-0">
+                        {pageDirections && (
+                          <div className="text-sm font-bold text-slate-900 pb-1 mb-1.5 tracking-tight shrink-0">
+                            {pageDirections}
+                          </div>
+                        )}
                         <div
                           className="grid gap-3 flex-1 h-full"
                           style={{
@@ -2008,11 +2017,12 @@ export default function OpenMathForgeApp() {
                                   return "[&>svg]:max-h-[235px] [&>svg]:h-[220px] [&>svg]:w-auto [&>svg]:max-w-[245px]";
                                 }
                                 const hasChoices = Boolean(prob.choices && prob.choices.length >= 4);
-                                const hasManySteps = Boolean(prob.steps_typst && prob.steps_typst.length > 3);
+                                const hasManySteps = Boolean(prob.steps_typst && prob.steps_typst.length > 2);
                                 if (hasChoices || hasManySteps) {
-                                  return "[&>svg]:max-h-[185px] [&>svg]:h-[175px] [&>svg]:w-auto [&>svg]:max-w-[195px]";
+                                  // Generous clearance for multi-step solution steps (zero cutting off)
+                                  return "[&>svg]:max-h-[160px] [&>svg]:h-[150px] [&>svg]:w-auto [&>svg]:max-w-[170px]";
                                 }
-                                return "[&>svg]:max-h-[205px] [&>svg]:h-[195px] [&>svg]:w-auto [&>svg]:max-w-[215px]";
+                                return "[&>svg]:max-h-[190px] [&>svg]:h-[175px] [&>svg]:w-auto [&>svg]:max-w-[195px]";
                               }
                               if (pageRowCount === 3) {
                                 return showAnswerKey
@@ -2035,7 +2045,7 @@ export default function OpenMathForgeApp() {
                                 {isOneColVisual ? (
                                   /* 1-Column Horizontal Split Layout: Maximizes 736px width for large graphs & scratchwork */
                                   <div className="flex flex-col justify-between h-full">
-                                    <div className="flex items-start justify-between gap-2 mb-1.5 pb-1 border-b border-slate-100 shrink-0">
+                                    <div className="flex items-center justify-between mb-1 pb-1 border-b border-slate-100 shrink-0">
                                       <div className="flex items-center space-x-1.5 shrink-0">
                                         <span className="font-bold text-slate-900">{displayIdx + 1})</span>
                                         <button
@@ -2047,9 +2057,6 @@ export default function OpenMathForgeApp() {
                                         >
                                           <RefreshCw className="w-3 h-3" />
                                         </button>
-                                      </div>
-                                      <div className="text-[11px] font-medium text-slate-600 italic text-right leading-tight">
-                                        {prob.prompt_text}
                                       </div>
                                     </div>
 
@@ -2138,7 +2145,7 @@ export default function OpenMathForgeApp() {
                                   /* Multi-Column Layout: Fills Vertical Real Estate with Prominent, Crisp Graphs */
                                   <div className="flex flex-col justify-between h-full">
                                     <div className="shrink-0">
-                                      <div className="flex items-start justify-between gap-2 mb-1">
+                                      <div className="flex items-center justify-between mb-0.5">
                                         <div className="flex items-center space-x-1.5 shrink-0">
                                           <span className="font-bold text-slate-900">{displayIdx + 1})</span>
                                           <button
@@ -2150,9 +2157,6 @@ export default function OpenMathForgeApp() {
                                           >
                                             <RefreshCw className="w-3 h-3" />
                                           </button>
-                                        </div>
-                                        <div className="text-[11px] font-medium text-slate-600 italic text-right leading-tight">
-                                          {prob.prompt_text}
                                         </div>
                                       </div>
 
