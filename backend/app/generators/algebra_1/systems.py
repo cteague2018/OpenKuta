@@ -51,7 +51,6 @@ class SystemsGraphingGenerator(BaseGenerator):
             ans_typst = f"({x_sol}, {y_sol})"
 
             steps = [
-                f"Given system: $ {system_typst} $",
                 f"Line 1: $ {eq1} $ has slope $ m_1 = {int(m1)} $ and y-intercept $ (0, {int(b1)}) $.",
                 f"Line 2: $ {eq2} $ has slope $ m_2 = {int(m2)} $ and y-intercept $ (0, {int(b2)}) $.",
                 "Graph both lines on the coordinate plane.",
@@ -86,7 +85,6 @@ class SystemsGraphingGenerator(BaseGenerator):
             b2 = b2_fl
 
             steps = [
-                f"Given system: $ {system_typst} $",
                 f"First line is in slope-intercept form: $ {eq1} $ (slope $ m = {m1} $, y-intercept $ (0, {b1}) $).",
                 f"Rewrite second equation into slope-intercept form: $ y = {m2_disp}x {'+ ' if b2 >= 0 else '- '}{abs(b2_disp) if isinstance(b2_disp, int) else b2_disp} $.",
                 "Graph both lines and locate the intersection.",
@@ -114,7 +112,6 @@ class SystemsGraphingGenerator(BaseGenerator):
             ans_typst = f"({x_sol}, {y_sol})"
 
             steps = [
-                f"Given system: $ {system_typst} $",
                 "Convert both equations to slope-intercept form $ y = mx + b $ or find the intercepts.",
                 "Graph both lines carefully on the coordinate plane.",
                 f"Determine coordinates of the intersection: $ ({x_sol}, {y_sol}) $.",
