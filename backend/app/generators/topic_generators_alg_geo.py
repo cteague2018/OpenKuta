@@ -152,14 +152,25 @@ def gen_alg_geo_problem(
             f2 = Fraction(rng.choice([-8, -5, 5, 9]), rng.choice([4, 9, 12]))
         res = f1 / f2 if is_div else f1 * f2
         ans = f"$ {_fmt_frac(res)} $"
+        if is_div:
+            inv_f2 = Fraction(f2.denominator, f2.numerator)
+            prod_n = f1.numerator * inv_f2.numerator
+            prod_d = f1.denominator * inv_f2.denominator
+            step2 = (
+                f"Multiply by the reciprocal of the divisor: "
+                f"${_fmt_frac(f1)} times {_fmt_frac(inv_f2)} = ({f1.numerator} times {inv_f2.numerator}) / ({f1.denominator} times {inv_f2.denominator}) = {prod_n}/{prod_d}$."
+            )
+        else:
+            prod_n = f1.numerator * f2.numerator
+            prod_d = f1.denominator * f2.denominator
+            step2 = (
+                f"Multiply numerators and denominators: "
+                f"$({f1.numerator} times {f2.numerator}) / ({f1.denominator} times {f2.denominator}) = {prod_n}/{prod_d}$."
+            )
         steps = [
             f"Write both rational numbers as fractions: ${_fmt_frac(f1)} {op_sym} {_fmt_frac(f2)}$.",
-            (
-                f"Multiply by the reciprocal of the divisor: ${_fmt_frac(f1)} times {_fmt_frac(Fraction(f2.denominator, f2.numerator))}$."
-                if is_div
-                else "Multiply the numerators together and the denominators together."
-            ),
-            f"Reduce to lowest terms: ${ans.strip('$ ')}$.",
+            step2,
+            f"Reduce to lowest terms: ${ans.strip('$ ')}.",
         ]
         return {
             "prompt_text": f"Find each {'quotient' if is_div else 'product'}. Write your answer in simplest form.",

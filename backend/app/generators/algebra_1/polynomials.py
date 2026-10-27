@@ -134,10 +134,20 @@ class PolynomialFactoringGenerator(BaseGenerator):
         d2 = f"({a}x {'- ' if p > 0 else '+ '}{abs(p)})(x {q_sign})"
         d3 = f"({a}x {p_sign})(x {'- ' if q > 0 else '+ '}{abs(q)})"
 
+        m1 = a * q
+        m2 = p
+        m1_s = f"+ {m1}x" if m1 >= 0 else f"- {abs(m1)}x"
+        m2_s = f"+ {m2}x" if m2 >= 0 else f"- {abs(m2)}x"
+        c_val = p * q
+        c_s = f"+ {c_val}" if c_val >= 0 else f"- {abs(c_val)}"
+        b_sum = a * q + p
+        ac_val = a * c_val
+
         steps = [
-            f"Given non-monic trinomial: $ {eq_typst} $",
-            f"Use grouping / ac method: find factors of $ a c = {a * (p * q)} $ summing to middle coefficient",
-            "Split middle term and factor by grouping",
+            f"Given trinomial: $ {eq_typst} $",
+            f"Find two factors of $a c = {ac_val}$ that sum to $b = {b_sum}$: factors are ${m1}$ and ${m2}$.",
+            f"Split middle term: $ {a}x^2 {m1_s} {m2_s} {c_s} $",
+            f"Factor by grouping: $ ({a}x^2 {m1_s}) + ({m2_s} {c_s}) = {a}x(x {q_sign}) {p_sign}(x {q_sign}) $",
             f"Factored form: $ {ans_typst} $"
         ]
 

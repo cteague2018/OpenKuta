@@ -328,15 +328,24 @@ class PolynomialDivisionGenerator(BaseGenerator):
             lead_p_coeff = a * q2
             f"+ {abs(c_val)}" if c_val < 0 else f"- {c_val}"
 
+            sub1 = sp.expand(q2 * (x**2) * d_expr)
+            diff1 = sp.expand(p_expr - sub1)
+            diff1_str = format_polynomial_typst(diff1, x)
+
+            sub2 = sp.expand(q1 * x * d_expr)
+            diff2 = sp.expand(diff1 - sub2)
+            diff2_str = format_polynomial_typst(diff2, x)
+
+            sub3 = sp.expand(q0 * d_expr)
+
             steps = [
                 f"Set up Polynomial Long Division: $ ({p_str}) / ({d_str}) $",
                 f"Step 1: Divide leading terms: $ ({lead_p_coeff} x^3) / ({a} x) = {q2} x^2 $",
-                f"  Multiply: $ {q2} x^2 dot ({d_str}) = {sp.expand(q2 * x**2 * d_expr)} $",
-                "  Subtract and bring down next term.",
-                f"Step 2: Divide resulting term by $ {a} x $: gives $ {format_polynomial_typst(q1 * x, x) if q1 != 0 else '0'} $",
-                "  Multiply and subtract.",
-                f"Step 3: Divide constant portion by $ {a} x $: gives constant term $ {q0} $",
-                f"  Subtract to find the final remainder: $ R = {rem} $",
+                f"  Multiply and subtract from dividend: $ ({p_str}) - ({format_polynomial_typst(sub1, x)}) = {diff1_str} $",
+                f"Step 2: Divide leading term: $ ({format_polynomial_typst(sp.LT(diff1), x)}) / ({a} x) = {format_polynomial_typst(q1 * x, x) if q1 != 0 else '0'} $",
+                f"  Multiply and subtract: $ ({diff1_str}) - ({format_polynomial_typst(sub2, x)}) = {diff2_str} $",
+                f"Step 3: Divide leading term: $ ({format_polynomial_typst(sp.LT(diff2), x)}) / ({a} x) = {q0} $",
+                f"  Multiply and subtract to find remainder: $ ({diff2_str}) - ({format_polynomial_typst(sub3, x)}) = {rem} $",
                 f"Quotient: $ Q(x) = {format_polynomial_typst(q_expr, x)} $, Remainder: $ R = {rem} $",
                 f"Result: $ {ans_typst} $"
             ]

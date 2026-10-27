@@ -1108,8 +1108,8 @@ def _gen_decoupled_subtopic(
             "equation_typst": f"$ {scale} mat({a}, {b}; {c}, {d}) + mat(1, 2; 3, 4) $",
             "answer_typst": f"$ mat({scale * a + 1}, {scale * b + 2}; {scale * c + 3}, {scale * d + 4}) $",
             "steps_typst": [
-                f"Multiply each entry of the first matrix by scalar ${scale}$.",
-                "Add corresponding entries of the two matrices.",
+                f"Multiply first matrix by scalar ${scale}$: ${scale} mat({a}, {b}; {c}, {d}) = mat({scale * a}, {scale * b}; {scale * c}, {scale * d})$.",
+                f"Add corresponding entries: $mat({scale * a} + 1, {scale * b} + 2; {scale * c} + 3, {scale * d} + 4)$.",
                 f"Result: $mat({scale * a + 1}, {scale * b + 2}; {scale * c + 3}, {scale * d + 4})$.",
             ],
             "distractors": [
@@ -1374,18 +1374,34 @@ def _gen_decoupled_subtopic(
     if c_low == "common factors and common multiples":
         p = rng.choice([2, 3, 5])
         n1 = p * rng.choice([4, 6, 8]) * scale
-        n2 = p * rng.choice([6, 9, 10]) * scale
+        n2_pool = [x for x in [6, 9, 10, 12, 14, 15] if p * x * scale != n1]
+        n2 = p * rng.choice(n2_pool) * scale
         g_val = math.gcd(n1, n2)
         l_val = math.lcm(n1, n2)
+        def _calc_pfactors(val: int) -> list[int]:
+            res_facs = []
+            cur_d = 2
+            temp_v = val
+            while cur_d * cur_d <= temp_v:
+                while temp_v % cur_d == 0:
+                    res_facs.append(cur_d)
+                    temp_v //= cur_d
+                cur_d += 1
+            if temp_v > 1:
+                res_facs.append(temp_v)
+            return res_facs
+
         if "greatest common factor" in t_low:
+            pf1_str = " times ".join(str(x) for x in _calc_pfactors(n1))
+            pf2_str = " times ".join(str(x) for x in _calc_pfactors(n2))
             return {
                 "prompt_text": "Find the greatest common factor (GCF) of the given numbers.",
                 "equation_typst": f"$ \"GCF\"({n1}, {n2}) $",
                 "answer_typst": f"$ {g_val} $",
                 "steps_typst": [
-                    f"List the prime factors of ${n1}$ and ${n2}$.",
-                    "Multiply the prime factors common to both numbers.",
-                    f"Greatest Common Factor = ${g_val}$.",
+                    f"Prime factorization of ${n1}$: ${pf1_str}$.",
+                    f"Prime factorization of ${n2}$: ${pf2_str}$.",
+                    f"Multiply common prime factors: $\"GCF\"({n1}, {n2}) = {g_val}$.",
                 ],
                 "distractors": [f"$ {l_val} $", f"$ {g_val * 2} $", f"$ {max(1, g_val // 2)} $"],
             }
@@ -3593,7 +3609,7 @@ def _gen_decoupled_subtopic(
             "answer_typst": f"$ {lcm_v} \" {unit}\" $",
             "steps_typst": [
                 f"Find the Least Common Multiple (LCM) of ${a}$ and ${b}$.",
-                f"Prime factorization / GCD: $\text{{gcd}}({a}, {b}) = {g}$.",
+                f"Prime factorization / GCD: $\"gcd\"({a}, {b}) = {g}$.",
                 f"LCM: $({a} times {b}) / {g} = {lcm_v}$ {unit}.",
             ],
             "distractors": [f"$ {g} \" {unit}\" $", f"$ {a + b} \" {unit}\" $", f"$ {a * b} \" {unit}\" $"],
@@ -3608,9 +3624,9 @@ def _gen_decoupled_subtopic(
             "equation_typst": f"$ ({a} + {b}) + {c} = {a} + ({b} + {c}) $",
             "answer_typst": "$ \"Associative Property of Addition\" $",
             "steps_typst": [
-                "Observe that the order of the addends does not change, only their grouping with parentheses.",
-                "Changing the grouping of addends illustrates the Associative Property of Addition.",
-                "Answer: Associative Property of Addition.",
+                f"Given expression: $({a} + {b}) + {c} = {a} + ({b} + {c})$.",
+                f"Evaluate both groupings: $({a + b}) + {c} = {a + b + c}$ and ${a} + ({b + c}) = {a + b + c}$.",
+                "Because changing parentheses grouping $(a + b) + c = a + (b + c)$ preserves sum equality, this illustrates the Associative Property of Addition.",
             ],
             "distractors": [
                 "$ \"Commutative Property of Addition\" $",
