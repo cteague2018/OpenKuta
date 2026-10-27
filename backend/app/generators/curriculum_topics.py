@@ -14,7 +14,6 @@ from backend.app.core.base import (
 from backend.app.core.svg_utils import (
     svg_circle_diagram,
     svg_coordinate_plane,
-    svg_data_table,
     svg_general_triangle,
     svg_number_line,
     svg_parallel_transversal,
@@ -65,7 +64,6 @@ def _gen_decoupled_subtopic(
     tot: Any
     rhs: Any
     dx: Any
-    lram: Any
 
     # ------------------------------------------------------------------
     # A. CALCULUS DIFFERENTIATION SUBTOPICS
@@ -560,7 +558,6 @@ def _gen_decoupled_subtopic(
             num_str = f"x^2 {mid_str} {const_str}".strip()
             ans_val = a + b
             denom_str = f"x {'+' if a < 0 else '-'} {abs(a)}"
-            num_factored = f"(x {'+' if a < 0 else '-'} {abs(a)})(x {'+' if b < 0 else '+'} {abs(b)}).replace('+-', '-')"
             return {
                 "prompt_text": "Evaluate the limit at the removable discontinuity by factoring and canceling.",
                 "equation_typst": f"$ lim_(x arrow.r {a}) ({num_str})/({denom_str}) $",
@@ -674,21 +671,21 @@ def _gen_decoupled_subtopic(
             method = rng.choice(["LRAM", "RRAM"])
             if method == "LRAM":
                 pts = list(range(0, n))
-                vals = [x * x + c_val for x in pts]
-                approx_sum = sum(vals)
+                f_vals = [float(x * x + c_val ) for x in pts]
+                approx_sum = sum(f_vals)
                 m_label = f"L_{n}"
                 step_pts = f"left endpoints $x = {', '.join(str(p) for p in pts)}$"
             else:
                 pts = list(range(1, n + 1))
-                vals = [x * x + c_val for x in pts]
-                approx_sum = sum(vals)
+                f_vals = [float(x * x + c_val ) for x in pts]
+                approx_sum = sum(f_vals)
                 m_label = f"R_{n}"
                 step_pts = f"right endpoints $x = {', '.join(str(p) for p in pts)}$"
 
-            def _fn_area(x: float, _c=c_val) -> float:
-                return 0.15 * x * x + _c
+            def _fn_area(x: float) -> float:
+                return float(0.15 * float(x) * float(x) + float(c_val))
 
-            boxes = [(pts[i] if method == "LRAM" else pts[i] - 1, _fn_area(pts[i]), 1) for i in range(n)]
+            boxes = [(pts[i] if method == "LRAM" else pts[i] - 1, _fn_area(float(pts[i])), 1) for i in range(n)]
 
             return {
                 "prompt_text": f"Approximate the area under f(x) = x^2 + {c_val} on [0, {b_end}] using a {method} sum with n = {n} subintervals.",
@@ -696,8 +693,8 @@ def _gen_decoupled_subtopic(
                 "answer_typst": f"$ {m_label} = {approx_sum} $",
                 "steps_typst": [
                     f"Subinterval width $Delta x = ({b_end} - 0)/{n} = {dx}$, with {step_pts}.",
-                    f"Evaluate $f(x)$ values: ${' + '.join(str(v) for v in vals)}$.",
-                    f"Sum rectangle areas: ${m_label} = {dx}({' + '.join(str(v) for v in vals)}) = {approx_sum}$.",
+                    f"Evaluate $f(x)$ values: ${' + '.join(str(v) for v in f_vals)}$.",
+                    f"Sum rectangle areas: ${m_label} = {dx}({' + '.join(str(v) for v in f_vals)}) = {approx_sum}$.",
                 ],
                 "distractors": [f"$ {m_label} = {approx_sum + n * 2} $", f"$ {m_label} = {max(1, approx_sum - n * 2)} $", f"$ {m_label} = {approx_sum + 10} $"],
                 "diagram_svg": svg_coordinate_plane(functions=[{"fn": _fn_area, "x_start": 0, "x_end": b_end, "color": "#1d4ed8"}], riemann_boxes=boxes),
@@ -1021,15 +1018,15 @@ def _gen_decoupled_subtopic(
         a = rng.randint(5, 10) * scale
         b = rng.randint(6, 12) * scale
         c_sq = a * a + b * b - a * b
-        c_val = round(math.sqrt(c_sq), 1)
+        c_side = round(math.sqrt(c_sq), 1)
         return {
             "prompt_text": "Use the Law of Cosines to find side c to the nearest tenth.",
             "equation_typst": f"$ a = {a}, quad b = {b}, quad m angle C = 60^circle $",
-            "answer_typst": f"$ c = sqrt({c_sq}) approx {c_val} $",
+            "answer_typst": f"$ c = sqrt({c_sq}) approx {c_side} $",
             "steps_typst": [
                 "Apply the Law of Cosines: $c^2 = a^2 + b^2 - 2 a b cos(C)$.",
                 f"Substitute $a = {a}, b = {b}, cos(60^circle) = 1/2$: $c^2 = {a}^2 + {b}^2 - {a}({b}) = {c_sq}$.",
-                f"Take the square root: $c = sqrt({c_sq}) approx {c_val}$.",
+                f"Take the square root: $c = sqrt({c_sq}) approx {c_side}$.",
             ],
             "distractors": [
                 f"$ c = sqrt({a * a + b * b}) approx {round(math.hypot(a, b), 1)} $",
@@ -1037,7 +1034,7 @@ def _gen_decoupled_subtopic(
                 f"$ c = sqrt({a * a + b * b + a * b}) $",
             ],
             "diagram_svg": svg_general_triangle(side_a=str(a), side_b=str(b), side_c="c=?", angle_c="60 deg"),
-            "answer_svg": svg_general_triangle(side_a=str(a), side_b=str(b), side_c=f"c={c_val}", angle_c="60 deg"),
+            "answer_svg": svg_general_triangle(side_a=str(a), side_b=str(b), side_c=f"c={c_side}", angle_c="60 deg"),
         }
 
     # ------------------------------------------------------------------
@@ -1652,13 +1649,13 @@ def _gen_decoupled_subtopic(
             return {
                 "prompt_text": f"Find the final account balance for an investment compounded {desc}.",
                 "equation_typst": f"$ P = \\${p_princ}, quad r = {r_pct}%, quad t = {t_yrs} \" years\", quad \"compounded \" {desc} $",
-                "answer_typst": f"$ A = \${amt:,.2f} $",
+                "answer_typst": rf"$ A = \${amt:,.2f} $",
                 "steps_typst": [
                     f"Use compound interest formula $A = P(1 + r/n)^(n t)$ with $n = {m_comp}$.",
-                    f"Substitute: $\${p_princ}(1 + {r_pct / 100}/{m_comp})^({m_comp} times {t_yrs})$.",
-                    f"Compute final balance: $A = \${amt:,.2f}$.",
+                    rf"Substitute: $\${p_princ}(1 + {r_pct / 100}/{m_comp})^({m_comp} times {t_yrs})$.",
+                    rf"Compute final balance: $A = \${amt:,.2f}$.",
                 ],
-                "distractors": [f"$ A = \${amt + 100:,.2f} $", f"$ A = \${p_princ * (1 + (r_pct * t_yrs)/100):,.2f} $", f"$ A = \${amt * 1.1:,.2f} $"],
+                "distractors": [rf"$ A = \${amt + 100:,.2f} $", rf"$ A = \${p_princ * (1 + (r_pct * t_yrs)/100):,.2f} $", rf"$ A = \${amt * 1.1:,.2f} $"],
             }
     # ------------------------------------------------------------------
     # O. SLOPE FROM A GRAPH VS SLOPE FROM TWO POINTS
@@ -1984,11 +1981,11 @@ def _gen_decoupled_subtopic(
         p2 = rng.choice([4, 5])
         val = (base_b ** p1) * (base_b ** p2)
         return {
-            "prompt_text": f"Use logarithmic properties to write the expression in terms of simpler logarithms.",
+            "prompt_text": "Use logarithmic properties to write the expression in terms of simpler logarithms.",
             "equation_typst": f"$ log_({base_b})({base_b}^{p1} times {base_b}^{p2}) $",
             "answer_typst": f"$ {p1 + p2} $",
             "steps_typst": [
-                f"Apply product rule of logarithms: $log_b(M N) = log_b(M) + log_b(N)$.",
+                "Apply product rule of logarithms: $log_b(M N) = log_b(M) + log_b(N)$.",
                 f"Separate terms: $log_({base_b})({base_b}^{p1}) + log_({base_b})({base_b}^{p2}) = {p1} + {p2}$.",
                 f"Sum: ${p1 + p2}$.",
             ],
@@ -2256,7 +2253,7 @@ def _gen_decoupled_subtopic(
                     "equation_typst": f"$ integral {k * m} sec^2({m}x) d x $",
                     "answer_typst": f"$ {k} tan({m}x) + C $",
                     "steps_typst": [
-                        f"Recall standard form $integral sec^2(u) d u = tan(u) + C$.",
+                        "Recall standard form $integral sec^2(u) d u = tan(u) + C$.",
                         f"Substitute $u = {m}x$ and $d u = {m} d x$: $({k * m}/{m}) integral sec^2(u) d u$.",
                         f"Evaluate: ${k} tan({m}x) + C$.",
                     ],
@@ -2268,7 +2265,7 @@ def _gen_decoupled_subtopic(
                     "equation_typst": f"$ integral {k * m} csc^2({m}x) d x $",
                     "answer_typst": f"$ -{k} cot({m}x) + C $",
                     "steps_typst": [
-                        f"Recall standard form $integral csc^2(u) d u = -cot(u) + C$.",
+                        "Recall standard form $integral csc^2(u) d u = -cot(u) + C$.",
                         f"Substitute $u = {m}x$ and $d u = {m} d x$: $({k * m}/{m}) integral csc^2(u) d u$.",
                         f"Evaluate: $-{k} cot({m}x) + C$.",
                     ],
@@ -2280,7 +2277,7 @@ def _gen_decoupled_subtopic(
                     "equation_typst": f"$ integral {k * m} sec({m}x) tan({m}x) d x $",
                     "answer_typst": f"$ {k} sec({m}x) + C $",
                     "steps_typst": [
-                        f"Recall standard form $integral sec(u) tan(u) d u = sec(u) + C$.",
+                        "Recall standard form $integral sec(u) tan(u) d u = sec(u) + C$.",
                         f"Substitute $u = {m}x$ and $d u = {m} d x$: $({k * m}/{m}) integral sec(u) tan(u) d u$.",
                         f"Evaluate: ${k} sec({m}x) + C$.",
                     ],
@@ -2742,7 +2739,7 @@ def _gen_decoupled_subtopic(
                 "distractors": [
                     f"$ sin(theta) = {_fmt_frac(cos_f)}, quad cos(theta) = {_fmt_frac(sin_f)} $",
                     f"$ sin(theta) = {_fmt_frac(Fraction(-y, r))}, quad cos(theta) = {_fmt_frac(Fraction(-x, r))} $",
-                    f"$ sin(theta) = 1, quad cos(theta) = 0 $",
+                    "$ sin(theta) = 1, quad cos(theta) = 0 $",
                 ],
             }
         if "product_to_sum" in t_low or "product-to-sum" in t_low or "product to sum" in t_low:
@@ -2802,7 +2799,7 @@ def _gen_decoupled_subtopic(
                     f"Apply double angle formula: $sin(2 theta) = 2 sin(theta) cos(theta) = 2({opp}/{hyp})({adj}/{hyp}) = {_fmt_frac(sin_2t)}$.",
                     f"Apply $cos(2 theta) = cos^2(theta) - sin^2(theta) = ({adj}/{hyp})^2 - ({opp}/{hyp})^2 = {_fmt_frac(cos_2t)}$.",
                 ],
-                "distractors": [f"$ sin(2 theta) = {2 * opp}/{hyp} $", f"$ sin(2 theta) = {_fmt_frac(cos_2t)} $", f"$ sin(2 theta) = 1 $"],
+                "distractors": [f"$ sin(2 theta) = {2 * opp}/{hyp} $", f"$ sin(2 theta) = {_fmt_frac(cos_2t)} $", "$ sin(2 theta) = 1 $"],
             }
 
         if "sum_and_difference" in t_low or "sum and difference" in t_low or "sum_difference" in t_low or "angle_sum" in t_low:
@@ -2817,7 +2814,7 @@ def _gen_decoupled_subtopic(
                 ("285", "315", "-", "30", "-(sqrt(6) + sqrt(2))", "4", "sqrt(6) - sqrt(2)", "4", "-(2 + sqrt(3))"),
                 ("345", "315", "+", "30", "-(sqrt(6) - sqrt(2))", "4", "sqrt(6) + sqrt(2)", "4", "-(2 - sqrt(3))"),
             ]
-            ang_name, a1, sign_op, a2, s_num, s_den, c_num, c_den, tan_val = rng.choice(ang_list)
+            ang_name, ang1, sign_op, ang2, s_num, s_den, c_num, c_den, tan_val = rng.choice(ang_list)
             k_mult = rng.choice([1, 2, 3, 4, 5])
             if fn_t == "sin":
                 ans_str = f"$ ({s_num}) / ({s_den}) $" if k_mult == 1 else f"$ ({k_mult}({s_num})) / ({s_den}) $"
@@ -2833,10 +2830,10 @@ def _gen_decoupled_subtopic(
             prefix = f"{k_mult} " if k_mult > 1 else ""
             return {
                 "prompt_text": f"Use the sum or difference identity to find the exact value of {prefix}{fn_t}({ang_name} deg).",
-                "equation_typst": f"$ {prefix}{fn_t}({ang_name}^circle) = {prefix}{fn_t}({a1}^circle {sign_op} {a2}^circle) $",
+                "equation_typst": f"$ {prefix}{fn_t}({ang_name}^circle) = {prefix}{fn_t}({ang1}^circle {sign_op} {ang2}^circle) $",
                 "answer_typst": ans_str,
                 "steps_typst": [
-                    f"Express ${ang_name}^circle$ as a sum or difference of special angles: ${a1}^circle {sign_op} {a2}^circle$.",
+                    f"Express ${ang_name}^circle$ as a sum or difference of special angles: ${ang1}^circle {sign_op} {ang2}^circle$.",
                     f"Apply identity ${id_formula}$.",
                     f"Substitute exact values of special angles and simplify to find ${ans_str.replace('$', '')}$.",
                 ],
@@ -3195,7 +3192,7 @@ def _gen_decoupled_subtopic(
         a_coef = rng.randint(2, 7)
         if "power series" in t_low:
             x0_shift = rng.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
-            x_term = f"x" if x0_shift == 0 else (f"(x - {x0_shift})" if x0_shift > 0 else f"(x + {abs(x0_shift)})")
+            x_term = "x" if x0_shift == 0 else (f"(x - {x0_shift})" if x0_shift > 0 else f"(x + {abs(x0_shift)})")
             int_left = x0_shift - c
             int_right = x0_shift + c
             return {
@@ -3439,19 +3436,19 @@ def _gen_decoupled_subtopic(
         k = rng.randint(2, 4 * scale)
         ab, ac = 3 * k, 5 * k
         bd = 3 * rng.randint(1, 3)
-        dc = 5 * (bd // 3)
+        dc_val = 5 * (bd // 3)
         return {
             "prompt_text": "Ray AD bisects angle BAC in triangle ABC. Use the Triangle Angle Bisector Theorem to find DC.",
             "equation_typst": f"$ A B = {ab}, quad A C = {ac}, quad B D = {bd}, quad D C = x $",
-            "answer_typst": f"$ x = {dc} $",
+            "answer_typst": f"$ x = {dc_val} $",
             "steps_typst": [
                 "By the Triangle Angle Bisector Theorem, $(B D)/(D C) = (A B)/(A C)$.",
                 f"Substitute the given side lengths: $({bd})/(x) = ({ab})/({ac})$.",
-                f"Cross-multiply and solve: ${ab}x = {bd * ac} arrow.r.double x = {dc}$.",
+                f"Cross-multiply and solve: ${ab}x = {bd * ac} arrow.r.double x = {dc_val}$.",
             ],
             "distractors": [f"$ x = {bd + 2} $", f"$ x = {ac} $", f"$ x = {ab} $"],
             "diagram_svg": svg_general_triangle(side_c=f"AB={ab}", side_b=f"AC={ac}", side_a=f"BD={bd}, DC=x"),
-            "answer_svg": svg_general_triangle(side_c=f"AB={ab}", side_b=f"AC={ac}", side_a=f"DC={dc}"),
+            "answer_svg": svg_general_triangle(side_c=f"AB={ab}", side_b=f"AC={ac}", side_a=f"DC={dc_val}"),
         }
 
     if "geometric diagrams and notation" in t_low:

@@ -60,7 +60,6 @@ def gen_alg_geo_problem(
     n: Any
     p: Any
     r: Any
-    s: Any
     t: Any
     v: Any
     w: Any
@@ -1627,8 +1626,6 @@ def gen_alg_geo_problem(
 
         if "regular polygon" in t_low or "polygon basics" in t_low or "polygons" in t_low:
             n = rng.randint(3, 25)
-            s = rng.randint(4, 25)
-            a = rng.randint(3, 20)
             sum_int = (n - 2) * 180
             each_int = round(sum_int / n, 1)
             each_ext = round(360 / n, 1)

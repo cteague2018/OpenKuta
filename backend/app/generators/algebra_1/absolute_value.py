@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
-from backend.app.core.svg_utils import svg_coordinate_plane, svg_coordinate_plane_pair
+from backend.app.core.svg_utils import svg_coordinate_plane_pair
 
 
 class AbsoluteValueEquationsGenerator(BaseGenerator):

@@ -816,7 +816,7 @@ def gen_adv_problem(
             directrix_var = "x" if fn_trig == "cos" else "y"
             directrix_sign = sign_str
             if conic_choice == "parabola":
-                e_val = 1
+                e_val: float = 1.0
                 e_str = "1"
                 d_val = rng.randint(2, 8)
                 ed_val = d_val
@@ -963,7 +963,7 @@ def gen_adv_problem(
                 "distractors": [
                     f"$ \"Circle with radius \" {r_val} $",
                     f"$ \"Limaçon with inner loop, max r = \" {2 * r_val} $",
-                    f"$ \"Archimedean spiral\" $",
+                    "$ \"Archimedean spiral\" $",
                 ],
                 "diagram_svg": svg_polar_grid(),
                 "answer_svg": svg_polar_grid(curve_points=curve),
@@ -1527,7 +1527,7 @@ def gen_adv_problem(
         ibp_type = rng.choice(["x_exp", "x_sin", "x_cos", "x_n_ln", "x_sec2"])
         c_mult = rng.choice([1, 2, 3, 4, 5])
         k = rng.choice([k for k in range(-8, 9) if k != 0])
-        kx = "x" if k == 1 else (f"-x" if k == -1 else f"{k}x")
+        kx = "x" if k == 1 else ("-x" if k == -1 else f"{k}x")
         if ibp_type == "x_sec2":
             return {
                 "prompt_text": "Evaluate the indefinite integral using integration by parts.",
@@ -1558,7 +1558,7 @@ def gen_adv_problem(
                 "distractors": [
                     f"$ (x^({n_pow + 1}))/({n_pow + 1}) ln(x) + C $",
                     f"$ (x^({n_pow}))/({n_pow}) ln(x) - x + C $",
-                    f"$ (ln(x))^2 / 2 + C $",
+                    "$ (ln(x))^2 / 2 + C $",
                 ],
             }
         elif ibp_type == "x_sin":
@@ -1611,6 +1611,8 @@ def gen_adv_problem(
             }
 
     if "area between curves" in t_low or "area under a curve" in t_low:
+        fn_top_math: Any
+        fn_bot_math: Any
         variant = rng.choice(["parabola_axis", "line_parabola", "shifted_line_parabola", "cubic_axis", "parabola_const"])
         if variant == "parabola_axis":
             b = rng.randint(2, 6)
@@ -1620,10 +1622,10 @@ def gen_adv_problem(
             area_f = Fraction(4 * a * (b ** 3), 3)
             quad_s = f"{c} - x^2" if a == 1 else f"{c} - {a}x^2"
 
-            def fn_top_math(x, _c=c, _a=a):
-                return (_c - _a * x * x) * (6.0 / max(c, 1))
+            def fn_top_math(x: float) -> float:
+                return float((c - a * x * x) * (6.0 / max(c, 1)))
 
-            def fn_bot_math(x):
+            def fn_bot_math(x: float) -> float:
                 return 0.0
 
             x_a, x_b = -b, b
@@ -1637,11 +1639,11 @@ def gen_adv_problem(
             m = rng.randint(2, 7)
             area_f = Fraction(m ** 3, 6)
 
-            def fn_top_math(x, _m=m):
-                return _m * x * (6.0 / (_m * _m))
+            def fn_top_math(x: float) -> float:
+                return float(m * x * (6.0 / (m * m)))
 
-            def fn_bot_math(x, _m=m):
-                return (x * x) * (6.0 / (_m * _m))
+            def fn_bot_math(x: float) -> float:
+                return float((x * x) * (6.0 / (m * m)))
 
             x_a, x_b = 0, m
             eq_s = f"$ y = {m}x \" and \" y = x^2 \" on \" [0, {m}] $"
@@ -1661,11 +1663,11 @@ def gen_adv_problem(
             c_str = f"+ {c_l}" if c_l > 0 else (f"- {abs(c_l)}" if c_l < 0 else "")
             line_expr = f"{m_str} {c_str}".strip() or "0"
 
-            def fn_top_math(x, _m=m_l, _c=c_l):
-                return _m * x + _c
+            def fn_top_math(x: float) -> float:
+                return float(m_l * x + c_l)
 
-            def fn_bot_math(x):
-                return x * x
+            def fn_bot_math(x: float) -> float:
+                return float(x * x)
 
             x_a, x_b = r1, r2
             eq_s = f"$ y = {line_expr} \" and \" y = x^2 \" on \" [{r1}, {r2}] $"
@@ -1679,10 +1681,10 @@ def gen_adv_problem(
             k2 = k * k
             area_f = Fraction(k ** 4, 4)
 
-            def fn_top_math(x, _k2=k2):
-                return (_k2 * x - x ** 3) * (6.0 / (_k2 * 1.5))
+            def fn_top_math(x: float) -> float:
+                return float((k2 * x - x ** 3) * (6.0 / (k2 * 1.5)))
 
-            def fn_bot_math(x):
+            def fn_bot_math(x: float) -> float:
                 return 0.0
 
             x_a, x_b = 0, k
@@ -1698,11 +1700,11 @@ def gen_adv_problem(
             c_top = c + k * k
             area_f = Fraction(4 * (k ** 3), 3)
 
-            def fn_top_math(x, _ct=c_top):
-                return (_ct - x * x)
+            def fn_top_math(x: float) -> float:
+                return float(c_top - x * x)
 
-            def fn_bot_math(x, _c=c):
-                return float(_c)
+            def fn_bot_math(x: float) -> float:
+                return float(c)
 
             x_a, x_b = -k, k
             eq_s = f"$ y = {c_top} - x^2 \" and \" y = {c} \" on \" [-{k}, {k}] $"
@@ -1805,6 +1807,8 @@ def gen_adv_problem(
         a = rng.choice([-3, -2, -1, 1, 2, 3])
         b = rng.choice([-3, -2, -1, 1, 2, 3])
         sf_case = rng.choice(["linear_x", "linear_y", "sum_xy", "circle_field"])
+        fn_sf: Any
+        fn_sol: Any
         if sf_case == "linear_x":
             eq_typst = f"$ (d y)/(d x) = {'' if a == 1 else ('-' if a == -1 else a)}x $"
             ans_typst = f"$ y = ({a})/(2) x^2 + C; quad \"Slopes depend only on \" x $"
@@ -1833,18 +1837,22 @@ def gen_adv_problem(
                 "Separating variables: $y d y = -x d x ==> x^2 + y^2 = C$.",
                 "Field forms concentric circles centered at origin.",
             ]
-            fn_sf = lambda x, y: -x / y if abs(y) > 0.3 else 10.0
-            fn_sol = lambda x: math.sqrt(max(0.0, 16.0 - x * x))
+            def fn_sf(x: float, y: float) -> float:
+                return -x / y if abs(y) > 0.3 else 10.0
+            def fn_sol(x: float) -> float:
+                return float(math.sqrt(max(0.0, 16.0 - x * x)))
         else:
             eq_typst = f"$ (d y)/(d x) = {a}x {'+' if b >= 0 else '-'} {abs(b)}y $"
-            ans_typst = f"$ \"Slopes depend on both \" x \" and \" y $"
+            ans_typst = "$ \"Slopes depend on both \" x \" and \" y $"
             steps = [
                 f"Evaluate slope at sample coordinates: $m = {a}x {'+' if b >= 0 else '-'} {abs(b)}y$.",
                 f"Isoclines occur along straight lines where ${a}x {'+' if b >= 0 else '-'} {abs(b)}y = c$.",
                 "Sketch directional field segments at each lattice point.",
             ]
-            fn_sf = lambda x, y, _a=a, _b=b: (_a * x + _b * y) / 4.0
-            fn_sol = lambda x, _a=a: _a * x * 0.3
+            def fn_sf(x: float, y: float) -> float:
+                return float((a * x + b * y) / 4.0)
+            def fn_sol(x: float) -> float:
+                return float(a * x * 0.3)
 
         return {
             "prompt_text": "Match the differential equation with its slope field and identify key solution curve features.",
@@ -1859,3 +1867,4 @@ def gen_adv_problem(
             "diagram_svg": svg_coordinate_plane(slope_field=fn_sf),
             "answer_svg": svg_coordinate_plane(slope_field=fn_sf, functions=[{"fn": fn_sol, "color": "#dc2626"}]),
         }
+    return None
