@@ -275,26 +275,34 @@ def gen_adv_problem(
             ],
         }
 
-    if "sum/difference of cubes" in t_low:
-        b = rng.choice([2, 3, 4, 5])
+    if "sum/difference of cubes" in t_low or "sum/differenc" in t_low:
+        a_base = rng.choice([1, 1, 1, 2, 3, 4, 5])
+        b_base = rng.choice([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+        while math.gcd(a_base, b_base) > 1:
+            b_base = rng.randint(1, 10)
         is_sum = rng.choice([True, False])
         sgn1 = "+" if is_sum else "-"
         sgn2 = "-" if is_sum else "+"
-        b3 = b ** 3
-        b2 = b * b
+        a3 = a_base ** 3
+        b3 = b_base ** 3
+        a_term = f"{a_base}x" if a_base > 1 else "x"
+        a3_term = f"{a3}x^3" if a3 > 1 else "x^3"
+        a2_term = f"{a_base * a_base}x^2" if a_base > 1 else "x^2"
+        mid_term = f"{a_base * b_base}x"
+        b2 = b_base * b_base
         return {
             "prompt_text": "Factor the sum or difference of cubes completely.",
-            "equation_typst": f"$ x^3 {sgn1} {b3} $",
-            "answer_typst": f"$ (x {sgn1} {b})(x^2 {sgn2} {b}x + {b2}) $",
+            "equation_typst": f"$ {a3_term} {sgn1} {b3} $",
+            "answer_typst": f"$ ({a_term} {sgn1} {b_base})({a2_term} {sgn2} {mid_term} + {b2}) $",
             "steps_typst": [
-                f"Rewrite as cubes: $x^3 {sgn1} {b}^3$.",
-                f"Apply the formula $a^3 {sgn1} b^3 = (a {sgn1} b)(a^2 {sgn2} a b + b^2)$.",
-                f"Substitute $a = x$ and $b = {b}$: $(x {sgn1} {b})(x^2 {sgn2} {b}x + {b2})$.",
+                f"Rewrite as cubes: $({a_term})^3 {sgn1} {b_base}^3$.",
+                f"Apply the identity $A^3 {sgn1} B^3 = (A {sgn1} B)(A^2 {sgn2} A B + B^2)$.",
+                f"Substitute $A = {a_term}$ and $B = {b_base}$: $({a_term} {sgn1} {b_base})({a2_term} {sgn2} {mid_term} + {b2})$.",
             ],
             "distractors": [
-                f"$ (x {sgn1} {b})(x^2 {sgn1} {b}x + {b2}) $",
-                f"$ (x {sgn1} {b})^3 $",
-                f"$ (x {sgn2} {b})(x^2 {sgn1} {b}x - {b2}) $",
+                f"$ ({a_term} {sgn1} {b_base})({a2_term} {sgn1} {mid_term} + {b2}) $",
+                f"$ ({a_term} {sgn1} {b_base})^3 $",
+                f"$ ({a_term} {sgn2} {b_base})({a2_term} {sgn1} {mid_term} - {b2}) $",
             ],
         }
 
@@ -302,9 +310,9 @@ def gen_adv_problem(
         c = rng.choice([-3, -2, -1, 2, 3])
         a2, a1, a0 = rng.randint(1, 3), rng.randint(-5, 5), rng.randint(-6, 6)
         rem = (c ** 3) + a2 * (c ** 2) + a1 * c + a0
-        s2 = f"+ {a2}x^2" if a2 >= 0 else f"- {abs(a2)}x^2"
-        s1 = f"+ {a1}x" if a1 >= 0 else f"- {abs(a1)}x"
-        s0 = f"+ {a0}" if a0 >= 0 else f"- {abs(a0)}"
+        s2 = f"+ {a2}x^2" if a2 > 0 else (f"- {abs(a2)}x^2" if a2 < 0 else "")
+        s1 = f"+ {a1}x" if a1 > 0 else (f"- {abs(a1)}x" if a1 < 0 else "")
+        s0 = f"+ {a0}" if a0 > 0 else (f"- {abs(a0)}" if a0 < 0 else "")
         div_str = f"x - {c}" if c > 0 else f"x + {abs(c)}"
         return {
             "prompt_text": "Use the Remainder Theorem to evaluate P(c) and find the remainder of the division.",
@@ -357,24 +365,56 @@ def gen_adv_problem(
         }
 
     if "fundamental theorem of algebra" in t_low or "complex zeros" in t_low:
-        deg = rng.choice([3, 4, 5])
-        r = rng.randint(1, 3)
-        b = rng.randint(2, 5)
-        return {
-            "prompt_text": "State the total number of complex zeros (counting multiplicity) and find all zeros of the polynomial.",
-            "equation_typst": f"$ P(x) = (x - {r})(x^2 + {b * b}) $",
-            "answer_typst": f"$ 3 \" zeros\": x = {r}, plus.minus {b}i $",
-            "steps_typst": [
-                "By the Fundamental Theorem of Algebra, a degree-3 polynomial has exactly $3$ complex zeros.",
-                f"Set $(x - {r}) = 0 arrow.r.double x = {r}$.",
-                f"Set $x^2 + {b * b} = 0 arrow.r.double x = plus.minus {b}i$.",
-            ],
-            "distractors": [
-                f"$ 2 \" zeros\": x = {r}, {b} $",
-                f"$ 3 \" zeros\": x = {-r}, plus.minus {b} $",
-                f"$ 1 \" zero\": x = {r} $",
-            ],
-        }
+        deg_case = rng.choice(["deg3", "deg4", "deg5"])
+        if deg_case == "deg4":
+            r1 = rng.choice([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
+            r2 = rng.choice([k for k in range(-5, 6) if k != 0 and k != r1])
+            b = rng.randint(1, 8)
+            s_r1 = f"- {r1}" if r1 > 0 else f"+ {abs(r1)}"
+            s_r2 = f"- {r2}" if r2 > 0 else f"+ {abs(r2)}"
+            return {
+                "prompt_text": "State the total number of complex zeros (counting multiplicity) and find all zeros of the polynomial.",
+                "equation_typst": f"$ P(x) = (x {s_r1})(x {s_r2})(x^2 + {b * b}) $",
+                "answer_typst": f"$ 4 \" zeros\": x = {r1}, {r2}, plus.minus {b}i $",
+                "steps_typst": [
+                    "By the Fundamental Theorem of Algebra, a degree-4 polynomial has exactly $4$ complex zeros.",
+                    f"Set linear factors to zero: $x = {r1}$ and $x = {r2}$.",
+                    f"Set quadratic factor $x^2 + {b * b} = 0 ==> x = plus.minus {b}i$.",
+                ],
+                "distractors": [f"$ 4 \" zeros\": x = {-r1}, {-r2}, plus.minus {b} $", f"$ 2 \" zeros\": x = {r1}, {r2} $", f"$ 4 \" zeros\": x = {r1}, {r2}, plus.minus {b} $"],
+            }
+        elif deg_case == "deg5":
+            r1 = rng.randint(1, 5)
+            b = rng.randint(1, 6)
+            c = rng.randint(b + 1, b + 6)
+            return {
+                "prompt_text": "State the total number of complex zeros (counting multiplicity) and find all zeros of the polynomial.",
+                "equation_typst": f"$ P(x) = (x - {r1})(x^2 + {b * b})(x^2 + {c * c}) $",
+                "answer_typst": f"$ 5 \" zeros\": x = {r1}, plus.minus {b}i, plus.minus {c}i $",
+                "steps_typst": [
+                    "By the Fundamental Theorem of Algebra, a degree-5 polynomial has exactly $5$ complex zeros.",
+                    f"Linear root: $x = {r1}$.",
+                    f"Quadratic factors yield $x = plus.minus {b}i$ and $x = plus.minus {c}i$.",
+                ],
+                "distractors": [f"$ 3 \" zeros\": x = {r1}, {b}, {c} $", f"$ 5 \" zeros\": x = {-r1}, plus.minus {b}, plus.minus {c} $", "$ 1 \" zero\" $"],
+            }
+        else:
+            r = rng.randint(-8, 8)
+            while r == 0:
+                r = rng.randint(-8, 8)
+            b = rng.randint(1, 12)
+            s_r = f"- {r}" if r > 0 else f"+ {abs(r)}"
+            return {
+                "prompt_text": "State the total number of complex zeros (counting multiplicity) and find all zeros of the polynomial.",
+                "equation_typst": f"$ P(x) = (x {s_r})(x^2 + {b * b}) $",
+                "answer_typst": f"$ 3 \" zeros\": x = {r}, plus.minus {b}i $",
+                "steps_typst": [
+                    "By the Fundamental Theorem of Algebra, a degree-3 polynomial has exactly $3$ complex zeros.",
+                    f"Set linear factor to zero: $x = {r}$.",
+                    f"Set quadratic factor $x^2 + {b * b} = 0 ==> x = plus.minus {b}i$.",
+                ],
+                "distractors": [f"$ 2 \" zeros\": x = {r}, {b} $", f"$ 3 \" zeros\": x = {-r}, plus.minus {b} $", f"$ 1 \" zero\": x = {r} $"],
+            }
 
     if "end behavior" in t_low or ("polynomial" in c_low and "graph" in t_low and "rational" not in t_low):
         r1 = rng.randint(-4, -1)
@@ -766,44 +806,190 @@ def gen_adv_problem(
         }
 
     if c_low == "polar coordinates":
-        r = rng.choice([2, 3, 4])
-        deg = rng.choice([30, 45, 60, 90, 120, 180])
-        if "graphs of polar" in t_low:
-            n_petals = rng.choice([2, 3, 4])
-            curve = [(r * math.cos(math.radians(n_petals * d)), d) for d in range(0, 361, 4)]
+        r_val = rng.randint(2, 9)
+        ang_deg = rng.choice([15 * k for k in range(1, 24)])
+
+        if "polar_forms_of_conic_sect" in t_low or "conic" in t_low:
+            conic_choice = rng.choice(["ellipse", "parabola", "hyperbola"])
+            sign_str = rng.choice(["+", "-"])
+            fn_trig = rng.choice(["cos", "sin"])
+            directrix_var = "x" if fn_trig == "cos" else "y"
+            directrix_sign = sign_str
+            if conic_choice == "parabola":
+                e_val = 1
+                e_str = "1"
+                d_val = rng.randint(2, 8)
+                ed_val = d_val
+                conic_name = "Parabola"
+            elif conic_choice == "ellipse":
+                num_e, den_e = rng.choice([(1, 2), (1, 3), (2, 3), (3, 4), (2, 5), (3, 5), (4, 5)])
+                e_val = num_e / den_e
+                e_str = f"{num_e}/{den_e}"
+                d_val = den_e * rng.randint(1, 4)
+                ed_val = int(num_e * (d_val // den_e))
+                conic_name = "Ellipse"
+            else:
+                num_e, den_e = rng.choice([(2, 1), (3, 1), (3, 2), (4, 3), (5, 2), (5, 3), (5, 4)])
+                e_val = num_e / den_e
+                e_str = f"{num_e}" if den_e == 1 else f"{num_e}/{den_e}"
+                d_val = den_e * rng.randint(1, 4)
+                ed_val = int(num_e * (d_val // den_e))
+                conic_name = "Hyperbola"
+
+            dir_val_str = f"{directrix_sign}{d_val}" if directrix_sign == "-" else f"{d_val}"
+            eq_typ = f"$ r = ({ed_val}) / (1 {sign_str} ({e_str}) {fn_trig}(theta)) $"
+            ans_typ = f"$ \"{conic_name}, \" e = {e_str}, quad {directrix_var} = {dir_val_str} $"
             return {
-                "prompt_text": "Identify the symmetry and shape of the polar equation and sketch its graph on the polar grid.",
-                "equation_typst": f"$ r = {r} cos({n_petals} theta) $",
-                "answer_typst": f"$ \"Rose curve with max radius \" r = {r} $",
+                "prompt_text": "Identify the type of conic section, eccentricity e, and directrix from the polar equation.",
+                "equation_typst": eq_typ,
+                "answer_typst": ans_typ,
                 "steps_typst": [
-                    f"Equations of the form $r = a cos(n theta)$ produce a rose curve with maximum radius $|a| = {r}$.",
-                    f"Since $n = {n_petals}$, the curve has ${n_petals if n_petals % 2 == 1 else 2 * n_petals}$ petals.",
-                    "Plot the petals symmetrically on the polar grid.",
+                    f"Match equation with standard polar conic form $r = (e d) / (1 {sign_str} e {fn_trig}(theta))$.",
+                    f"Identify eccentricity $e = {e_str}$. Since {'e = 1' if e_val == 1 else ('e < 1' if e_val < 1 else 'e > 1')}, the conic is a {conic_name}.",
+                    f"From the numerator $e d = {ed_val}$, solve for directrix $d = {ed_val} / ({e_str}) = {d_val}$. Directrix: ${directrix_var} = {dir_val_str}$.",
                 ],
                 "distractors": [
-                    f"$ \"Cardioid with radius \" {r} $",
-                    "$ \"Limaçon with inner loop\" $",
-                    "$ \"Archimedean spiral\" $",
+                    f"$ \"{'Hyperbola' if conic_name == 'Ellipse' else 'Ellipse'}, \" e = {e_str}, quad {directrix_var} = {dir_val_str} $",
+                    f"$ \"{conic_name}, \" e = {d_val}, quad {directrix_var} = {ed_val} $",
+                    f"$ \"{conic_name}, \" e = {e_str}, quad {directrix_var} = {-d_val if directrix_sign == '+' else d_val} $",
+                ],
+                "diagram_svg": svg_polar_grid(),
+                "answer_svg": svg_polar_grid(),
+            }
+
+        if "polar_and_rectangular_for" in t_low or "rectangular" in t_low:
+            sub = rng.choice(["p_to_r", "r_to_p"])
+            if sub == "p_to_r":
+                # Special angles with clean coordinates
+                special = [
+                    (0, "1", "0", 1, 0),
+                    (30, "sqrt(3)/2", "1/2", math.sqrt(3)/2, 0.5),
+                    (45, "sqrt(2)/2", "sqrt(2)/2", math.sqrt(2)/2, math.sqrt(2)/2),
+                    (60, "1/2", "sqrt(3)/2", 0.5, math.sqrt(3)/2),
+                    (90, "0", "1", 0, 1),
+                    (120, "-1/2", "sqrt(3)/2", -0.5, math.sqrt(3)/2),
+                    (135, "-sqrt(2)/2", "sqrt(2)/2", -math.sqrt(2)/2, math.sqrt(2)/2),
+                    (180, "-1", "0", -1, 0),
+                    (210, "-sqrt(3)/2", "-1/2", -math.sqrt(3)/2, -0.5),
+                    (240, "-1/2", "-sqrt(3)/2", -0.5, -math.sqrt(3)/2),
+                    (270, "0", "-1", 0, -1),
+                    (300, "1/2", "-sqrt(3)/2", 0.5, -math.sqrt(3)/2),
+                    (315, "sqrt(2)/2", "-sqrt(2)/2", math.sqrt(2)/2, -math.sqrt(2)/2),
+                ]
+                deg_item = rng.choice(special)
+                d_ang, cos_s, sin_s, c_val, s_val = deg_item
+                r_mult = rng.choice([2, 4, 6, 8, 10])
+                x_val_clean = round(r_mult * c_val, 2)
+                y_val_clean = round(r_mult * s_val, 2)
+                return {
+                    "prompt_text": "Convert the polar coordinates (r, theta) to exact rectangular coordinates (x, y).",
+                    "equation_typst": f"$ (r, theta) = ({r_mult}, {d_ang}^circle) $",
+                    "answer_typst": f"$ (x, y) = ({x_val_clean}, {y_val_clean}) $",
+                    "steps_typst": [
+                        f"Compute x-coordinate: $x = r cos(theta) = {r_mult} cos({d_ang}^circle) = {r_mult}({cos_s}) = {x_val_clean}$.",
+                        f"Compute y-coordinate: $y = r sin(theta) = {r_mult} sin({d_ang}^circle) = {r_mult}({sin_s}) = {y_val_clean}$.",
+                        f"Result: $(x, y) = ({x_val_clean}, {y_val_clean})$.",
+                    ],
+                    "distractors": [
+                        f"$ (x, y) = ({y_val_clean}, {x_val_clean}) $",
+                        f"$ (x, y) = ({-x_val_clean}, {y_val_clean}) $",
+                        f"$ (x, y) = ({r_mult}, {d_ang}) $",
+                    ],
+                    "diagram_svg": svg_polar_grid(max_r=max(5, r_mult), points=[(r_mult, d_ang, "P")]),
+                    "answer_svg": svg_coordinate_plane(points=[(x_val_clean, y_val_clean, f"({x_val_clean}, {y_val_clean})", True)]),
+                }
+            else:
+                pts_rect = [(3, 4, 5, 53), (4, 3, 5, 37), (5, 12, 13, 67), (1, 1, "sqrt(2)", 45), (0, 4, 4, 90), (4, 0, 4, 0), (-3, 3, "3 sqrt(2)", 135), (-4, 0, 4, 180), (0, -5, 5, 270)]
+                rx, ry, r_ans, th_ans = rng.choice(pts_rect)
+                return {
+                    "prompt_text": "Convert the rectangular coordinates (x, y) to polar coordinates (r, theta) with r > 0 and 0 <= theta < 360 deg.",
+                    "equation_typst": f"$ (x, y) = ({rx}, {ry}) $",
+                    "answer_typst": f"$ (r, theta) = ({r_ans}, {th_ans}^circle) $",
+                    "steps_typst": [
+                        f"Calculate radius $r = sqrt(x^2 + y^2) = sqrt(({rx})^2 + ({ry})^2) = {r_ans}$.",
+                        f"Calculate angle $theta = arctan(y / x) = arctan(({ry}) / ({rx})) ==> theta = {th_ans}^circle$.",
+                        f"Result: $(r, theta) = ({r_ans}, {th_ans}^circle)$.",
+                    ],
+                    "distractors": [
+                        f"$ (r, theta) = ({r_ans}, {(th_ans + 90) % 360}^circle) $",
+                        f"$ (r, theta) = ({rx + ry}, {th_ans}^circle) $",
+                        f"$ (r, theta) = ({ry}, {rx}^circle) $",
+                    ],
+                    "diagram_svg": svg_coordinate_plane(points=[(rx, ry, f"({rx}, {ry})", True)]),
+                    "answer_svg": svg_polar_grid(),
+                }
+
+        if "graphs_of_polar_equations" in t_low or "graphs" in t_low:
+            p_type = rng.choice(["rose_cos", "rose_sin", "cardioid", "circle", "lemniscate"])
+            if p_type == "rose_cos":
+                n_pet = rng.choice([2, 3, 4, 5, 6, 7])
+                pet_count = n_pet if n_pet % 2 == 1 else 2 * n_pet
+                curve = [(r_val * math.cos(math.radians(n_pet * d)), d) for d in range(0, 361, 4)]
+                eq_s = f"$ r = {r_val} cos({n_pet} theta) $"
+                ans_s = f"$ \"Rose curve with \" {pet_count} \" petals, max radius \" r = {r_val} $"
+                step_desc = f"Equations $r = a cos(n theta)$ form a rose curve. Since $n = {n_pet}$, it has ${pet_count}$ petals with maximum radius $|a| = {r_val}$."
+            elif p_type == "rose_sin":
+                n_pet = rng.choice([2, 3, 4, 5, 6, 7])
+                pet_count = n_pet if n_pet % 2 == 1 else 2 * n_pet
+                curve = [(r_val * math.sin(math.radians(n_pet * d)), d) for d in range(0, 361, 4)]
+                eq_s = f"$ r = {r_val} sin({n_pet} theta) $"
+                ans_s = f"$ \"Rose curve with \" {pet_count} \" petals, max radius \" r = {r_val} $"
+                step_desc = f"Equations $r = a sin(n theta)$ form a rose curve with ${pet_count}$ petals and max radius ${r_val}$."
+            elif p_type == "cardioid":
+                curve = [((r_val + r_val * math.cos(math.radians(d))), d) for d in range(0, 361, 4)]
+                eq_s = f"$ r = {r_val} + {r_val} cos(theta) $"
+                ans_s = f"$ \"Cardioid symmetric to polar axis, max r = \" {2 * r_val} $"
+                step_desc = f"Equations of the form $r = a + a cos(theta)$ form a cardioid (heart-shaped limaçon) with cusp at origin and max radius ${2 * r_val}$."
+            elif p_type == "lemniscate":
+                curve = [(r_val * math.sqrt(max(0, math.cos(math.radians(2 * d)))), d) for d in range(0, 361, 4)]
+                eq_s = f"$ r^2 = {r_val * r_val} cos(2 theta) $"
+                ans_s = f"$ \"Lemniscate (figure-eight) with max length \" {r_val} $"
+                step_desc = f"Equations $r^2 = a^2 cos(2 theta)$ form a lemniscate symmetric about the pole with petal reach $|a| = {r_val}$."
+            else:
+                curve = [(r_val * math.cos(math.radians(d)), d) for d in range(0, 361, 4)]
+                eq_s = f"$ r = {r_val} cos(theta) $"
+                ans_s = f"$ \"Circle centered at \" ({round(r_val/2, 1)}, 0) \" with radius \" {round(r_val/2, 1)} $"
+                step_desc = f"Multiply by $r$: $r^2 = {r_val} r cos(theta) ==> x^2 + y^2 = {r_val}x$, which is a circle of diameter ${r_val}$."
+
+            return {
+                "prompt_text": "Identify the symmetry and shape of the polar equation and sketch its graph on the polar grid.",
+                "equation_typst": eq_s,
+                "answer_typst": ans_s,
+                "steps_typst": [
+                    step_desc,
+                    "Analyze symmetry: replace $theta$ with $-theta$ or $pi - theta$.",
+                    "Plot key points and sketch the complete polar curve.",
+                ],
+                "distractors": [
+                    f"$ \"Circle with radius \" {r_val} $",
+                    f"$ \"Limaçon with inner loop, max r = \" {2 * r_val} $",
+                    f"$ \"Archimedean spiral\" $",
                 ],
                 "diagram_svg": svg_polar_grid(),
                 "answer_svg": svg_polar_grid(curve_points=curve),
             }
+
+        # Default polar point plotting and equivalent representations
+        r = r_val
+        deg = ang_deg
+        alt_deg1 = (deg + 360)
+        alt_deg2 = (deg + 180) % 360
         return {
-            "prompt_text": "Plot the polar point (r, theta) on the polar grid and find an equivalent polar representation.",
+            "prompt_text": "Plot the polar point (r, theta) on the polar grid and find an equivalent polar representation with r > 0 and r < 0.",
             "equation_typst": f"$ P({r}, {deg}^circle) $",
-            "answer_typst": f"$ ({r}, {deg + 360}^circle) \" or \" ({-r}, {deg + 180}^circle) $",
+            "answer_typst": f"$ ({r}, {alt_deg1}^circle) \" and \" ({-r}, {alt_deg2}^circle) $",
             "steps_typst": [
-                f"Locate angle $theta = {deg}^circle$ and move outward $r = {r}$ concentric circles.",
-                f"Adding $360^circle$ gives $({r}, {deg + 360}^circle)$.",
-                f"Negating $r$ and adding $180^circle$ gives $({-r}, {deg + 180}^circle)$.",
+                f"Locate angle $theta = {deg}^circle$ on the grid and measure $r = {r}$ concentric units outward.",
+                f"Adding $360^circle$ preserves direction: $({r}, {deg}^circle + 360^circle) = ({r}, {alt_deg1}^circle)$.",
+                f"Negating $r$ and adding $180^circle$ reflects through the pole to the same point: $({-r}, {alt_deg2}^circle)$.",
             ],
             "distractors": [
                 f"$ ({-r}, {deg}^circle) $",
-                f"$ ({r}, {deg + 180}^circle) $",
+                f"$ ({r}, {alt_deg2}^circle) $",
                 f"$ ({r * 2}, {deg}^circle) $",
             ],
             "diagram_svg": svg_polar_grid(),
-            "answer_svg": svg_polar_grid(points=[(r, deg, f"P({r},{deg} deg)")]),
+            "answer_svg": svg_polar_grid(max_r=max(5, r), points=[(r, deg, "P")]),
         }
 
     if "cross products" in t_low:
@@ -927,25 +1113,42 @@ def gen_adv_problem(
         }
 
     if "radians and degrees" in t_low:
-        deg = rng.choice([30, 45, 60, 120, 135, 150, 210, 225, 240, 300, 315, 330])
-        g = math.gcd(deg, 180)
-        num, den = deg // g, 180 // g
-        rad_str = f"({'' if num == 1 else num} pi)/({den})"
-        return {
-            "prompt_text": "Convert the angle measure from degrees to radians in exact form.",
-            "equation_typst": f"$ {deg}^circle $",
-            "answer_typst": f"$ {rad_str} $",
-            "steps_typst": [
-                f"Multiply by the conversion factor $pi / 180^circle$: ${deg}^circle times pi / 180^circle$.",
-                f"Divide numerator and denominator by their GCF ${g}$.",
-                f"Exact radian measure: ${rad_str}$.",
-            ],
-            "distractors": [
-                f"$ ({den} pi)/({num}) $",
-                f"$ ({num + 1} pi)/({den}) $",
-                f"$ ({num} pi)/({den * 2}) $",
-            ],
-        }
+        is_deg_to_rad = rng.choice([True, False])
+        if is_deg_to_rad:
+            deg = rng.choice([15 * k for k in range(-48, 49) if k != 0] + [rng.randint(-360, 360)])
+            g = math.gcd(abs(deg), 180)
+            num = deg // g
+            den = 180 // g
+            num_str = "-" if num == -1 else ("" if num == 1 else str(num))
+            rad_str = f"({num_str}pi)/({den})" if den != 1 else f"{num_str}pi"
+            return {
+                "prompt_text": "Convert the angle measure from degrees to radians in exact simplified form.",
+                "equation_typst": f"$ {deg}^circle $",
+                "answer_typst": f"$ {rad_str} $",
+                "steps_typst": [
+                    f"Multiply by the conversion factor $(pi \" rad\") / (180^circle)$: ${deg}^circle times pi / 180^circle$.",
+                    f"Simplify fraction $({deg})/(180)$ by dividing by GCF ${g}$.",
+                    f"Exact radian measure: ${rad_str}$.",
+                ],
+                "distractors": [f"$ ({den}pi)/({abs(num)}) $", f"$ ({num + 1}pi)/({den}) $", f"$ {deg}pi $"],
+            }
+        else:
+            num = rng.choice([k for k in range(-12, 13) if k != 0])
+            den = rng.choice([2, 3, 4, 6])
+            deg = (num * 180) // den
+            num_str = "-" if num == -1 else ("" if num == 1 else str(num))
+            rad_expr = f"({num_str}pi)/({den})"
+            return {
+                "prompt_text": "Convert the angle measure from radians to degrees.",
+                "equation_typst": f"$ {rad_expr} $",
+                "answer_typst": f"$ {deg}^circle $",
+                "steps_typst": [
+                    f"Multiply by the conversion factor $180^circle / pi$: ${rad_expr} times (180^circle) / pi$.",
+                    f"Cancel $pi$ and simplify: $({num} times 180^circle) / {den}$.",
+                    f"Result: ${deg}^circle$.",
+                ],
+                "distractors": [f"$ {deg + 30}^circle $", f"$ {180 - deg}^circle $", f"$ {deg * 2}^circle $"],
+            }
 
     if "coterminal angles" in t_low:
         ang = rng.randint(25, 330)
@@ -968,21 +1171,28 @@ def gen_adv_problem(
         }
 
     if "mutually exclusive" in t_low:
-        pa = Fraction(rng.choice([1, 2, 3]), 10)
-        pb = Fraction(rng.choice([2, 3, 4]), 10)
+        den = rng.choice([6, 8, 10, 12, 15, 16, 20, 24, 25, 30, 36, 40, 50, 52])
+        num_a = rng.randint(1, den // 2)
+        num_b = rng.randint(1, den - num_a - 1)
+        pa = Fraction(num_a, den)
+        pb = Fraction(num_b, den)
         p_union = pa + pb
+        context_prompt = (
+            "A card is randomly drawn from a standard deck." if den == 52 else
+            (f"A fair {den}-sided die is rolled." if den in (6, 8, 12, 20) else "Events A and B are mutually exclusive.")
+        )
         return {
-            "prompt_text": "Events A and B are mutually exclusive. Find P(A or B).",
+            "prompt_text": f"{context_prompt} Find P(A or B).",
             "equation_typst": f"$ P(A) = {pa.numerator}/{pa.denominator}, quad P(B) = {pb.numerator}/{pb.denominator} $",
             "answer_typst": f"$ P(A union B) = {p_union.numerator}/{p_union.denominator} $",
             "steps_typst": [
-                "Since $A$ and $B$ are mutually exclusive, $P(A inter B) = 0$.",
-                f"Apply the addition rule $P(A union B) = P(A) + P(B) = {pa.numerator}/{pa.denominator} + {pb.numerator}/{pb.denominator}$.",
-                f"Simplify: $P(A union B) = {p_union.numerator}/{p_union.denominator}$.",
+                "Since events $A$ and $B$ are mutually exclusive, they cannot happen simultaneously ($P(A inter B) = 0$).",
+                f"Apply the addition rule: $P(A union B) = P(A) + P(B) = {pa.numerator}/{pa.denominator} + {pb.numerator}/{pb.denominator}$.",
+                f"Find common denominator and simplify: $P(A union B) = {p_union.numerator}/{p_union.denominator}$.",
             ],
             "distractors": [
                 f"$ P(A union B) = {(pa * pb).numerator}/{(pa * pb).denominator} $",
-                f"$ P(A union B) = {abs(pa - pb).numerator}/{abs(pa - pb).denominator if pa != pb else 10} $",
+                f"$ P(A union B) = {abs(pa - pb).numerator}/{abs(pa - pb).denominator if pa != pb else den} $",
                 "$ P(A union B) = 1 $",
             ],
             "diagram_svg": svg_venn_diagram(only_a=f"{pa}", only_b=f"{pb}", both="0"),
@@ -990,11 +1200,49 @@ def gen_adv_problem(
         }
 
     if "permutations" in t_low or "combinations" in t_low:
-        n = rng.randint(5, 9)
-        r = rng.randint(2, 3)
         is_perm = "permutation" in t_low and "combination" not in t_low
+        n = rng.randint(5, 20)
+        r = rng.randint(2, min(5, n - 1))
         p_val = math.perm(n, r)
         c_val = math.comb(n, r)
+        if "word" in t_low or "wp" in t_low or "probability" in t_low or rng.random() < 0.4:
+            if is_perm:
+                scenarios = [
+                    (f"How many ways can {r} officers (president, VP, secretary) be chosen from {n} members?", "order matters (different titles)"),
+                    (f"In a race with {n} runners, how many ways can top {r} places be awarded?", "order matters (1st, 2nd, etc.)"),
+                    (f"How many {r}-letter codes can be formed from {n} distinct letters without repetition?", "order matters in a code"),
+                ]
+                q_text, reason = rng.choice(scenarios)
+                return {
+                    "prompt_text": q_text,
+                    "equation_typst": f"$ P({n}, {r}) = ({n}!)/({n - r}!) $",
+                    "answer_typst": f"$ {p_val} \" ways\" $",
+                    "steps_typst": [
+                        f"Identify whether order matters: {reason}, so use permutations.",
+                        f"Apply permutation formula: $P({n}, {r}) = {n}! / ({n} - {r})! = {n}! / {n - r}!$.",
+                        f"Compute product of ${r}$ descending factors: ${p_val}$.",
+                    ],
+                    "distractors": [f"$ {c_val} \" ways\" $", f"$ {n * r} \" ways\" $", f"$ {p_val + n} \" ways\" $"],
+                }
+            else:
+                scenarios = [
+                    (f"A committee of {r} members is to be chosen from a group of {n} people. How many distinct committees are possible?", "order does not matter"),
+                    (f"How many ways can a student select {r} books to read from a list of {n} books?", "order does not matter"),
+                    (f"A pizza parlor offers {n} toppings. How many different {r}-topping pizzas can be made?", "order of toppings does not matter"),
+                ]
+                q_text, reason = rng.choice(scenarios)
+                return {
+                    "prompt_text": q_text,
+                    "equation_typst": f"$ C({n}, {r}) = binom({n}, {r}) $",
+                    "answer_typst": f"$ {c_val} \" ways\" $",
+                    "steps_typst": [
+                        f"Identify whether order matters: {reason}, so use combinations.",
+                        f"Apply combination formula: $C({n}, {r}) = {n}! / ({r}!({n - r})!)$.",
+                        f"Calculate: $({p_val}) / ({math.factorial(r)}) = {c_val}$.",
+                    ],
+                    "distractors": [f"$ {p_val} \" ways\" $", f"$ {n * r} \" ways\" $", f"$ {c_val + r} \" ways\" $"],
+                }
+
         if is_perm:
             return {
                 "prompt_text": "Evaluate the permutation P(n, r).",
@@ -1002,7 +1250,7 @@ def gen_adv_problem(
                 "answer_typst": f"$ {p_val} $",
                 "steps_typst": [
                     f"Use the permutation formula $P(n, r) = n! / (n - r)! = {n}! / {n - r}!$.",
-                    f"Multiply the first ${r}$ descending factors starting from ${n}$.",
+                    f"Multiply the first ${r}$ descending factors: ${p_val}$.",
                     f"Result: ${p_val}$.",
                 ],
                 "distractors": [f"$ {c_val} $", f"$ {n * r} $", f"$ {p_val + n} $"],
@@ -1215,8 +1463,9 @@ def gen_adv_problem(
         }
 
     if "newton's method" in t_low:
-        x0 = rng.randint(2, 4)
-        n = x0 * x0 + rng.randint(1, 3)
+        x0 = rng.randint(2, 12)
+        diff_n = rng.choice([-3, -2, -1, 1, 2, 3, 5])
+        n = x0 * x0 + diff_n
         fx0 = x0 * x0 - n
         fpx0 = 2 * x0
         x1_f = Fraction(x0) - Fraction(fx0, fpx0)
@@ -1237,14 +1486,15 @@ def gen_adv_problem(
         }
 
     if "curve sketching" in t_low or "graphical comparison of f" in t_low:
-        a = rng.choice([-2, -1, 1, 2])
-        k = rng.choice([1, 2, 3])
+        a = rng.choice([-3, -2, -1, 1, 2, 3])
+        k = rng.randint(1, 12)
+        c_shift = rng.randint(-15, 15)
         k2 = k * k
         c3 = 3 * k2
-        f_expr = f"{'' if a == 1 else ('-' if a == -1 else a)}(x^3 - {c3}x)"
+        f_expr = f"{'' if a == 1 else ('-' if a == -1 else a)}(x^3 - {c3}x)" + (f" {'+' if c_shift > 0 else '-'} {abs(c_shift)}" if c_shift != 0 else "")
 
-        def fn_f(x, _a=a, _k=k):
-            return _a * (0.15 * (x ** 3) - 0.45 * (_k ** 2) * x)
+        def fn_f(x, _a=a, _k=k, _c=c_shift):
+            return _a * (0.15 * (x ** 3) - 0.45 * (_k ** 2) * x) + _c * 0.1
 
         def fn_fp(x, _a=a, _k=k):
             return _a * (0.45 * (x ** 2) - 0.45 * (_k ** 2))
@@ -1252,14 +1502,14 @@ def gen_adv_problem(
         return {
             "prompt_text": "Find the critical points, inflection point, and sketch f(x) and f'(x).",
             "equation_typst": f"$ f(x) = {f_expr} $",
-            "answer_typst": f"$ \"Critical points\": x = plus.minus {k}, quad \"Inflection point\": (0, 0) $",
+            "answer_typst": f"$ \"Critical points\": x = plus.minus {k}, quad \"Inflection point\": (0, {c_shift}) $",
             "steps_typst": [
                 f"Compute $f'(x) = {3 * a}(x^2 - {k2}) = 0 ==> x = plus.minus {k}$.",
-                f"Compute $f''(x) = {6 * a}x = 0 ==> x = 0$ (inflection point at $(0, 0)$).",
+                f"Compute $f''(x) = {6 * a}x = 0 ==> x = 0$, giving inflection point at $(0, {c_shift})$.",
                 f"Evaluate local extrema at $x = -{k}$ and $x = {k}$.",
             ],
             "distractors": [
-                f"$ \"Critical points\": x = 0, plus.minus {k}, quad \"Inflection point\": (1, 0) $",
+                f"$ \"Critical points\": x = 0, plus.minus {k}, quad \"Inflection point\": (1, {c_shift}) $",
                 f"$ \"Critical points\": x = plus.minus {k + 1}, quad \"Inflection point\": (0, 0) $",
                 f"$ \"Critical points\": x = 0, quad \"Inflection point\": (plus.minus {k}, 0) $",
             ],
@@ -1269,96 +1519,94 @@ def gen_adv_problem(
                     {"fn": fn_f, "color": "#2563eb"},
                     {"fn": fn_fp, "color": "#dc2626", "dashed": True},
                 ],
-                points=[(-k, fn_f(-k), f"x=-{k}", True), (k, fn_f(k), f"x={k}", True), (0, 0, "IP", True)],
+                points=[(-k, fn_f(-k), f"x=-{k}", True), (k, fn_f(k), f"x={k}", True), (0, c_shift * 0.1, "IP", True)],
             ),
         }
 
     if "integration by parts" in t_low:
-        ibp_type = rng.choice(["x_exp", "x_sin", "x_cos", "ln_x", "x_ln"])
-        if ibp_type == "x_exp":
-            k = rng.choice([-3, -2, -1, 1, 2, 3, 4, 5])
-            kx = "x" if k == 1 else (f"-x" if k == -1 else f"{k}x")
+        ibp_type = rng.choice(["x_exp", "x_sin", "x_cos", "x_n_ln", "x_sec2"])
+        c_mult = rng.choice([1, 2, 3, 4, 5])
+        k = rng.choice([k for k in range(-8, 9) if k != 0])
+        kx = "x" if k == 1 else (f"-x" if k == -1 else f"{k}x")
+        if ibp_type == "x_sec2":
             return {
                 "prompt_text": "Evaluate the indefinite integral using integration by parts.",
-                "equation_typst": f"$ integral x e^({kx}) d x $",
-                "answer_typst": f"$ (x)/({k}) e^({kx}) - (1)/({k * k}) e^({kx}) + C $" if k != 1 else "$ x e^x - e^x + C $",
+                "equation_typst": f"$ integral {c_mult}x sec^2({kx}) d x $",
+                "answer_typst": f"$ ({c_mult}x)/({k}) tan({kx}) - ({c_mult})/({k * k}) ln|sec({kx})| + C $",
                 "steps_typst": [
-                    f"Choose $u = x$ ($d u = d x$) and $d v = e^({kx}) d x$ ($v = (1/{k}) e^({kx})$).",
-                    f"Apply $integral u d v = u v - integral v d u$: $(x/{k})e^({kx}) - integral (1/{k})e^({kx}) d x$.",
-                    f"Integrate remaining term: $(x/{k})e^({kx}) - (1/{k * k})e^({kx}) + C$.",
+                    f"Choose $u = {c_mult}x$ ($d u = {c_mult} d x$) and $d v = sec^2({kx}) d x$ ($v = (1/{k}) tan({kx})$).",
+                    f"Apply formula: $({c_mult}x/{k}) tan({kx}) - integral ({c_mult}/{k}) tan({kx}) d x$.",
+                    f"Integrate: $({c_mult}x/{k}) tan({kx}) - ({c_mult}/{k * k}) ln|sec({kx})| + C$.",
                 ],
                 "distractors": [
-                    f"$ (x)/({k}) e^({kx}) + (1)/({k * k}) e^({kx}) + C $",
-                    f"$ (x^2)/(2) e^({kx}) + C $",
-                    f"$ {k} x e^({kx}) - e^({kx}) + C $",
+                    f"$ ({c_mult}x)/({k}) tan({kx}) + ({c_mult})/({k * k}) ln|sec({kx})| + C $",
+                    f"$ ({c_mult}x^2)/2 sec^2({kx}) + C $",
+                    f"$ {c_mult} tan({kx}) + C $",
+                ],
+            }
+        elif ibp_type == "x_n_ln":
+            n_pow = rng.randint(1, 6)
+            return {
+                "prompt_text": "Evaluate the indefinite integral using integration by parts.",
+                "equation_typst": f"$ integral x^{n_pow} ln(x) d x $" if n_pow > 1 else "$ integral x ln(x) d x $",
+                "answer_typst": f"$ (x^({n_pow + 1}))/({n_pow + 1}) ln(x) - (x^({n_pow + 1}))/({(n_pow + 1) ** 2}) + C $",
+                "steps_typst": [
+                    f"Choose $u = ln(x)$ ($d u = (1/x) d x$) and $d v = x^{n_pow} d x$ ($v = (x^{n_pow + 1})/({n_pow + 1})$).",
+                    f"Apply $integral u d v = u v - integral v d u$: $(x^{n_pow + 1}/{n_pow + 1}) ln(x) - integral (x^{n_pow})/({n_pow + 1}) d x$.",
+                    f"Evaluate: $(x^({n_pow + 1}))/({n_pow + 1}) ln(x) - (x^({n_pow + 1}))/({(n_pow + 1) ** 2}) + C$.",
+                ],
+                "distractors": [
+                    f"$ (x^({n_pow + 1}))/({n_pow + 1}) ln(x) + C $",
+                    f"$ (x^({n_pow}))/({n_pow}) ln(x) - x + C $",
+                    f"$ (ln(x))^2 / 2 + C $",
                 ],
             }
         elif ibp_type == "x_sin":
-            k = rng.choice([1, 2, 3, 4])
-            kx = "x" if k == 1 else f"{k}x"
             return {
                 "prompt_text": "Evaluate the indefinite integral using integration by parts.",
-                "equation_typst": f"$ integral x sin({kx}) d x $",
-                "answer_typst": f"$ -(x)/({k}) cos({kx}) + (1)/({k * k}) sin({kx}) + C $" if k > 1 else "$ -x cos(x) + sin(x) + C $",
+                "equation_typst": f"$ integral {c_mult}x sin({kx}) d x $",
+                "answer_typst": f"$ -({c_mult}x)/({k}) cos({kx}) + ({c_mult})/({k * k}) sin({kx}) + C $",
                 "steps_typst": [
-                    f"Choose $u = x$ ($d u = d x$) and $d v = sin({kx}) d x$ ($v = -(1/{k}) cos({kx})$).",
-                    f"Apply formula: $-(x/{k}) cos({kx}) - integral -(1/{k}) cos({kx}) d x$.",
-                    f"Evaluate: $-(x/{k}) cos({kx}) + (1/{k * k}) sin({kx}) + C$.",
+                    f"Choose $u = {c_mult}x$ ($d u = {c_mult} d x$) and $d v = sin({kx}) d x$ ($v = -(1/{k}) cos({kx})$).",
+                    f"Apply formula: $-({c_mult}x/{k}) cos({kx}) - integral -({c_mult}/{k}) cos({kx}) d x$.",
+                    f"Evaluate: $-({c_mult}x/{k}) cos({kx}) + ({c_mult}/{k * k}) sin({kx}) + C$.",
                 ],
                 "distractors": [
-                    f"$ (x)/({k}) cos({kx}) - (1)/({k * k}) sin({kx}) + C $",
-                    f"$ -(x^2)/2 cos({kx}) + C $",
-                    f"$ -x sin({kx}) + cos({kx}) + C $",
+                    f"$ ({c_mult}x)/({k}) cos({kx}) - ({c_mult})/({k * k}) sin({kx}) + C $",
+                    f"$ -({c_mult}x^2)/2 cos({kx}) + C $",
+                    f"$ -{c_mult}x sin({kx}) + cos({kx}) + C $",
                 ],
             }
         elif ibp_type == "x_cos":
-            k = rng.choice([1, 2, 3, 4])
-            kx = "x" if k == 1 else f"{k}x"
             return {
                 "prompt_text": "Evaluate the indefinite integral using integration by parts.",
-                "equation_typst": f"$ integral x cos({kx}) d x $",
-                "answer_typst": f"$ (x)/({k}) sin({kx}) + (1)/({k * k}) cos({kx}) + C $" if k > 1 else "$ x sin(x) + cos(x) + C $",
+                "equation_typst": f"$ integral {c_mult}x cos({kx}) d x $",
+                "answer_typst": f"$ ({c_mult}x)/({k}) sin({kx}) + ({c_mult})/({k * k}) cos({kx}) + C $",
                 "steps_typst": [
-                    f"Choose $u = x$ ($d u = d x$) and $d v = cos({kx}) d x$ ($v = (1/{k}) sin({kx})$).",
-                    f"Apply formula: $(x/{k}) sin({kx}) - integral (1/{k}) sin({kx}) d x$.",
-                    f"Evaluate: $(x/{k}) sin({kx}) + (1/{k * k}) cos({kx}) + C$.",
+                    f"Choose $u = {c_mult}x$ ($d u = {c_mult} d x$) and $d v = cos({kx}) d x$ ($v = (1/{k}) sin({kx})$).",
+                    f"Apply formula: $({c_mult}x/{k}) sin({kx}) - integral ({c_mult}/{k}) sin({kx}) d x$.",
+                    f"Evaluate: $({c_mult}x/{k}) sin({kx}) + ({c_mult}/{k * k}) cos({kx}) + C$.",
                 ],
                 "distractors": [
-                    f"$ -(x)/({k}) sin({kx}) + (1)/({k * k}) cos({kx}) + C $",
-                    f"$ (x^2)/2 sin({kx}) + C $",
-                    f"$ x cos({kx}) - sin({kx}) + C $",
+                    f"$ -({c_mult}x)/({k}) sin({kx}) + ({c_mult})/({k * k}) cos({kx}) + C $",
+                    f"$ ({c_mult}x^2)/2 sin({kx}) + C $",
+                    f"$ {c_mult}x cos({kx}) - sin({kx}) + C $",
                 ],
             }
-        elif ibp_type == "ln_x":
+        else:
             return {
                 "prompt_text": "Evaluate the indefinite integral using integration by parts.",
-                "equation_typst": "$ integral ln(x) d x $",
-                "answer_typst": "$ x ln(x) - x + C $",
+                "equation_typst": f"$ integral {c_mult}x e^({kx}) d x $",
+                "answer_typst": f"$ ({c_mult}x)/({k}) e^({kx}) - ({c_mult})/({k * k}) e^({kx}) + C $",
                 "steps_typst": [
-                    "Choose $u = ln(x)$ ($d u = (1/x) d x$) and $d v = d x$ ($v = x$).",
-                    "Apply $integral u d v = u v - integral v d u$: $x ln(x) - integral x (1/x) d x$.",
-                    "Simplify: $x ln(x) - integral 1 d x = x ln(x) - x + C$.",
+                    f"Choose $u = {c_mult}x$ ($d u = {c_mult} d x$) and $d v = e^({kx}) d x$ ($v = (1/{k}) e^({kx})$).",
+                    f"Apply $integral u d v = u v - integral v d u$: $({c_mult}x/{k})e^({kx}) - integral ({c_mult}/{k})e^({kx}) d x$.",
+                    f"Integrate: $({c_mult}x/{k})e^({kx}) - ({c_mult}/{k * k})e^({kx}) + C$.",
                 ],
                 "distractors": [
-                    "$ (ln(x))^2 / 2 + C $",
-                    "$ 1/x + C $",
-                    "$ x ln(x) + x + C $",
-                ],
-            }
-        else:  # x_ln
-            return {
-                "prompt_text": "Evaluate the indefinite integral using integration by parts.",
-                "equation_typst": "$ integral x ln(x) d x $",
-                "answer_typst": "$ (x^2)/2 ln(x) - (x^2)/4 + C $",
-                "steps_typst": [
-                    "Choose $u = ln(x)$ ($d u = (1/x) d x$) and $d v = x d x$ ($v = x^2 / 2$).",
-                    "Apply formula: $(x^2 / 2) ln(x) - integral (x^2 / 2)(1/x) d x$.",
-                    "Integrate $(x/2)$: $(x^2 / 2) ln(x) - x^2 / 4 + C$.",
-                ],
-                "distractors": [
-                    "$ (x^2)/2 ln(x) + (x^2)/4 + C $",
-                    "$ x^2 ln(x) - x + C $",
-                    "$ (x^3)/3 ln(x) - (x^3)/9 + C $",
+                    f"$ ({c_mult}x)/({k}) e^({kx}) + ({c_mult})/({k * k}) e^({kx}) + C $",
+                    f"$ ({c_mult}x^2)/(2) e^({kx}) + C $",
+                    f"$ {k} x e^({kx}) - e^({kx}) + C $",
                 ],
             }
 
@@ -1554,76 +1802,60 @@ def gen_adv_problem(
         }
 
     if "slope fields" in t_low:
-        variant = rng.choice(["linear_x", "linear_y", "sum_xy", "circle_field", "quad_x"])
-        if variant == "linear_x":
-            k = rng.choice([-3, -2, -1, 1, 2, 3])
-            eq_typst = f"$ (d y)/(d x) = {'' if k == 1 else ('-' if k == -1 else k)}x $"
-            ans_typst = f"$ y = ({k})/(2) x^2 + C; quad \"Slopes depend only on \" x $"
+        a = rng.choice([-3, -2, -1, 1, 2, 3])
+        b = rng.choice([-3, -2, -1, 1, 2, 3])
+        sf_case = rng.choice(["linear_x", "linear_y", "sum_xy", "circle_field"])
+        if sf_case == "linear_x":
+            eq_typst = f"$ (d y)/(d x) = {'' if a == 1 else ('-' if a == -1 else a)}x $"
+            ans_typst = f"$ y = ({a})/(2) x^2 + C; quad \"Slopes depend only on \" x $"
             steps = [
-                f"At each grid point $(x, y)$, the slope segment has slope $m = {k}x$.",
-                "Notice slopes are zero along the $y$-axis ($x = 0$) and equal along vertical lines.",
-                f"Antidifferentiate to find the family of parabolas $y = ({k})/2 x^2 + C$.",
+                f"At each grid point $(x, y)$, slope segment $m = {a}x$.",
+                "Slopes are zero along $x = 0$ (the y-axis) and invariant under vertical translations.",
+                f"Antiderivative family of parabolas: $y = ({a})/2 x^2 + C$.",
             ]
-            fn_sf = lambda x, y, _k=k: (_k * x) / 3.0
-            fn_sol = lambda x, _k=k: (_k * x * x) / 6.0
-        elif variant == "linear_y":
-            k = rng.choice([-2, -1, 1, 2])
-            eq_typst = f"$ (d y)/(d x) = {'' if k == 1 else ('-' if k == -1 else k)}y $"
-            ans_typst = f"$ y = C e^({k}x); quad \"Slopes depend only on \" y $"
+            fn_sf = lambda x, y, _a=a: (_a * x) / 3.0
+            fn_sol = lambda x, _a=a: (_a * x * x) / 6.0
+        elif sf_case == "linear_y":
+            eq_typst = f"$ (d y)/(d x) = {'' if b == 1 else ('-' if b == -1 else b)}y $"
+            ans_typst = f"$ y = C e^({b}x); quad \"Slopes depend only on \" y $"
             steps = [
-                f"At each grid point $(x, y)$, slope $m = {k}y$.",
-                "Slopes are zero along the $x$-axis ($y = 0$) and equal along horizontal lines.",
-                f"Separate variables and integrate: $y = C e^({k}x)$.",
+                f"At each grid point $(x, y)$, slope $m = {b}y$.",
+                "Slopes are zero along $y = 0$ (the x-axis) and invariant under horizontal translations.",
+                f"General solution is exponential: $y = C e^({b}x)$.",
             ]
-            fn_sf = lambda x, y, _k=k: (_k * y) / 3.0
-            fn_sol = lambda x, _k=k: 0.5 * math.exp(_k * x * 0.4) if abs(_k * x * 0.4) < 4 else float('nan')
-        elif variant == "circle_field":
+            fn_sf = lambda x, y, _b=b: (_b * y) / 3.0
+            fn_sol = lambda x, _b=b: 0.5 * math.exp(_b * x * 0.4) if abs(_b * x * 0.4) < 4 else float('nan')
+        elif sf_case == "circle_field":
             eq_typst = "$ (d y)/(d x) = -x / y $"
             ans_typst = "$ x^2 + y^2 = C; quad \"Concentric circular trajectories\" $"
             steps = [
-                "At each point $(x, y)$, slope is $m = -x/y$, perpendicular to the radial vector $(x, y)$.",
-                "Separate variables: $y d y = -x d x ==> x^2 + y^2 = C$.",
-                "The slope field represents concentric circles centered at $(0, 0)$.",
+                "At each $(x, y)$, the slope $m = -x/y$ is orthogonal to the radius vector.",
+                "Separating variables: $y d y = -x d x ==> x^2 + y^2 = C$.",
+                "Field forms concentric circles centered at origin.",
             ]
             fn_sf = lambda x, y: -x / y if abs(y) > 0.3 else 10.0
             fn_sol = lambda x: math.sqrt(max(0.0, 16.0 - x * x))
-        elif variant == "sum_xy":
-            eq_typst = "$ (d y)/(d x) = x + y $"
-            ans_typst = "$ y = C e^x - x - 1 $"
+        else:
+            eq_typst = f"$ (d y)/(d x) = {a}x {'+' if b >= 0 else '-'} {abs(b)}y $"
+            ans_typst = f"$ \"Slopes depend on both \" x \" and \" y $"
             steps = [
-                "Slopes are constant along diagonal isoclines $x + y = c$.",
-                "Along the line $y = -x$, $d y / d x = 0$ (horizontal tangents).",
-                "General solution: $y = C e^x - x - 1$.",
+                f"Evaluate slope at sample coordinates: $m = {a}x {'+' if b >= 0 else '-'} {abs(b)}y$.",
+                f"Isoclines occur along straight lines where ${a}x {'+' if b >= 0 else '-'} {abs(b)}y = c$.",
+                "Sketch directional field segments at each lattice point.",
             ]
-            fn_sf = lambda x, y: (x + y) / 4.0
-            fn_sol = lambda x: math.exp(x * 0.5) - x - 1
-        else:  # quad_x
-            k = rng.choice([-1, 1])
-            eq_typst = f"$ (d y)/(d x) = {'' if k == 1 else '-'}x^2 $"
-            ans_typst = f"$ y = {'' if k == 1 else '-'}x^3 / 3 + C $"
-            steps = [
-                f"At each point $(x, y)$, slopes are non-negative everywhere since $x^2 >= 0$." if k == 1 else "Slopes are non-positive everywhere.",
-                "Slopes depend only on $x$, forming vertical strip symmetry.",
-                f"Antidifferentiate to find cubic curves $y = {'' if k == 1 else '-'}x^3 / 3 + C$.",
-            ]
-            fn_sf = lambda x, y, _k=k: (_k * x * x) / 6.0
-            fn_sol = lambda x, _k=k: (_k * (x ** 3)) / 18.0
+            fn_sf = lambda x, y, _a=a, _b=b: (_a * x + _b * y) / 4.0
+            fn_sol = lambda x, _a=a: _a * x * 0.3
 
         return {
-            "prompt_text": "Sketch the slope field for the differential equation and draw the particular solution.",
+            "prompt_text": "Match the differential equation with its slope field and identify key solution curve features.",
             "equation_typst": eq_typst,
             "answer_typst": ans_typst,
             "steps_typst": steps,
             "distractors": [
                 "$ (d y)/(d x) = x^2 + y^2 $",
-                "$ (d y)/(d x) = y - x $",
-                "$ (d y)/(d x) = 2x $",
+                "$ y = sin(x) + C $",
+                "$ (d y)/(d x) = 0 $",
             ],
-            "diagram_svg": svg_coordinate_plane(slope_field={"fn": fn_sf, "step": 2}),
-            "answer_svg": svg_coordinate_plane(
-                slope_field={"fn": fn_sf, "step": 2},
-                functions=[{"fn": fn_sol, "color": "#dc2626"}],
-            ),
+            "diagram_svg": svg_coordinate_plane(slope_field=fn_sf),
+            "answer_svg": svg_coordinate_plane(slope_field=fn_sf, functions=[{"fn": fn_sol, "color": "#dc2626"}]),
         }
-
-    return None

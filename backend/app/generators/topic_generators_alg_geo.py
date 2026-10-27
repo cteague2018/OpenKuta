@@ -445,8 +445,9 @@ def gen_alg_geo_problem(
         }
 
     if c_low == "percents" and ("diagram" in t_low or "relating" in t_low or "equivalent" in t_low or "introduction" in t_low):
-        pct = rng.choice([20, 25, 40, 50, 75, 80])
-        whole = rng.choice([40, 60, 80, 120, 200])
+        pct_choices = [5, 10, 12, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 110, 120, 125, 150]
+        pct = rng.choice(pct_choices) if rng.random() < 0.8 else rng.randint(1, 99)
+        whole = rng.choice([k * 10 for k in range(2, 51)])
         part = (whole * pct) // 100
         if "relating" in t_low:
             f = Fraction(pct, 100)
@@ -728,21 +729,32 @@ def gen_alg_geo_problem(
         }
 
     if "work word problems" in t_low:
-        pairs = [(3, 6, 2), (4, 12, 3), (6, 12, 4), (5, 20, 4), (6, 30, 5)]
-        t1, t2, both = rng.choice(pairs)
-        if difficulty != ProblemDifficulty.MILD:
-            k = rng.choice([2, 3])
-            t1, t2, both = t1 * k, t2 * k, both * k
+        scenarios = [
+            ("Pump A", "Pump B", "fill a tank"),
+            ("Worker A", "Worker B", "paint a house"),
+            ("Machine 1", "Machine 2", "complete a print job"),
+            ("Pipe 1", "Pipe 2", "fill a reservoir"),
+            ("Carlos", "Maria", "clean an auditorium"),
+            ("Tractor A", "Tractor B", "plow a field"),
+        ]
+        s_name1, s_name2, s_task = rng.choice(scenarios)
+        m = rng.randint(2, 6)
+        both = rng.randint(2, 18)
+        t1 = both * (m + 1) // m
+        t2 = m * t1
+        # ensure integer or simplified fraction
+        both_f = Fraction(t1 * t2, t1 + t2)
+        both_s = f"{both_f.numerator}/{both_f.denominator}" if both_f.denominator != 1 else str(both_f.numerator)
         return {
             "prompt_text": "Set up a rational work-rate equation and solve for the combined time.",
-            "equation_typst": f"\"Pump A can fill a tank in \" {t1} \" hours and Pump B can fill it in \" {t2} \" hours. How long will it take both pumps working together?\"",
-            "answer_typst": f"$ t = {both} \" hours\" $",
+            "equation_typst": f"\"{s_name1} can {s_task} in \" {t1} \" hours and {s_name2} can {s_task} in \" {t2} \" hours. How long will it take both working together?\"",
+            "answer_typst": f"$ t = {both_s} \" hours\" $",
             "steps_typst": [
                 f"Combine hourly work rates: $1/({t1}) + 1/({t2}) = 1/t$.",
-                f"Find a common denominator of ${t2}$: $({t2 // t1 + 1})/({t2}) = 1/t$.",
-                f"Solve for $t$: $t = {both}$ hours.",
+                f"Find common denominator and sum rates: $({t1 + t2})/({t1 * t2}) = 1/t$.",
+                f"Take the reciprocal to solve for $t$: $t = ({t1 * t2})/({t1 + t2}) = {both_s}$ hours.",
             ],
-            "distractors": [f"$ t = {(t1 + t2) // 2} \" hours\" $", f"$ t = {t1 + t2} \" hours\" $", f"$ t = {both + 2} \" hours\" $"],
+            "distractors": [f"$ t = {round((t1 + t2) / 2, 1)} \" hours\" $", f"$ t = {t1 + t2} \" hours\" $", f"$ t = {both_f + 1} \" hours\" $"],
         }
 
     if "systems" in c_low and "word problems" in t_low:
@@ -1215,18 +1227,35 @@ def gen_alg_geo_problem(
         }
 
     if "translations, rotations, reflections" in t_low:
-        pts = [(1, 2), (5, 2), (2, 6)]
-        dx = rng.choice([-6, -5, -4])
-        dy = rng.choice([-6, -5, -4])
-        img_pts = [(x + dx, y + dy) for x, y in pts]
+        dx, dy = 3, 2
+        x1, y1 = rng.randint(-5, 2), rng.randint(-5, 2)
+        w, h = rng.randint(2, 5), rng.randint(2, 5)
+        pts = [(x1, y1), (x1 + w, y1), (x1 + (rng.randint(1, w - 1) if w > 1 else 1), y1 + h)]
+        mode = rng.choice(["translate", "reflect_x", "reflect_y", "rotate_180"])
+        if mode == "translate":
+            dx = rng.choice([-5, -4, -3, -2, 2, 3, 4, 5])
+            dy = rng.choice([-5, -4, -3, -2, 2, 3, 4, 5])
+            img_pts = [(x + dx, y + dy) for x, y in pts]
+            rule_str = f"(x {('+' if dx > 0 else '-')} {abs(dx)}, y {('+' if dy > 0 else '-')} {abs(dy)})"
+            eq_desc = f"\"Translate \" triangle A({pts[0][0]},{pts[0][1]}), B({pts[1][0]},{pts[1][1]}), C({pts[2][0]},{pts[2][1]}) \" by \" (x, y) ==> {rule_str}"
+        elif mode == "reflect_x":
+            img_pts = [(x, -y) for x, y in pts]
+            eq_desc = f"\"Reflect \" triangle A({pts[0][0]},{pts[0][1]}), B({pts[1][0]},{pts[1][1]}), C({pts[2][0]},{pts[2][1]}) \" across the x-axis\""
+        elif mode == "reflect_y":
+            img_pts = [(-x, y) for x, y in pts]
+            eq_desc = f"\"Reflect \" triangle A({pts[0][0]},{pts[0][1]}), B({pts[1][0]},{pts[1][1]}), C({pts[2][0]},{pts[2][1]}) \" across the y-axis\""
+        else:
+            img_pts = [(-x, -y) for x, y in pts]
+            eq_desc = f"\"Rotate \" triangle A({pts[0][0]},{pts[0][1]}), B({pts[1][0]},{pts[1][1]}), C({pts[2][0]},{pts[2][1]}) \" 180 degrees about origin\""
+
         return {
             "prompt_text": "Find the coordinates of the image of triangle ABC under the given transformation and sketch both on the coordinate plane.",
-            "equation_typst": f"\"Translate \" triangle A(1, 2), B(5, 2), C(2, 6) \" by \" (x, y) arrow.r (x - {abs(dx)}, y - {abs(dy)})",
+            "equation_typst": eq_desc,
             "answer_typst": f"$ A'({img_pts[0][0]}, {img_pts[0][1]}), B'({img_pts[1][0]}, {img_pts[1][1]}), C'({img_pts[2][0]}, {img_pts[2][1]}) $",
             "steps_typst": [
-                f"Apply the translation rule $(x, y) arrow.r (x - {abs(dx)}, y - {abs(dy)})$ to each vertex.",
-                f"$A(1, 2) arrow.r A'({img_pts[0][0]}, {img_pts[0][1]})$ and $B(5, 2) arrow.r B'({img_pts[1][0]}, {img_pts[1][1]})$.",
-                f"$C(2, 6) arrow.r C'({img_pts[2][0]}, {img_pts[2][1]})$.",
+                f"Apply transformation rule to vertex A: $({pts[0][0]}, {pts[0][1]}) ==> ({img_pts[0][0]}, {img_pts[0][1]})$.",
+                f"Apply transformation rule to vertex B: $({pts[1][0]}, {pts[1][1]}) ==> ({img_pts[1][0]}, {img_pts[1][1]})$.",
+                f"Apply transformation rule to vertex C: $({pts[2][0]}, {pts[2][1]}) ==> ({img_pts[2][0]}, {img_pts[2][1]})$.",
             ],
             "distractors": [
                 f"$ A'({1 + abs(dx)}, {2 + abs(dy)}), B'({5 + abs(dx)}, {2 + abs(dy)}), C'({2 + abs(dx)}, {6 + abs(dy)}) $",
@@ -1282,7 +1311,7 @@ def gen_alg_geo_problem(
         }
 
     if "classifying angles" in t_low or "basic angle terminology" in t_low:
-        deg = rng.choice([35, 62, 90, 118, 145, 180])
+        deg = rng.randint(12, 178)
         kind = "Acute" if deg < 90 else ("Right" if deg == 90 else ("Obtuse" if deg < 180 else "Straight"))
         return {
             "prompt_text": "Classify the angle as acute, right, obtuse, or straight.",
@@ -1344,26 +1373,79 @@ def gen_alg_geo_problem(
                 "answer_svg": svg_general_triangle(side_c=f"DE = {ms}", side_a=f"AC = {base}", side_b=""),
             }
         if "centroid" in t_low or "median" in t_low:
-            gm = rng.randint(4, 15)
-            ag = 2 * gm
-            am = 3 * gm
-            return {
-                "prompt_text": "Point G is the centroid of triangle ABC on median AM. Given GM, find AG and the full median AM.",
-                "equation_typst": f"$ G M = {gm} $",
-                "answer_typst": f"$ A G = {ag}, quad A M = {am} $",
-                "steps_typst": [
-                    "By the Centroid Theorem, the centroid divides each median in a $2:1$ ratio from vertex to midpoint ($A G = 2 G M$).",
-                    f"Compute $A G = 2({gm}) = {ag}$.",
-                    f"Full median length: $A M = A G + G M = {ag} + {gm} = {am}$.",
-                ],
-                "distractors": [
-                    f"$ A G = {gm}, quad A M = {2 * gm} $",
-                    f"$ A G = {am}, quad A M = {4 * gm} $",
-                    f"$ A G = {ag + 2}, quad A M = {am + 2} $",
-                ],
-                "diagram_svg": svg_general_triangle(side_c=f"GM = {gm}", side_a="AG = ?", side_b="AM = ?"),
-                "answer_svg": svg_general_triangle(side_c=f"GM = {gm}", side_a=f"AG = {ag}", side_b=f"AM = {am}"),
-            }
+            case = rng.choice(["given_gm", "given_ag", "given_am", "coordinates"])
+            if case == "coordinates":
+                x1, y1 = rng.randint(-6, 6), rng.randint(-6, 6)
+                x2, y2 = rng.randint(-6, 6), rng.randint(-6, 6)
+                x3, y3 = rng.randint(-6, 6), rng.randint(-6, 6)
+                gx = Fraction(x1 + x2 + x3, 3)
+                gy = Fraction(y1 + y2 + y3, 3)
+                gx_s = f"{gx.numerator}/{gx.denominator}" if gx.denominator != 1 else str(gx.numerator)
+                gy_s = f"{gy.numerator}/{gy.denominator}" if gy.denominator != 1 else str(gy.numerator)
+                return {
+                    "prompt_text": "Find the coordinates of the centroid of triangle ABC with the given vertices.",
+                    "equation_typst": f"\"Vertices: \" A({x1}, {y1}), quad B({x2}, {y2}), quad C({x3}, {y3})",
+                    "answer_typst": f"$ G({gx_s}, {gy_s}) $",
+                    "steps_typst": [
+                        "The centroid coordinates are the arithmetic averages of vertex coordinates: $((x_1+x_2+x_3)/3, (y_1+y_2+y_3)/3)$.",
+                        f"Compute x-coordinate: $({x1} + {x2} + {x3}) / 3 = {gx_s}$.",
+                        f"Compute y-coordinate: $({y1} + {y2} + {y3}) / 3 = {gy_s}$.",
+                    ],
+                    "distractors": [f"$ G({x1 + x2}, {y1 + y2}) $", f"$ G({round(float(gx) + 1, 1)}, {gy_s}) $", f"$ G({gx_s}, 0) $"],
+                    "diagram_svg": svg_coordinate_plane(points=[(x1, y1, "A", True), (x2, y2, "B", True), (x3, y3, "C", True)]),
+                    "answer_svg": svg_coordinate_plane(points=[(x1, y1, "A", True), (x2, y2, "B", True), (x3, y3, "C", True), (float(gx), float(gy), "G", True)]),
+                }
+            elif case == "given_ag":
+                ag = rng.randint(6, 40) * 2
+                gm = ag // 2
+                am = ag + gm
+                return {
+                    "prompt_text": "Point G is the centroid of triangle ABC on median AM. Given AG, find GM and the full median AM.",
+                    "equation_typst": f"$ A G = {ag} $",
+                    "answer_typst": f"$ G M = {gm}, quad A M = {am} $",
+                    "steps_typst": [
+                        "By the Centroid Theorem, $A G = 2 G M$, so $G M = A G / 2$.",
+                        f"Compute $G M = {ag} / 2 = {gm}$.",
+                        f"Full median length: $A M = A G + G M = {ag} + {gm} = {am}$.",
+                    ],
+                    "distractors": [f"$ G M = {ag}, quad A M = {2 * ag} $", f"$ G M = {ag * 2}, quad A M = {3 * ag} $", f"$ G M = {gm + 2}, quad A M = {am + 2} $"],
+                    "diagram_svg": svg_general_triangle(side_c="GM = ?", side_a=f"AG = {ag}", side_b="AM = ?"),
+                    "answer_svg": svg_general_triangle(side_c=f"GM = {gm}", side_a=f"AG = {ag}", side_b=f"AM = {am}"),
+                }
+            elif case == "given_am":
+                am = rng.randint(6, 40) * 3
+                ag = (am * 2) // 3
+                gm = am // 3
+                return {
+                    "prompt_text": "Point G is the centroid of triangle ABC on median AM. Given the full median AM, find AG and GM.",
+                    "equation_typst": f"$ A M = {am} $",
+                    "answer_typst": f"$ A G = {ag}, quad G M = {gm} $",
+                    "steps_typst": [
+                        "By the Centroid Theorem, $A G = 2/3 A M$ and $G M = 1/3 A M$.",
+                        f"Compute $A G = 2/3({am}) = {ag}$.",
+                        f"Compute $G M = 1/3({am}) = {gm}$.",
+                    ],
+                    "distractors": [f"$ A G = {am // 2}, quad G M = {am // 2} $", f"$ A G = {gm}, quad G M = {ag} $", f"$ A G = {ag + 3}, quad G M = {gm} $"],
+                    "diagram_svg": svg_general_triangle(side_c="GM = ?", side_a="AG = ?", side_b=f"AM = {am}"),
+                    "answer_svg": svg_general_triangle(side_c=f"GM = {gm}", side_a=f"AG = {ag}", side_b=f"AM = {am}"),
+                }
+            else:
+                gm = rng.randint(3, 45)
+                ag = 2 * gm
+                am = 3 * gm
+                return {
+                    "prompt_text": "Point G is the centroid of triangle ABC on median AM. Given GM, find AG and the full median AM.",
+                    "equation_typst": f"$ G M = {gm} $",
+                    "answer_typst": f"$ A G = {ag}, quad A M = {am} $",
+                    "steps_typst": [
+                        "By the Centroid Theorem, the centroid divides each median in a $2:1$ ratio ($A G = 2 G M$).",
+                        f"Compute $A G = 2({gm}) = {ag}$.",
+                        f"Full median length: $A M = A G + G M = {ag} + {gm} = {am}$.",
+                    ],
+                    "distractors": [f"$ A G = {gm}, quad A M = {2 * gm} $", f"$ A G = {am}, quad A M = {4 * gm} $", f"$ A G = {ag + 2}, quad A M = {am + 2} $"],
+                    "diagram_svg": svg_general_triangle(side_c=f"GM = {gm}", side_a="AG = ?", side_b="AM = ?"),
+                    "answer_svg": svg_general_triangle(side_c=f"GM = {gm}", side_a=f"AG = {ag}", side_b=f"AM = {am}"),
+                }
         if "triangle inequality" in t_low or "inequalities in one triangle" in t_low:
             s1 = rng.randint(5, 14)
             s2 = rng.randint(s1 + 2, s1 + 12)
@@ -1521,52 +1603,86 @@ def gen_alg_geo_problem(
                 "diagram_svg": svg_polygon_diagram("quad", dim1=f"A={a1}, B={a2}", dim2=f"C={a3}, D=?"),
                 "answer_svg": svg_polygon_diagram("quad", dim1=f"A={a1}, B={a2}", dim2=f"C={a3}, D={a4}"),
             }
+        if "shaded" in t_low:
+            w_out = rng.randint(12, 35)
+            h_out = rng.randint(10, 28)
+            area_out = w_out * h_out
+            w_in = rng.randint(3, w_out - 4)
+            h_in = rng.randint(3, h_out - 4)
+            area_in = w_in * h_in
+            area_shaded = area_out - area_in
+            return {
+                "prompt_text": "Find the area of the shaded region formed by subtracting the unshaded inner shape from the outer rectangle.",
+                "equation_typst": f"\"Outer rectangle: \" {w_out} times {h_out}, quad \"Inner cutout: \" {w_in} times {h_in}",
+                "answer_typst": f"$ A_\"shaded\" = {area_shaded} $",
+                "steps_typst": [
+                    f"Calculate total outer area: $A_\"outer\" = {w_out} times {h_out} = {area_out}$.",
+                    f"Calculate inner cutout area: $A_\"inner\" = {w_in} times {h_in} = {area_in}$.",
+                    f"Subtract to find shaded area: $A_\"shaded\" = {area_out} - {area_in} = {area_shaded}$.",
+                ],
+                "distractors": [f"$ A_\"shaded\" = {area_out + area_in} $", f"$ A_\"shaded\" = {area_out} $", f"$ A_\"shaded\" = {area_shaded + 10} $"],
+                "diagram_svg": svg_polygon_diagram("rectangle", dim1=f"{w_out}x{h_out}", dim2=f"Cutout {w_in}x{h_in}"),
+                "answer_svg": svg_polygon_diagram("rectangle", dim1=f"Area = {area_shaded}", dim2=f"Cutout {w_in}x{h_in}"),
+            }
+
         if "regular polygon" in t_low or "polygon basics" in t_low or "polygons" in t_low:
-            n = rng.choice([3, 4, 5, 6, 7, 8, 9, 10, 12])
-            s = rng.randint(4, 18)
-            a = rng.randint(3, 14)
-            if "area" in t_low:
-                perim = n * s
-                area = (perim * a) // 2
-                return {
-                    "prompt_text": "Find the perimeter and area of the regular polygon with given side length s and apothem a.",
-                    "equation_typst": f"$ n = {n} \" sides\", quad s = {s}, quad a = {a} $",
-                    "answer_typst": f"$ P = {perim}, quad A = {area} $",
-                    "steps_typst": [
-                        f"Find the perimeter: $P = n s = {n}({s}) = {perim}$.",
-                        f"Use the regular polygon area formula $A = 1/2 a P$: $A = 1/2({a})({perim}) = {area}$.",
-                        f"Answer: $P = {perim}, A = {area}$.",
-                    ],
-                    "distractors": [
-                        f"$ P = {perim}, quad A = {perim * a} $",
-                        f"$ P = {s * a}, quad A = {area} $",
-                        f"$ P = {perim}, quad A = {area + s} $",
-                    ],
-                    "diagram_svg": svg_polygon_diagram("regular", dim1=f"a = {a}", dim2=f"s = {s} (n={n})"),
-                    "answer_svg": svg_polygon_diagram("regular", dim1=f"a = {a}", dim2=f"A = {area}"),
-                }
+            n = rng.randint(3, 25)
+            s = rng.randint(4, 25)
+            a = rng.randint(3, 20)
             sum_int = (n - 2) * 180
             each_int = round(sum_int / n, 1)
             each_ext = round(360 / n, 1)
-            poly_names = {3: "triangle", 4: "quadrilateral", 5: "pentagon", 6: "hexagon", 7: "heptagon", 8: "octagon", 9: "nonagon", 10: "decagon", 12: "dodecagon"}
-            p_name = poly_names.get(n, f"{n}-gon")
-            return {
-                "prompt_text": f"Find the sum of the interior angles of a regular {p_name} (n = {n} sides) and the measure of each interior angle.",
-                "equation_typst": f"$ \"Regular \" {p_name} quad (n = {n}) $",
-                "answer_typst": f"$ \"Sum\" = {sum_int}^circle, quad \"Each angle\" = {each_int:g}^circle $",
-                "steps_typst": [
-                    f"Use the Polygon Interior Angles Theorem: $\"Sum\" = (n - 2) times 180^circle = ({n} - 2) times 180^circle = {sum_int}^circle$.",
-                    f"Divide by $n = {n}$ for a regular polygon: ${sum_int}^circle div {n} = {each_int:g}^circle$.",
-                    f"Sum = ${sum_int}^circle$, Each angle = ${each_int:g}^circle$.",
-                ],
-                "distractors": [
-                    f"$ \"Sum\" = {n * 180}^circle, quad \"Each angle\" = 180^circle $",
-                    f"$ \"Sum\" = {sum_int}^circle, quad \"Each angle\" = {each_ext:g}^circle $",
-                    f"$ \"Sum\" = {(n - 1) * 180}^circle, quad \"Each angle\" = {each_int + 15:g}^circle $",
-                ],
-                "diagram_svg": svg_polygon_diagram("regular", dim1=f"n = {n}", dim2="Interior angles = ?"),
-                "answer_svg": svg_polygon_diagram("regular", dim1=f"Sum = {sum_int}", dim2=f"Each = {each_int:g} deg"),
-            }
+            poly_mode = rng.choice(["interior", "exterior", "reverse_sum"])
+            if poly_mode == "exterior":
+                return {
+                    "prompt_text": f"Find the measure of each exterior angle and the sum of exterior angles of a regular {n}-gon.",
+                    "equation_typst": f"$ \"Regular \" {n}\"-gon\" $",
+                    "answer_typst": f"$ \"Each exterior angle\" = {each_ext:g}^circle, quad \"Sum\" = 360^circle $",
+                    "steps_typst": [
+                        "The sum of exterior angles of any convex polygon is always $360^circle$.",
+                        f"Divide by the number of sides $n = {n}$: $360^circle div {n} = {each_ext:g}^circle$.",
+                        f"Each exterior angle = ${each_ext:g}^circle$, Sum = $360^circle$.",
+                    ],
+                    "distractors": [
+                        f"$ \"Each exterior angle\" = {each_int:g}^circle, quad \"Sum\" = 180^circle $",
+                        f"$ \"Each exterior angle\" = {round(180/n, 1):g}^circle, quad \"Sum\" = 360^circle $",
+                        f"$ \"Each exterior angle\" = {each_ext + 5:g}^circle, quad \"Sum\" = 720^circle $",
+                    ],
+                    "diagram_svg": svg_polygon_diagram("regular", dim1=f"n = {n}", dim2="Exterior angles = ?"),
+                    "answer_svg": svg_polygon_diagram("regular", dim1=f"Each = {each_ext:g} deg", dim2="Sum = 360 deg"),
+                }
+            elif poly_mode == "reverse_sum":
+                return {
+                    "prompt_text": "The sum of the interior angles of a convex polygon is given. Find the number of sides n.",
+                    "equation_typst": f"$ \"Sum of interior angles\" = {sum_int}^circle $",
+                    "answer_typst": f"$ n = {n} $",
+                    "steps_typst": [
+                        f"Set up the Polygon Interior Angles formula: $(n - 2) times 180^circle = {sum_int}^circle$.",
+                        f"Divide by $180^circle$: $n - 2 = {sum_int} / 180 = {n - 2}$.",
+                        f"Add 2: $n = {n - 2} + 2 = {n}$.",
+                    ],
+                    "distractors": [f"$ n = {n - 1} $", f"$ n = {n + 2} $", f"$ n = {sum_int // 360} $"],
+                    "diagram_svg": svg_polygon_diagram("regular", dim1=f"Sum = {sum_int}", dim2="n = ?"),
+                    "answer_svg": svg_polygon_diagram("regular", dim1=f"n = {n}", dim2=f"Sum = {sum_int}"),
+                }
+            else:
+                return {
+                    "prompt_text": f"Find the sum of the interior angles of a regular {n}-gon and the measure of each interior angle.",
+                    "equation_typst": f"$ \"Regular \" {n}\"-gon\" $",
+                    "answer_typst": f"$ \"Sum\" = {sum_int}^circle, quad \"Each angle\" = {each_int:g}^circle $",
+                    "steps_typst": [
+                        f"Use Polygon Interior Angles Theorem: $(n - 2) times 180^circle = ({n} - 2) times 180^circle = {sum_int}^circle$.",
+                        f"Divide by $n = {n}$ for each angle: ${sum_int}^circle div {n} = {each_int:g}^circle$.",
+                        f"Sum = ${sum_int}^circle$, Each interior angle = ${each_int:g}^circle$.",
+                    ],
+                    "distractors": [
+                        f"$ \"Sum\" = {n * 180}^circle, quad \"Each angle\" = 180^circle $",
+                        f"$ \"Sum\" = {sum_int}^circle, quad \"Each angle\" = {each_ext:g}^circle $",
+                        f"$ \"Sum\" = {(n - 1) * 180}^circle, quad \"Each angle\" = {each_int + 10:g}^circle $",
+                    ],
+                    "diagram_svg": svg_polygon_diagram("regular", dim1=f"n = {n}", dim2="Interior angles = ?"),
+                    "answer_svg": svg_polygon_diagram("regular", dim1=f"Sum = {sum_int}", dim2=f"Each = {each_int:g} deg"),
+                }
         # Parallelogram / triangle area
         b = rng.randint(6, 16)
         h = rng.randint(4, 12)
@@ -1609,8 +1725,12 @@ def gen_alg_geo_problem(
                 "answer_svg": svg_polygon_diagram("net", dim1=f"{ln}x{w}x{h}", dim2=f"SA = {sa}"),
             }
         if "similar solids" in t_low:
-            pairs = [(1, 2), (1, 3), (1, 4), (1, 5), (2, 3), (2, 5), (3, 4), (3, 5), (4, 5), (5, 6), (3, 7), (5, 7), (2, 7), (3, 8), (5, 8)]
-            a_sc, b_sc = rng.choice(pairs)
+            a_sc = rng.randint(1, 12)
+            b_sc = a_sc + rng.randint(1, 10)
+            import math as _m
+            g = _m.gcd(a_sc, b_sc)
+            a_sc //= g
+            b_sc //= g
             solid_name = rng.choice(["solids", "prisms", "cylinders", "cones", "pyramids", "spheres"])
             sa_a, sa_b = a_sc * a_sc, b_sc * b_sc
             v_a, v_b = a_sc ** 3, b_sc ** 3
@@ -1619,9 +1739,9 @@ def gen_alg_geo_problem(
                 "equation_typst": f"$ \"Scale factor\" = {a_sc} : {b_sc} $",
                 "answer_typst": f"$ \"SA Ratio\" = {sa_a} : {sa_b}, quad \"Volume Ratio\" = {v_a} : {v_b} $",
                 "steps_typst": [
-                    f"If the linear scale factor is $a:b = {a_sc}:{b_sc}$, the surface area ratio is $a^2:b^2 = {sa_a}:{sa_b}$.",
-                    f"The volume ratio is $a^3:b^3 = {v_a}:{v_b}$.",
-                    f"SA Ratio = ${sa_a}:{sa_b}$, Volume Ratio = ${v_a}:{v_b}$.",
+                    f"Surface area scales as the square of the linear ratio: $a^2 : b^2 = {a_sc}^2 : {b_sc}^2 = {sa_a} : {sa_b}$.",
+                    f"Volume scales as the cube of the linear ratio: $a^3 : b^3 = {a_sc}^3 : {b_sc}^3 = {v_a} : {v_b}$.",
+                    f"SA Ratio = ${sa_a} : {sa_b}$, Volume Ratio = ${v_a} : {v_b}$.",
                 ],
                 "distractors": [
                     f"$ \"SA Ratio\" = {a_sc} : {b_sc}, quad \"Volume Ratio\" = {sa_a} : {sa_b} $",

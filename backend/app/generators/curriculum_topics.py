@@ -216,39 +216,87 @@ def _gen_decoupled_subtopic(
                     f"$ f'(x) = {a * n}x({a}x^2 + {b})^{n} $",
                 ],
             }
-        if "inverse trigonometric" in t_low:
-            a = rng.randint(2, 4 * scale)
+        if "inverse trigonometric" in t_low or "inverse_trigonometric" in t_low:
+            fn_choice = rng.choice(["arcsin", "arccos", "arctan", "arcsec"])
+            a = rng.randint(2, 25)
+            k = rng.choice([1, 2, 3])
+            if k == 1:
+                u_str = f"{a}x"
+                du_str = f"{a}"
+                u_sq_str = f"{a * a}x^2"
+            else:
+                u_str = f"{a}x^{k}"
+                du_str = f"{a * k}x^{k - 1}" if k > 2 else f"{a * k}x"
+                u_sq_str = f"{a * a}x^{2 * k}"
+
+            if fn_choice == "arcsin":
+                eq_s = f"$ f(x) = arcsin({u_str}) $"
+                ans_s = f"$ f'(x) = ({du_str})/(sqrt(1 - {u_sq_str})) $"
+                step_rule = "Recall $d/dx[arcsin(u)] = (u') / sqrt(1 - u^2)$."
+            elif fn_choice == "arccos":
+                eq_s = f"$ f(x) = arccos({u_str}) $"
+                ans_s = f"$ f'(x) = -({du_str})/(sqrt(1 - {u_sq_str})) $"
+                step_rule = "Recall $d/dx[arccos(u)] = -(u') / sqrt(1 - u^2)$."
+            elif fn_choice == "arctan":
+                eq_s = f"$ f(x) = arctan({u_str}) $"
+                ans_s = f"$ f'(x) = ({du_str})/(1 + {u_sq_str}) $"
+                step_rule = "Recall $d/dx[arctan(u)] = (u') / (1 + u^2)$."
+            else:
+                eq_s = f"$ f(x) = arcsec({u_str}) $"
+                ans_s = f"$ f'(x) = ({du_str})/(|{u_str}| sqrt({u_sq_str} - 1)) $"
+                step_rule = "Recall $d/dx[arcsec(u)] = (u') / (|u| sqrt(u^2 - 1))$."
+
             return {
-                "prompt_text": "Differentiate the inverse trigonometric function.",
-                "equation_typst": f"$ f(x) = arcsin({a}x) $" if scale < 3 else f"$ f(x) = arctan({a}x) $",
-                "answer_typst": f"$ f'(x) = ({a})/(sqrt(1 - {a * a}x^2)) $" if scale < 3 else f"$ f'(x) = ({a})/(1 + {a * a}x^2) $",
+                "prompt_text": "Differentiate the inverse trigonometric function with respect to x.",
+                "equation_typst": eq_s,
+                "answer_typst": ans_s,
                 "steps_typst": [
-                    "Recall $d/(d x)[arcsin(u)] = u' / sqrt(1 - u^2)$ and $d/(d x)[arctan(u)] = u' / (1 + u^2)$.",
-                    f"Here $u = {a}x$ and $u' = {a}$, with $u^2 = {a * a}x^2$.",
-                    "Substitute $u$ and $u'$ into the inverse trigonometric derivative formula.",
+                    step_rule,
+                    f"Identify inner argument $u = {u_str}$ and compute derivative $u' = {du_str}$.",
+                    f"Square argument: $u^2 = {u_sq_str}$. Substitute $u$ and $u'$ to obtain $f'(x)$.",
                 ],
                 "distractors": [
-                    f"$ f'(x) = (1)/(sqrt(1 - {a * a}x^2)) $",
-                    f"$ f'(x) = ({a})/(1 - {a * a}x^2) $",
-                    f"$ f'(x) = arccos({a}x) $",
+                    f"$ f'(x) = (1)/(sqrt(1 - {u_sq_str})) $",
+                    f"$ f'(x) = ({du_str})/(1 - {u_sq_str}) $",
+                    f"$ f'(x) = -({du_str})/(1 + {u_sq_str}) $",
                 ],
             }
         if "trigonometric" in t_low:
-            a = rng.randint(2, 3 * scale)
-            c = rng.randint(1, 5)
+            fn_t = rng.choice(["sin", "cos", "tan", "sec", "csc", "cot"])
+            a = rng.randint(2, 20)
+            c = rng.choice([k for k in range(-15, 16) if k != 0])
+            if fn_t == "sin":
+                ans_s = f"$ f'(x) = {c * a} cos({a}x) $"
+                rule_s = "$d/dx[sin(u)] = cos(u) u'$"
+            elif fn_t == "cos":
+                ans_s = f"$ f'(x) = {-c * a} sin({a}x) $"
+                rule_s = "$d/dx[cos(u)] = -sin(u) u'$"
+            elif fn_t == "tan":
+                ans_s = f"$ f'(x) = {c * a} sec^2({a}x) $"
+                rule_s = "$d/dx[tan(u)] = sec^2(u) u'$"
+            elif fn_t == "sec":
+                ans_s = f"$ f'(x) = {c * a} sec({a}x) tan({a}x) $"
+                rule_s = "$d/dx[sec(u)] = sec(u) tan(u) u'$"
+            elif fn_t == "csc":
+                ans_s = f"$ f'(x) = {-c * a} csc({a}x) cot({a}x) $"
+                rule_s = "$d/dx[csc(u)] = -csc(u) cot(u) u'$"
+            else:
+                ans_s = f"$ f'(x) = {-c * a} csc^2({a}x) $"
+                rule_s = "$d/dx[cot(u)] = -csc^2(u) u'$"
+
             return {
                 "prompt_text": "Differentiate the trigonometric function with respect to x.",
-                "equation_typst": f"$ f(x) = {c} sin({a}x) $",
-                "answer_typst": f"$ f'(x) = {c * a} cos({a}x) $",
+                "equation_typst": f"$ f(x) = {c} {fn_t}({a}x) $",
+                "answer_typst": ans_s,
                 "steps_typst": [
-                    "Use $d/(d x)[sin(u)] = cos(u) dot u'$.",
-                    f"Multiply the outer coefficient ${c}$ by the inner derivative ${a}$.",
-                    f"Result: $f'(x) = {c * a} cos({a}x)$.",
+                    f"Use chain rule formula: {rule_s}.",
+                    f"Identify outer constant ${c}$ and inner derivative of ${a}x$: $u' = {a}$.",
+                    f"Multiply constants: ${c} times {a} = {c * a}$ to find the final derivative.",
                 ],
                 "distractors": [
-                    f"$ f'(x) = -{c * a} cos({a}x) $",
-                    f"$ f'(x) = {c} cos({a}x) $",
-                    f"$ f'(x) = {c * a} sin({a}x) $",
+                    f"$ f'(x) = {c} {fn_t}({a}x) $",
+                    f"$ f'(x) = {-c * a} {fn_t}({a}x) $",
+                    f"$ f'(x) = {c * a} x {fn_t}({a}x) $",
                 ],
             }
         if "logarithm" in t_low or "exponential" in t_low:
@@ -353,9 +401,10 @@ def _gen_decoupled_subtopic(
                 ],
             }
         if "concavity" in t_low:
-            a = rng.randint(-3 * scale, 3 * scale)
+            a_pool = [k for k in range(-4 * scale, 4 * scale + 1) if k != 0]
+            a = rng.choice(a_pool)
             b = 3 * a
-            s_b = f"- {b}x^2" if b >= 0 else f"+ {abs(b)}x^2"
+            s_b = f"- {b}x^2" if b > 0 else f"+ {abs(b)}x^2"
             return {
                 "prompt_text": "Find the inflection point and intervals of concavity for the function.",
                 "equation_typst": f"$ f(x) = x^3 {s_b} + 5 $",
@@ -372,24 +421,57 @@ def _gen_decoupled_subtopic(
                 ],
             }
         if "optimization" in t_low:
-            perim = rng.choice([20, 24, 32, 40, 48]) * scale
-            side = perim // 4
-            max_area = side * side
-            return {
-                "prompt_text": "Use calculus optimization to find the dimensions that maximize the objective quantity.",
-                "equation_typst": f"\"Find the maximum area of a rectangle with perimeter \" P = {perim} \" units.\"",
-                "answer_typst": f"$ x = y = {side}, quad A_\"max\" = {max_area} $",
-                "steps_typst": [
-                    f"From $2x + 2y = {perim}$, write $y = {perim // 2} - x$ and Area $A(x) = x({perim // 2} - x) = {perim // 2}x - x^2$.",
-                    f"Set $A'(x) = {perim // 2} - 2x = 0 arrow.r.double x = {side}$.",
-                    f"Then $y = {side}$ and maximum area $A = {side}^2 = {max_area}$.",
-                ],
-                "distractors": [
-                    f"$ x = {perim // 2}, quad A_\"max\" = {perim * 2} $",
-                    f"$ x = y = {side}, quad A_\"max\" = {perim} $",
-                    f"$ x = {side - 2}, y = {side + 2}, quad A_\"max\" = {(side - 2) * (side + 2)} $",
-                ],
-            }
+            opt_mode = rng.choice(["perimeter", "fence_river", "box_open"])
+            if opt_mode == "fence_river":
+                p = rng.randint(4, 25) * 4
+                x = p // 4
+                y = p // 2
+                max_area = x * y
+                return {
+                    "prompt_text": "A farmer encloses a rectangular field along a straight river (no fence needed along river). Find the dimensions that maximize area with fencing P.",
+                    "equation_typst": f"\"Fencing perimeter \" 2x + y = {p} \" meters\"",
+                    "answer_typst": f"$ x = {x} \" m\", quad y = {y} \" m\", quad A_\"max\" = {max_area} \" m\"^2 $",
+                    "steps_typst": [
+                        f"From $2x + y = {p}$, express $y = {p} - 2x$. Area $A(x) = x({p} - 2x) = {p}x - 2x^2$.",
+                        f"Differentiate and set to zero: $A'(x) = {p} - 4x = 0 ==> x = {x}$.",
+                        f"Then $y = {p} - 2({x}) = {y}$, giving maximum area $A = {x} times {y} = {max_area}$.",
+                    ],
+                    "distractors": [f"$ x = {p // 3}, y = {p // 3} $", f"$ A_\"max\" = {p * 2} $", f"$ x = {x * 2}, y = {y // 2} $"],
+                }
+            elif opt_mode == "box_open":
+                s = rng.choice([12, 16, 18, 20, 24, 30])
+                x = s // 6
+                vol = x * (s - 2 * x) * (s - 2 * x)
+                return {
+                    "prompt_text": "An open-top box is made by cutting congruent squares of side x from corners of a square sheet of cardboard and folding up sides. Find x maximizing volume.",
+                    "equation_typst": f"\"Cardboard square side \" s = {s} \" in.\"",
+                    "answer_typst": f"$ x = {x} \" in.\", quad V_\"max\" = {vol} \" in\"^3 $",
+                    "steps_typst": [
+                        f"Volume function $V(x) = x({s} - 2x)^2 = 4x^3 - {4 * s}x^2 + {s * s}x$.",
+                        f"Differentiate: $V'(x) = 12x^2 - {8 * s}x + {s * s} = (2x - {s})(6x - {s}) = 0$.",
+                        f"Since $0 < x < {s // 2}$, choose $x = {s}/6 = {x}$. Maximum volume $V = {vol}$.",
+                    ],
+                    "distractors": [f"$ x = {s // 4}, V = {s * s} $", f"$ x = {x + 1}, V = {vol - 8} $", f"$ V_\"max\" = {s ** 3} $"],
+                }
+            else:
+                side = rng.randint(5, 35)
+                perim = 4 * side
+                max_area = side * side
+                return {
+                    "prompt_text": "Use calculus optimization to find the dimensions that maximize the objective quantity.",
+                    "equation_typst": f"\"Find the maximum area of a rectangle with perimeter \" P = {perim} \" units.\"",
+                    "answer_typst": f"$ x = y = {side}, quad A_\"max\" = {max_area} $",
+                    "steps_typst": [
+                        f"From $2x + 2y = {perim}$, write $y = {2 * side} - x$ and Area $A(x) = x({2 * side} - x) = {2 * side}x - x^2$.",
+                        f"Set $A'(x) = {2 * side} - 2x = 0 ==> x = {side}$.",
+                        f"Then $y = {side}$ and maximum area $A = {side}^2 = {max_area}$.",
+                    ],
+                    "distractors": [
+                        f"$ x = y = {2 * side}, quad A_\"max\" = {perim * 2} $",
+                        f"$ x = {side - 2}, y = {side + 2}, quad A_\"max\" = {max_area - 4} $",
+                        f"$ A_\"max\" = {perim} $",
+                    ],
+                }
         if "motion along a line" in t_low:
             a = rng.randint(1, 3)
             b = rng.randint(2, 6)
@@ -412,29 +494,46 @@ def _gen_decoupled_subtopic(
                 ],
             }
         if "differentials" in t_low:
-            x0 = rng.randint(2, 5)
-            dx = Fraction(1, 10 * scale)
-            dy = Fraction(2 * x0, 1) * dx
+            func_type = rng.choice(["quad", "cubic", "sqrt", "poly"])
+            x0 = rng.randint(1, 12)
+            dx = rng.choice([0.01, 0.02, 0.04, 0.05, 0.1, -0.01, -0.02, -0.05, -0.1])
+            if func_type == "cubic":
+                dy = 3 * (x0 ** 2) * dx
+                eq_s = f"$ y = x^3, quad x = {x0}, quad d x = {dx:g} $"
+                step_deriv = f"Compute derivative: $f'(x) = 3x^2 ==> f'({x0}) = {3 * x0 * x0}$."
+            elif func_type == "sqrt":
+                sq_x0 = rng.choice([1, 4, 9, 16, 25])
+                x0 = sq_x0
+                dy = (1.0 / (2 * math.sqrt(x0))) * dx
+                eq_s = f"$ y = sqrt(x), quad x = {x0}, quad d x = {dx:g} $"
+                step_deriv = f"Compute derivative: $f'(x) = 1/(2 sqrt(x)) ==> f'({x0}) = 1/{int(2 * math.sqrt(x0))}$."
+            elif func_type == "poly":
+                a_coef = rng.randint(2, 5)
+                b_coef = rng.randint(1, 6)
+                dy = (2 * a_coef * x0 + b_coef) * dx
+                eq_s = f"$ y = {a_coef}x^2 + {b_coef}x, quad x = {x0}, quad d x = {dx:g} $"
+                step_deriv = f"Compute derivative: $f'(x) = {2 * a_coef}x + {b_coef} ==> f'({x0}) = {2 * a_coef * x0 + b_coef}$."
+            else:
+                dy = 2 * x0 * dx
+                eq_s = f"$ y = x^2, quad x = {x0}, quad d x = {dx:g} $"
+                step_deriv = f"Compute derivative: $f'(x) = 2x ==> f'({x0}) = {2 * x0}$."
+
             return {
-                "prompt_text": "Find the differential dy = f'(x) dx for the given values of x and dx.",
-                "equation_typst": f"$ y = x^2, quad x = {x0}, quad d x = {float(dx):g} $",
-                "answer_typst": f"$ d y = {float(dy):g} $",
+                "prompt_text": "Find the differential dy = f'(x) dx for the given function and values of x and dx.",
+                "equation_typst": eq_s,
+                "answer_typst": f"$ d y = {dy:.4g} $",
                 "steps_typst": [
-                    "Compute the derivative: $f'(x) = 2x$.",
-                    f"Write the differential formula: $d y = 2x d x = 2({x0})({float(dx):g})$.",
-                    f"Multiply: $d y = {float(dy):g}$.",
+                    step_deriv,
+                    f"Write differential formula: $d y = f'({x0}) d x = f'({x0}) times ({dx:g})$.",
+                    f"Evaluate product: $d y = {dy:.4g}$.",
                 ],
-                "distractors": [
-                    f"$ d y = {float(dx):g} $",
-                    f"$ d y = {float(dy * 2):g} $",
-                    f"$ d y = {x0 * x0 * float(dx):g} $",
-                ],
+                "distractors": [f"$ d y = {dy * 2:.4g} $", f"$ d y = {dx:g} $", f"$ d y = {-dy:.4g} $"],
             }
 
     # ------------------------------------------------------------------
     # C. CALCULUS LIMITS & CONTINUITY
     # ------------------------------------------------------------------
-    if c_low in ("limits", "continuity") or ("introduction to calculus" in c_low and "limit" in t_low):
+    if c_low in ("limits", "continuity") or "continuity" in t_low or ("introduction to calculus" in c_low and "limit" in t_low):
         if "direct evaluation" in t_low:
             a = rng.randint(1, 3 * scale)
             b = rng.randint(1, 5)
@@ -503,47 +602,106 @@ def _gen_decoupled_subtopic(
                 "distractors": ["$ 0 $", "$ infinity $", f"$ -{_fmt_frac(f)} $"],
             }
         if "continuity" in c_low or "continuity" in t_low:
-            a = rng.randint(1, 5 * scale)
-            return {
-                "prompt_text": "Find all points of discontinuity and classify each as removable, jump, or infinite.",
-                "equation_typst": f"$ f(x) = (x - {a})/((x - {a})(x + {a})) $",
-                "answer_typst": f"$ x = {a} \" (removable)\", quad x = -{a} \" (infinite)\" $",
-                "steps_typst": [
-                    f"Set the denominator to zero: $(x - {a})(x + {a}) = 0 arrow.r.double x = {a}, -{a}$.",
-                    f"The factor $(x - {a})$ cancels with the numerator, so $x = {a}$ is a removable discontinuity.",
-                    f"The factor $(x + {a})$ remains in the denominator, so $x = -{a}$ is an infinite discontinuity.",
-                ],
-                "distractors": [
-                    f"$ x = {a} \" (infinite)\", quad x = -{a} \" (removable)\" $",
-                    f"$ x = {a} \" (jump)\", quad x = -{a} \" (jump)\" $",
-                    "$ \"Continuous everywhere\" $",
-                ],
-            }
+            cont_family = rng.choice(["rational_remov_inf", "piecewise_jump", "removable_point"])
+            if cont_family == "piecewise_jump":
+                c_pt = rng.randint(-4, 4)
+                m1 = rng.choice([-3, -2, 1, 2, 3])
+                b1 = rng.randint(-4, 4)
+                m2 = rng.choice([-3, -2, 1, 2, 3])
+                b2 = rng.randint(-4, 4)
+                while (m1 * c_pt + b1) == (m2 * c_pt + b2):
+                    b2 += 2
+                val_left = m1 * c_pt + b1
+                val_right = m2 * c_pt + b2
+                return {
+                    "prompt_text": "Determine if the piecewise function is continuous at x = c; if not, classify the discontinuity.",
+                    "equation_typst": f"$ f(x) = cases({m1}x {('+' if b1>=0 else '-')} {abs(b1)} &\"if \" x <= {c_pt}, {m2}x {('+' if b2>=0 else '-')} {abs(b2)} &\"if \" x > {c_pt}) $",
+                    "answer_typst": f"$ \"Jump discontinuity at \" x = {c_pt} $",
+                    "steps_typst": [
+                        f"Evaluate left-hand limit: $lim_(x ==> {c_pt}^-) f(x) = {m1}({c_pt}) + {b1} = {val_left}$.",
+                        f"Evaluate right-hand limit: $lim_(x ==> {c_pt}^+) f(x) = {m2}({c_pt}) + {b2} = {val_right}$.",
+                        f"Since left limit (${val_left}$) != right limit (${val_right}$), there is a jump discontinuity at $x = {c_pt}$.",
+                    ],
+                    "distractors": [f"$ \"Continuous at \" x = {c_pt} $", f"$ \"Removable discontinuity at \" x = {c_pt} $", f"$ \"Infinite discontinuity at \" x = {c_pt} $"],
+                }
+            elif cont_family == "removable_point":
+                c_pt = rng.choice([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
+                l_val = rng.randint(2, 15)
+                true_l = 2 * c_pt
+                while l_val == true_l:
+                    l_val += 3
+                return {
+                    "prompt_text": "Determine if the function is continuous at x = c; if not, classify the discontinuity.",
+                    "equation_typst": f"$ f(x) = cases(((x^2 - {c_pt * c_pt}))/((x - {c_pt})) &\"if \" x != {c_pt}, {l_val} &\"if \" x = {c_pt}) $",
+                    "answer_typst": f"$ \"Removable discontinuity at \" x = {c_pt} $",
+                    "steps_typst": [
+                        f"Evaluate the limit as $x ==> {c_pt}$: $lim_(x ==> {c_pt}) (x - {c_pt})(x + {c_pt}) / (x - {c_pt}) = {c_pt} + {c_pt} = {true_l}$.",
+                        f"Compare with defined value $f({c_pt}) = {l_val}$.",
+                        f"Since $lim_(x ==> {c_pt}) f(x) = {true_l} != f({c_pt}) = {l_val}$, there is a removable discontinuity at $x = {c_pt}$.",
+                    ],
+                    "distractors": [f"$ \"Continuous at \" x = {c_pt} $", f"$ \"Jump discontinuity at \" x = {c_pt} $", f"$ \"Infinite discontinuity at \" x = {c_pt} $"],
+                }
+            else:
+                a_pt = rng.choice([-6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6])
+                b_pt = rng.choice([k for k in range(-6, 7) if k != 0 and k != a_pt])
+                s_a = f"- {a_pt}" if a_pt > 0 else f"+ {abs(a_pt)}"
+                s_b = f"- {b_pt}" if b_pt > 0 else f"+ {abs(b_pt)}"
+                return {
+                    "prompt_text": "Find all points of discontinuity and classify each as removable, jump, or infinite.",
+                    "equation_typst": f"$ f(x) = (x {s_a})/((x {s_a})(x {s_b})) $",
+                    "answer_typst": f"$ x = {a_pt} \" (removable)\", quad x = {b_pt} \" (infinite)\" $",
+                    "steps_typst": [
+                        f"Set denominator to zero: $(x {s_a})(x {s_b}) = 0 ==> x = {a_pt}, {b_pt}$.",
+                        f"The factor $(x {s_a})$ cancels with the numerator, so $x = {a_pt}$ is a removable discontinuity.",
+                        f"The factor $(x {s_b})$ remains in the denominator, so $x = {b_pt}$ is an infinite discontinuity (vertical asymptote).",
+                    ],
+                    "distractors": [
+                        f"$ x = {a_pt} \" (infinite)\", quad x = {b_pt} \" (removable)\" $",
+                        f"$ x = {a_pt} \" (jump)\", quad x = {b_pt} \" (jump)\" $",
+                        "$ \"Continuous everywhere\" $",
+                    ],
+                }
 
     # ------------------------------------------------------------------
     # D. CALCULUS INTEGRATION SUBTOPICS
     # ------------------------------------------------------------------
     if "integration" in c_low or ("introduction to calculus" in c_low and ("area" in t_low or "integral" in t_low)):
         if "approximating area" in t_low:
-            n = 4
+            n = rng.choice([3, 4, 5, 6])
+            c_val = rng.randint(1, 4)
+            b_end = n
+            dx = 1
+            method = rng.choice(["LRAM", "RRAM"])
+            if method == "LRAM":
+                pts = list(range(0, n))
+                vals = [x * x + c_val for x in pts]
+                approx_sum = sum(vals)
+                m_label = f"L_{n}"
+                step_pts = f"left endpoints $x = {', '.join(str(p) for p in pts)}$"
+            else:
+                pts = list(range(1, n + 1))
+                vals = [x * x + c_val for x in pts]
+                approx_sum = sum(vals)
+                m_label = f"R_{n}"
+                step_pts = f"right endpoints $x = {', '.join(str(p) for p in pts)}$"
 
-            def _fn_area(x: float) -> float:
-                return 0.25 * x * x + 1
+            def _fn_area(x: float, _c=c_val) -> float:
+                return 0.15 * x * x + _c
 
-            boxes = [(i, _fn_area(i), 1) for i in range(n)]
-            lram = sum(i * i + 1 for i in range(n))
+            boxes = [(pts[i] if method == "LRAM" else pts[i] - 1, _fn_area(pts[i]), 1) for i in range(n)]
+
             return {
-                "prompt_text": "Approximate the area under f(x) = x^2 + 1 on [0, 4] using a Left Riemann Sum with n = 4 subintervals.",
-                "equation_typst": "$ integral_0^4 (x^2 + 1) d x quad (\"LRAM\", n = 4) $",
-                "answer_typst": f"$ L_4 = {lram} $",
+                "prompt_text": f"Approximate the area under f(x) = x^2 + {c_val} on [0, {b_end}] using a {method} sum with n = {n} subintervals.",
+                "equation_typst": f"$ integral_0^{b_end} (x^2 + {c_val}) d x quad (\"{method}\", n = {n}) $",
+                "answer_typst": f"$ {m_label} = {approx_sum} $",
                 "steps_typst": [
-                    "Subinterval width is $Delta x = (4 - 0)/4 = 1$, with left endpoints $x = 0, 1, 2, 3$.",
-                    "Evaluate $f(0) = 1, f(1) = 2, f(2) = 5, f(3) = 10$.",
-                    f"Sum: $L_4 = 1(1 + 2 + 5 + 10) = {lram}$.",
+                    f"Subinterval width $Delta x = ({b_end} - 0)/{n} = {dx}$, with {step_pts}.",
+                    f"Evaluate $f(x)$ values: ${' + '.join(str(v) for v in vals)}$.",
+                    f"Sum rectangle areas: ${m_label} = {dx}({' + '.join(str(v) for v in vals)}) = {approx_sum}$.",
                 ],
-                "distractors": [f"$ {lram + 16} $", f"$ {lram - 4} $", "$ 24 $"],
-                "diagram_svg": svg_coordinate_plane(functions=[{"fn": _fn_area, "x_start": 0, "x_end": 4, "color": "#1d4ed8"}], riemann_boxes=boxes),
-                "answer_svg": svg_coordinate_plane(functions=[{"fn": _fn_area, "x_start": 0, "x_end": 4, "color": "#1d4ed8"}], riemann_boxes=boxes),
+                "distractors": [f"$ {m_label} = {approx_sum + n * 2} $", f"$ {m_label} = {max(1, approx_sum - n * 2)} $", f"$ {m_label} = {approx_sum + 10} $"],
+                "diagram_svg": svg_coordinate_plane(functions=[{"fn": _fn_area, "x_start": 0, "x_end": b_end, "color": "#1d4ed8"}], riemann_boxes=boxes),
+                "answer_svg": svg_coordinate_plane(functions=[{"fn": _fn_area, "x_start": 0, "x_end": b_end, "color": "#1d4ed8"}], riemann_boxes=boxes),
             }
         if "limit of sums" in t_low:
             b = rng.randint(2, 4 + scale)
@@ -647,8 +805,8 @@ def _gen_decoupled_subtopic(
                 "distractors": [f"$ a_({n}) = {a1 * (r ** n)} $", f"$ a_({n}) = {a1 + (n - 1) * r} $", f"$ a_({n}) = {an // r} $"],
             }
         if "arithmetic and geometric mean" in t_low:
-            m = rng.randint(2, 5)
-            k = rng.choice([2, 3, 4])
+            m = rng.randint(1, 25)
+            k = rng.randint(2, 12)
             x, y = m, m * k * k
             am = (x + y) / 2
             gm = m * k
@@ -701,19 +859,36 @@ def _gen_decoupled_subtopic(
     # F. GEOMETRY TRIGONOMETRY & TRIANGLES DECOUPLED SUBTOPICS
     # ------------------------------------------------------------------
     if "finding trig" in t_low or "finding sine" in t_low or "finding ratios" in t_low:
-        triples = [(3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25)]
-        opp, adj, hyp = rng.choice(triples)
-        opp, adj, hyp = opp * scale, adj * scale, hyp * scale
-        fn = rng.choice(["sin", "cos", "tan"])
-        f = Fraction(opp, hyp) if fn == "sin" else (Fraction(adj, hyp) if fn == "cos" else Fraction(opp, adj))
+        prim_triples = [
+            (3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25), (9, 40, 41),
+            (11, 60, 61), (12, 35, 37), (13, 84, 85), (16, 63, 65), (20, 21, 29),
+            (28, 45, 53), (33, 56, 65), (36, 77, 85), (39, 80, 89), (48, 55, 73),
+        ]
+        opp0, adj0, hyp0 = rng.choice(prim_triples)
+        mult = rng.choice([1, 2, 3, 4, 5])
+        opp, adj, hyp = opp0 * mult, adj0 * mult, hyp0 * mult
+        fn = rng.choice(["sin", "cos", "tan", "csc", "sec", "cot"])
+        if fn == "sin":
+            f = Fraction(opp, hyp)
+        elif fn == "cos":
+            f = Fraction(adj, hyp)
+        elif fn == "tan":
+            f = Fraction(opp, adj)
+        elif fn == "csc":
+            f = Fraction(hyp, opp)
+        elif fn == "sec":
+            f = Fraction(hyp, adj)
+        else:
+            f = Fraction(adj, opp)
+
         return {
             "prompt_text": "Find the value of the trigonometric ratio as a simplified fraction.",
             "equation_typst": f"$ {fn}(theta) quad (\"Opp\" = {opp}, \" Adj\" = {adj}, \" Hyp\" = {hyp}) $",
             "answer_typst": f"$ {fn}(theta) = {_fmt_frac(f)} $",
             "steps_typst": [
-                "Use SOH CAH TOA: $\\sin = \"Opp\"/\"Hyp\"$, $\\cos = \"Adj\"/\"Hyp\"$, $\\tan = \"Opp\"/\"Adj\"$.",
-                f"Substitute the side lengths for ${fn}(theta)$.",
-                f"Reduce to lowest terms: ${_fmt_frac(f)}$.",
+                "Use right triangle definitions: $\\sin = \"Opp\"/\"Hyp\"$, $\\cos = \"Adj\"/\"Hyp\"$, $\\tan = \"Opp\"/\"Adj\"$ and reciprocals $\\csc, \\sec, \\cot$.",
+                f"Substitute side lengths into ${fn}(theta)$.",
+                f"Reduce fraction to lowest terms: ${_fmt_frac(f)}$.",
             ],
             "distractors": [
                 f"$ {_fmt_frac(Fraction(f.denominator, f.numerator))} $",
@@ -724,48 +899,100 @@ def _gen_decoupled_subtopic(
             "answer_svg": svg_right_triangle(a_label=str(adj), b_label=str(opp), c_label=str(hyp), theta_label=f"{fn}={f}"),
         }
 
-    if "finding angle" in t_low:
-        opp, adj, hyp = rng.choice([(3, 4, 5), (5, 12, 13), (8, 15, 17)])
-        opp, adj, hyp = opp * scale, adj * scale, hyp * scale
-        deg = round(math.degrees(math.atan2(opp, adj)), 1)
+    if "finding angle" in t_low or "finding_angles" in t_low or "angle_measures" in t_low:
+        trig_mode = rng.choice(["tan", "sin", "cos"])
+        if trig_mode == "tan":
+            opp = rng.randint(3, 40)
+            adj = rng.randint(3, 40)
+            deg = round(math.degrees(math.atan2(opp, adj)), 1)
+            eq_s = f"$ tan(theta) = ({opp})/({adj}) $"
+            step_id = f"Opposite = ${opp}$, Adjacent = ${adj}$ ==> $tan(theta) = {opp}/{adj}$."
+            diag_a, diag_b, diag_c = str(adj), str(opp), ""
+        elif trig_mode == "sin":
+            opp = rng.randint(3, 35)
+            hyp = opp + rng.randint(2, 25)
+            deg = round(math.degrees(math.asin(opp / hyp)), 1)
+            eq_s = f"$ sin(theta) = ({opp})/({hyp}) $"
+            step_id = f"Opposite = ${opp}$, Hypotenuse = ${hyp}$ ==> $sin(theta) = {opp}/{hyp}$."
+            diag_a, diag_b, diag_c = "", str(opp), str(hyp)
+        else:
+            adj = rng.randint(3, 35)
+            hyp = adj + rng.randint(2, 25)
+            deg = round(math.degrees(math.acos(adj / hyp)), 1)
+            eq_s = f"$ cos(theta) = ({adj})/({hyp}) $"
+            step_id = f"Adjacent = ${adj}$, Hypotenuse = ${hyp}$ ==> $cos(theta) = {adj}/{hyp}$."
+            diag_a, diag_b, diag_c = str(adj), "", str(hyp)
+
         return {
             "prompt_text": "Find the measure of angle theta to the nearest tenth of a degree.",
-            "equation_typst": f"$ tan(theta) = ({opp})/({adj}) $",
+            "equation_typst": eq_s,
             "answer_typst": f"$ theta approx {deg}^circle $",
             "steps_typst": [
-                f"Identify the opposite side (${opp}$) and adjacent side (${adj}$): $tan(theta) = ({opp})/({adj})$.",
-                f"Apply the inverse tangent function: $theta = arctan(({opp})/({adj}))$.",
+                step_id,
+                f"Apply inverse function: $theta = arc{trig_mode}({eq_s.split('=')[1].strip().replace('$', '')})$.",
                 f"Evaluate in degree mode: $theta approx {deg}^circle$.",
             ],
             "distractors": [
                 f"$ theta approx {round(90.0 - deg, 1)}^circle $",
                 f"$ theta approx {round(deg + 10.0, 1)}^circle $",
-                f"$ theta approx {round(deg / 2, 1)}^circle $",
+                f"$ theta approx {round(abs(deg - 15.0), 1)}^circle $",
             ],
-            "diagram_svg": svg_right_triangle(a_label=str(adj), b_label=str(opp), c_label="", theta_label="theta=?"),
-            "answer_svg": svg_right_triangle(a_label=str(adj), b_label=str(opp), c_label="", theta_label=f"{deg} deg"),
+            "diagram_svg": svg_right_triangle(a_label=diag_a, b_label=diag_b, c_label=diag_c, theta_label="theta=?"),
+            "answer_svg": svg_right_triangle(a_label=diag_a, b_label=diag_b, c_label=diag_c, theta_label=f"{deg} deg"),
         }
 
-    if "missing sides" in t_low or "solving right triangles" in t_low or "finding angles and sides" in t_low:
-        ang = rng.choice([30, 45, 60, 35, 50])
-        hyp = rng.randint(8, 18) * scale
-        opp_v = round(hyp * math.sin(math.radians(ang)), 1)
+    if "missing sides" in t_low or "solving right triangles" in t_low or "finding angles and sides" in t_low or ("trig" in t_low and "solve" in t_low):
+        ang = rng.randint(15, 75)
+        side_mode = rng.choice(["find_opp_from_hyp", "find_adj_from_hyp", "find_opp_from_adj", "find_hyp_from_opp"])
+        if side_mode == "find_opp_from_hyp":
+            hyp = rng.randint(8, 45)
+            val = round(hyp * math.sin(math.radians(ang)), 1)
+            eq_s = f"$ sin({ang}^circle) = (x)/({hyp}) $"
+            steps = [
+                f"Set up sine ratio: $sin({ang}^circle) = x / {hyp}$.",
+                f"Multiply by ${hyp}$: $x = {hyp} sin({ang}^circle)$.",
+                f"Round to nearest tenth: $x approx {val}$.",
+            ]
+            d_a, d_b, d_c = "", "x", str(hyp)
+        elif side_mode == "find_adj_from_hyp":
+            hyp = rng.randint(8, 45)
+            val = round(hyp * math.cos(math.radians(ang)), 1)
+            eq_s = f"$ cos({ang}^circle) = (x)/({hyp}) $"
+            steps = [
+                f"Set up cosine ratio: $cos({ang}^circle) = x / {hyp}$.",
+                f"Multiply by ${hyp}$: $x = {hyp} cos({ang}^circle)$.",
+                f"Round to nearest tenth: $x approx {val}$.",
+            ]
+            d_a, d_b, d_c = "x", "", str(hyp)
+        elif side_mode == "find_opp_from_adj":
+            adj = rng.randint(5, 35)
+            val = round(adj * math.tan(math.radians(ang)), 1)
+            eq_s = f"$ tan({ang}^circle) = (x)/({adj}) $"
+            steps = [
+                f"Set up tangent ratio: $tan({ang}^circle) = x / {adj}$.",
+                f"Multiply by ${adj}$: $x = {adj} tan({ang}^circle)$.",
+                f"Round to nearest tenth: $x approx {val}$.",
+            ]
+            d_a, d_b, d_c = str(adj), "x", ""
+        else:
+            opp = rng.randint(5, 35)
+            val = round(opp / math.sin(math.radians(ang)), 1)
+            eq_s = f"$ sin({ang}^circle) = ({opp})/(x) $"
+            steps = [
+                f"Set up sine ratio: $sin({ang}^circle) = {opp} / x$.",
+                f"Solve for $x$: $x = ({opp}) / (sin({ang}^circle))$.",
+                f"Round to nearest tenth: $x approx {val}$.",
+            ]
+            d_a, d_b, d_c = "", str(opp), "x"
+
         return {
             "prompt_text": "Find the missing side length x of the right triangle to the nearest tenth.",
-            "equation_typst": f"$ sin({ang}^circle) = (x)/({hyp}) $",
-            "answer_typst": f"$ x approx {opp_v} $",
-            "steps_typst": [
-                f"Relate the opposite side $x$ and hypotenuse ${hyp}$ using sine: $sin({ang}^circle) = x / {hyp}$.",
-                f"Multiply both sides by ${hyp}$: $x = {hyp} sin({ang}^circle)$.",
-                f"Round to the nearest tenth: $x approx {opp_v}$.",
-            ],
-            "distractors": [
-                f"$ x approx {round(hyp * math.cos(math.radians(ang)), 1)} $",
-                f"$ x approx {round(hyp / math.sin(math.radians(ang)), 1)} $",
-                f"$ x approx {round(opp_v + 3.2, 1)} $",
-            ],
-            "diagram_svg": svg_right_triangle(a_label="", b_label="x", c_label=str(hyp), theta_label=f"{ang} deg"),
-            "answer_svg": svg_right_triangle(a_label="", b_label=f"x={opp_v}", c_label=str(hyp), theta_label=f"{ang} deg"),
+            "equation_typst": eq_s,
+            "answer_typst": f"$ x approx {val} $",
+            "steps_typst": steps,
+            "distractors": [f"$ x approx {round(val + 3.2, 1)} $", f"$ x approx {round(abs(val - 4.1), 1)} $", f"$ x approx {round(val * 1.5, 1)} $"],
+            "diagram_svg": svg_right_triangle(a_label=d_a, b_label=d_b, c_label=d_c, theta_label=f"{ang} deg"),
+            "answer_svg": svg_right_triangle(a_label=d_a, b_label=d_b, c_label=d_c, theta_label=f"x={val}"),
         }
 
     if "law of sines" in t_low and "cosines" not in t_low:
@@ -1326,8 +1553,8 @@ def _gen_decoupled_subtopic(
         }
 
     if "arc length and sector area" in t_low:
-        r = rng.choice([6, 8, 10, 12])
-        theta = rng.choice([60, 90, 120, 180])
+        r = rng.randint(3, 45)
+        theta = rng.choice([15 * k for k in range(1, 24)])
         arc_f = Fraction(theta * 2 * r, 360)
         sec_f = Fraction(theta * r * r, 360)
         return {
@@ -1347,78 +1574,92 @@ def _gen_decoupled_subtopic(
             "diagram_svg": svg_circle_diagram(radius_label=f"r = {r}", angle_label=f"{theta} deg", shade_sector=True),
             "answer_svg": svg_circle_diagram(radius_label=f"s = {arc_f}pi", angle_label=f"A = {sec_f}pi", shade_sector=True),
         }
-
     # ------------------------------------------------------------------
     # N. LOGARITHMS & EXPONENTIAL EQUATIONS DECOUPLED SUBTOPICS
     # ------------------------------------------------------------------
     if "logarithm" in c_low or "logarithm" in t_low or "compound interest" in t_low:
-        base = rng.choice([2, 3, 4, 5])
-        exp_k = rng.randint(2, 3 + scale)
-        val = base ** exp_k
+        base = rng.choice([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
         if "evaluating logarithms" in t_low:
+            mode_eval = rng.choice(["int_pos", "int_neg", "fractional"])
+            if mode_eval == "int_pos":
+                k_exp = rng.randint(1, 6)
+                arg_val = base ** k_exp
+                ans_str = str(k_exp)
+                step_exp = f"{base}^{k_exp} = {arg_val}"
+                arg_s = str(arg_val)
+            elif mode_eval == "int_neg":
+                k_exp = rng.randint(1, 4)
+                denom = base ** k_exp
+                ans_str = str(-k_exp)
+                step_exp = f"{base}^(-{k_exp}) = 1/{denom}"
+                arg_s = f"(1)/({denom})"
+            else:
+                k_exp = rng.choice([2, 3, 4])
+                ans_str = f"1/{k_exp}"
+                step_exp = f"{base}^(1/{k_exp}) = root({k_exp}, {base})"
+                arg_s = f"root({k_exp}, {base})"
+
             return {
                 "prompt_text": "Evaluate the logarithm without a calculator.",
-                "equation_typst": f"$ log_({base})({val}) $",
-                "answer_typst": f"$ {exp_k} $",
+                "equation_typst": f"$ log_({base})({arg_s}) $",
+                "answer_typst": f"$ {ans_str} $",
                 "steps_typst": [
-                    f"Ask: to what power must ${base}$ be raised to equal ${val}$?",
-                    f"Rewrite ${val}$ as a power of ${base}$: ${base}^{exp_k} = {val}$.",
-                    f"Therefore, $log_({base})({val}) = {exp_k}$.",
+                    f"Ask: to what power must base ${base}$ be raised to equal ${arg_s}$?",
+                    f"Express ${arg_s}$ as a power of base ${base}$: ${step_exp}$.",
+                    f"Therefore, $log_({base})({arg_s}) = {ans_str}$.",
                 ],
-                "distractors": [f"$ {val // base} $", f"$ {exp_k + 1} $", f"$ 1/({exp_k}) $"],
+                "distractors": [f"$ {base} $", f"$ {ans_str} + 1 $", "$ 0 $"],
             }
+
         if "not requiring logarithms" in t_low:
-            sol = rng.randint(1, 4 * scale)
+            sol = rng.randint(1, 20)
+            offset = rng.randint(1, 8)
+            rhs_exp = sol + offset
             return {
                 "prompt_text": "Solve the exponential equation by rewriting both sides with a common base.",
-                "equation_typst": f"$ {base}^(x + 1) = {base ** (sol + 1)} $",
+                "equation_typst": f"$ {base}^(x {'+' if offset >= 0 else '-'} {abs(offset)}) = {base ** rhs_exp} $",
                 "answer_typst": f"$ x = {sol} $",
                 "steps_typst": [
-                    f"Write ${base ** (sol + 1)}$ as a power of ${base}$: ${base}^{sol + 1}$.",
-                    f"Equate the exponents: $x + 1 = {sol + 1}$.",
-                    f"Solve for $x$: $x = {sol}$.",
+                    f"Express the right-hand side with base ${base}$: ${base}^{rhs_exp}$.",
+                    f"Set exponents equal: $x {'+' if offset >= 0 else '-'} {abs(offset)} = {rhs_exp}$.",
+                    f"Solve for $x$: $x = {rhs_exp} - {offset} = {sol}$.",
                 ],
-                "distractors": [f"$ x = {sol + 1} $", f"$ x = {sol - 1} $", f"$ x = {base * sol} $"],
+                "distractors": [f"$ x = {sol + 1} $", f"$ x = {sol - 1} $", f"$ x = {rhs_exp} $"],
             }
+
         if "requiring logarithms" in t_low:
-            rhs = rng.choice([7, 10, 12, 15, 20]) * scale
+            rhs = rng.randint(15, 300)
             approx = round(math.log(rhs) / math.log(base), 3)
             return {
                 "prompt_text": "Solve the exponential equation using logarithms. Give both the exact form and decimal approximation.",
                 "equation_typst": f"$ {base}^x = {rhs} $",
                 "answer_typst": f"$ x = (ln({rhs}))/(ln({base})) approx {approx} $",
                 "steps_typst": [
-                    f"Take the natural logarithm of both sides: $ln({base}^x) = ln({rhs})$.",
-                    f"Apply the power property: $x ln({base}) = ln({rhs})$.",
-                    f"Divide by $ln({base})$: $x = ln({rhs})/ln({base}) approx {approx}$.",
+                    f"Take natural logarithms: $ln({base}^x) = ln({rhs})$.",
+                    f"Power rule: $x ln({base}) = ln({rhs})$.",
+                    f"Solve for $x$: $x = ln({rhs}) / ln({base}) approx {approx}$.",
                 ],
-                "distractors": [
-                    f"$ x = (ln({base}))/(ln({rhs})) $",
-                    f"$ x = ln({rhs} - {base}) $",
-                    f"$ x = ({rhs})/({base}) $",
-                ],
-            }
-        if "compound interest" in t_low:
-            P = rng.choice([1000, 2000, 5000])
-            r_pct = rng.choice([4, 5, 6, 8])
-            t = rng.randint(3, 6 * scale)
-            amt = round(P * ((1 + r_pct / 100.0) ** t), 2)
-            return {
-                "prompt_text": "Find the account balance A using the compound interest formula A = P(1 + r/n)^(nt).",
-                "equation_typst": f"$ P = \"$\"{P}, quad r = {r_pct}% \" compounded annually\", quad t = {t} \" years\" $",
-                "answer_typst": f"$ A = \"$\"{amt:.2f} $",
-                "steps_typst": [
-                    f"Substitute $P = {P}, r = {r_pct / 100:.2f}, n = 1, t = {t}$ into $A = P(1 + r)^t$.",
-                    f"Write $A = {P}(1.{r_pct:02d})^{t}$.",
-                    f"Evaluate and round to the nearest cent: $\\${amt:.2f}$.",
-                ],
-                "distractors": [
-                    f"$ A = \"$\"{P + P * (r_pct / 100.0) * t:.2f} $",
-                    f"$ A = \"$\"{amt + 150:.2f} $",
-                    f"$ A = \"$\"{P * (1 + r_pct / 100.0) * t:.2f} $",
-                ],
+                "distractors": [f"$ x = ln({rhs}) $", f"$ x = {round(approx + 1, 3)} $", f"$ x = {rhs // base} $"],
             }
 
+        if "compound interest" in t_low:
+            p_princ = rng.choice([500, 1000, 2000, 5000, 10000, 15000, 25000])
+            r_pct = rng.choice([2, 3, 4, 5, 6, 7, 8])
+            t_yrs = rng.randint(2, 20)
+            n_freq = rng.choice([(1, "annually"), (2, "semiannually"), (4, "quarterly"), (12, "monthly")])
+            m_comp, desc = n_freq
+            amt = round(p_princ * ((1 + (r_pct / 100) / m_comp) ** (m_comp * t_yrs)), 2)
+            return {
+                "prompt_text": f"Find the final account balance for an investment compounded {desc}.",
+                "equation_typst": f"$ P = \\${p_princ}, quad r = {r_pct}%, quad t = {t_yrs} \" years\", quad \"compounded \" {desc} $",
+                "answer_typst": f"$ A = \${amt:,.2f} $",
+                "steps_typst": [
+                    f"Use compound interest formula $A = P(1 + r/n)^(n t)$ with $n = {m_comp}$.",
+                    f"Substitute: $\${p_princ}(1 + {r_pct / 100}/{m_comp})^({m_comp} times {t_yrs})$.",
+                    f"Compute final balance: $A = \${amt:,.2f}$.",
+                ],
+                "distractors": [f"$ A = \${amt + 100:,.2f} $", f"$ A = \${p_princ * (1 + (r_pct * t_yrs)/100):,.2f} $", f"$ A = \${amt * 1.1:,.2f} $"],
+            }
     # ------------------------------------------------------------------
     # O. SLOPE FROM A GRAPH VS SLOPE FROM TWO POINTS
     # ------------------------------------------------------------------
@@ -1487,38 +1728,81 @@ def _gen_decoupled_subtopic(
         }
 
     if "special right triangle" in t_low:
-        leg = rng.randint(3, 9) * scale
-        if scale == 1:
+        sub_type = rng.choice(["45_45_90_leg", "45_45_90_hyp", "30_60_90_short", "30_60_90_long", "30_60_90_hyp"])
+        leg_val = rng.randint(2, 28)
+        if sub_type == "45_45_90_leg":
             return {
                 "prompt_text": "Find the hypotenuse c of the 45-45-90 special right triangle.",
-                "equation_typst": f"$ \"45\"^circle\"-45\"^circle\"-90\"^circle \" triangle with leg \" a = {leg} $",
-                "answer_typst": f"$ c = {leg}sqrt(2) $",
+                "equation_typst": f"$ \"45\"^circle\"-45\"^circle\"-90\"^circle \" triangle with leg \" a = {leg_val} $",
+                "answer_typst": f"$ c = {leg_val}sqrt(2) $",
                 "steps_typst": [
-                    "In a $45^circle$-$45^circle$-$90^circle$ triangle, the sides are in the ratio $1 : 1 : sqrt(2)$.",
-                    f"Multiply the leg length ${leg}$ by $sqrt(2)$.",
-                    f"Hypotenuse $c = {leg}sqrt(2)$.",
+                    "In a $45^circle$-$45^circle$-$90^circle$ triangle, sides are in ratio $1 : 1 : sqrt(2)$.",
+                    f"Multiply leg length by $sqrt(2)$: $c = a sqrt(2) = {leg_val}sqrt(2)$.",
+                    f"Hypotenuse: $c = {leg_val}sqrt(2)$.",
                 ],
-                "distractors": [f"$ c = {2 * leg} $", f"$ c = {leg}sqrt(3) $", f"$ c = ({leg})/(sqrt(2)) $"],
-                "diagram_svg": svg_right_triangle(a_label=str(leg), b_label=str(leg), c_label="c=?", theta_label="45 deg"),
-                "answer_svg": svg_right_triangle(a_label=str(leg), b_label=str(leg), c_label=f"{leg}sqrt(2)", theta_label="45 deg"),
+                "distractors": [f"$ c = {2 * leg_val} $", f"$ c = {leg_val}sqrt(3) $", f"$ c = {leg_val} $"],
+                "diagram_svg": svg_right_triangle(a_label=str(leg_val), b_label=str(leg_val), c_label="c=?", theta_label="45 deg"),
+                "answer_svg": svg_right_triangle(a_label=str(leg_val), b_label=str(leg_val), c_label=f"{leg_val}sqrt(2)", theta_label="45 deg"),
             }
-        return {
-            "prompt_text": "Find the long leg b and hypotenuse c of the 30-60-90 special right triangle given short leg a.",
-            "equation_typst": f"$ \"30\"^circle\"-60\"^circle\"-90\"^circle \" triangle with short leg \" a = {leg} $",
-            "answer_typst": f"$ b = {leg}sqrt(3), quad c = {2 * leg} $",
-            "steps_typst": [
-                "In a $30^circle$-$60^circle$-$90^circle$ triangle, the sides are in the ratio $1 : sqrt(3) : 2$.",
-                f"Long leg $b = a sqrt(3) = {leg}sqrt(3)$.",
-                f"Hypotenuse $c = 2a = {2 * leg}$.",
-            ],
-            "distractors": [
-                f"$ b = {leg}sqrt(2), quad c = {2 * leg} $",
-                f"$ b = {2 * leg}, quad c = {leg}sqrt(3) $",
-                f"$ b = {3 * leg}, quad c = {2 * leg} $",
-            ],
-            "diagram_svg": svg_right_triangle(a_label=str(leg), b_label="b=?", c_label="c=?", theta_label="60 deg"),
-            "answer_svg": svg_right_triangle(a_label=str(leg), b_label=f"{leg}sqrt(3)", c_label=str(2 * leg), theta_label="60 deg"),
-        }
+        elif sub_type == "45_45_90_hyp":
+            hyp_even = leg_val * 2
+            return {
+                "prompt_text": "Find the leg length a of the 45-45-90 special right triangle given hypotenuse c.",
+                "equation_typst": f"$ \"45\"^circle\"-45\"^circle\"-90\"^circle \" triangle with hypotenuse \" c = {hyp_even} $",
+                "answer_typst": f"$ a = {leg_val}sqrt(2) $",
+                "steps_typst": [
+                    "In a $45^circle$-$45^circle$-$90^circle$ triangle, $c = a sqrt(2) ==> a = c / sqrt(2)$.",
+                    f"Rationalize the denominator: $a = ({hyp_even} sqrt(2)) / 2 = {leg_val}sqrt(2)$.",
+                    f"Leg length: $a = {leg_val}sqrt(2)$.",
+                ],
+                "distractors": [f"$ a = {hyp_even}sqrt(2) $", f"$ a = {leg_val} $", f"$ a = {leg_val}sqrt(3) $"],
+                "diagram_svg": svg_right_triangle(a_label="a=?", b_label="a=?", c_label=str(hyp_even), theta_label="45 deg"),
+                "answer_svg": svg_right_triangle(a_label=f"{leg_val}sqrt(2)", b_label=f"{leg_val}sqrt(2)", c_label=str(hyp_even), theta_label="45 deg"),
+            }
+        elif sub_type == "30_60_90_long":
+            b_val = leg_val
+            return {
+                "prompt_text": "Find the short leg a and hypotenuse c of the 30-60-90 special right triangle given long leg b.",
+                "equation_typst": f"$ \"30\"^circle\"-60\"^circle\"-90\"^circle \" triangle with long leg \" b = {3 * b_val} $",
+                "answer_typst": f"$ a = {b_val}sqrt(3), quad c = {2 * b_val}sqrt(3) $",
+                "steps_typst": [
+                    "In a $30^circle$-$60^circle$-$90^circle$ triangle, $b = a sqrt(3) ==> a = b / sqrt(3)$.",
+                    f"Rationalize denominator: $a = ({3 * b_val} sqrt(3)) / 3 = {b_val}sqrt(3)$.",
+                    f"Hypotenuse $c = 2a = 2({b_val}sqrt(3)) = {2 * b_val}sqrt(3)$.",
+                ],
+                "distractors": [f"$ a = {b_val}, c = {2 * b_val} $", f"$ a = {3 * b_val}sqrt(3), c = {6 * b_val} $", f"$ a = {b_val}sqrt(2), c = {2 * b_val} $"],
+                "diagram_svg": svg_right_triangle(a_label="a=?", b_label=str(3 * b_val), c_label="c=?", theta_label="60 deg"),
+                "answer_svg": svg_right_triangle(a_label=f"{b_val}sqrt(3)", b_label=str(3 * b_val), c_label=f"{2 * b_val}sqrt(3)", theta_label="60 deg"),
+            }
+        elif sub_type == "30_60_90_hyp":
+            hyp_val = leg_val * 2
+            return {
+                "prompt_text": "Find the short leg a and long leg b of the 30-60-90 special right triangle given hypotenuse c.",
+                "equation_typst": f"$ \"30\"^circle\"-60\"^circle\"-90\"^circle \" triangle with hypotenuse \" c = {hyp_val} $",
+                "answer_typst": f"$ a = {leg_val}, quad b = {leg_val}sqrt(3) $",
+                "steps_typst": [
+                    f"Short leg $a = c / 2 = {hyp_val} / 2 = {leg_val}$.",
+                    f"Long leg $b = a sqrt(3) = {leg_val}sqrt(3)$.",
+                    f"Result: $a = {leg_val}, b = {leg_val}sqrt(3)$.",
+                ],
+                "distractors": [f"$ a = {leg_val}sqrt(3), b = {leg_val} $", f"$ a = {hyp_val}, b = {hyp_val}sqrt(3) $", f"$ a = {leg_val}, b = {leg_val}sqrt(2) $"],
+                "diagram_svg": svg_right_triangle(a_label="a=?", b_label="b=?", c_label=str(hyp_val), theta_label="60 deg"),
+                "answer_svg": svg_right_triangle(a_label=str(leg_val), b_label=f"{leg_val}sqrt(3)", c_label=str(hyp_val), theta_label="60 deg"),
+            }
+        else:
+            return {
+                "prompt_text": "Find the long leg b and hypotenuse c of the 30-60-90 special right triangle given short leg a.",
+                "equation_typst": f"$ \"30\"^circle\"-60\"^circle\"-90\"^circle \" triangle with short leg \" a = {leg_val} $",
+                "answer_typst": f"$ b = {leg_val}sqrt(3), quad c = {2 * leg_val} $",
+                "steps_typst": [
+                    "In a $30^circle$-$60^circle$-$90^circle$ triangle, sides are in ratio $1 : sqrt(3) : 2$.",
+                    f"Long leg $b = a sqrt(3) = {leg_val}sqrt(3)$.",
+                    f"Hypotenuse $c = 2a = {2 * leg_val}$.",
+                ],
+                "distractors": [f"$ b = {leg_val}sqrt(2), quad c = {2 * leg_val} $", f"$ b = {2 * leg_val}, quad c = {leg_val}sqrt(3) $", f"$ b = {3 * leg_val}, quad c = {2 * leg_val} $"],
+                "diagram_svg": svg_right_triangle(a_label=str(leg_val), b_label="b=?", c_label="c=?", theta_label="60 deg"),
+                "answer_svg": svg_right_triangle(a_label=str(leg_val), b_label=f"{leg_val}sqrt(3)", c_label=str(2 * leg_val), theta_label="60 deg"),
+            }
 
     # ------------------------------------------------------------------
     # Q. EVALUATING AND GRAPHING FUNCTIONS & CIRCLES GRAPHING
@@ -1694,23 +1978,67 @@ def _gen_decoupled_subtopic(
             ],
         }
 
-    if "exponents and logarithms" in t_low or "logarithms and exponents as inverses" in t_low or "writing logs in terms of" in t_low or (t_low == "inverses of" and "logarithm" in c_low):
-        b = rng.choice([2, 3, 5])
-        k = rng.randint(2, 3 + scale)
-        val = b ** k
+    if "writing logs in terms of" in t_low:
+        base_b = rng.choice([2, 3, 5, 7, 10])
+        p1 = rng.choice([2, 3])
+        p2 = rng.choice([4, 5])
+        val = (base_b ** p1) * (base_b ** p2)
         return {
-            "prompt_text": "Rewrite the exponential equation in logarithmic form and evaluate.",
-            "equation_typst": f"$ {b}^{k} = {val} $",
-            "answer_typst": f"$ log_({b})({val}) = {k} $",
+            "prompt_text": f"Use logarithmic properties to write the expression in terms of simpler logarithms.",
+            "equation_typst": f"$ log_({base_b})({base_b}^{p1} times {base_b}^{p2}) $",
+            "answer_typst": f"$ {p1 + p2} $",
             "steps_typst": [
-                f"Identify base $b = {b}$, exponent $y = {k}$, and result $x = {val}$.",
-                "Use the equivalence $b^y = x arrow.l.r.double log_b(x) = y$.",
-                f"Write $log_({b})({val}) = {k}$.",
+                f"Apply product rule of logarithms: $log_b(M N) = log_b(M) + log_b(N)$.",
+                f"Separate terms: $log_({base_b})({base_b}^{p1}) + log_({base_b})({base_b}^{p2}) = {p1} + {p2}$.",
+                f"Sum: ${p1 + p2}$.",
+            ],
+            "distractors": [f"$ {p1 * p2} $", f"$ {base_b * (p1 + p2)} $", f"$ {p1} $"],
+        }
+
+    if "logarithms and exponents as inverses" in t_low or (t_low == "inverses of" and "logarithm" in c_low):
+        b_inv = rng.choice([2, 3, 4, 5, 6, 7, 10])
+        h_shift = rng.choice([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
+        k_shift = rng.choice([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
+        s_h = f"- {h_shift}" if h_shift > 0 else f"+ {abs(h_shift)}"
+        s_k = f"+ {k_shift}" if k_shift > 0 else f"- {abs(k_shift)}"
+        inv_k = f"- {k_shift}" if k_shift > 0 else f"+ {abs(k_shift)}"
+        inv_h = f"+ {h_shift}" if h_shift > 0 else f"- {abs(h_shift)}"
+        return {
+            "prompt_text": "Find the inverse function f^(-1)(x) for the given function.",
+            "equation_typst": f"$ f(x) = {b_inv}^(x {s_h}) {s_k} $",
+            "answer_typst": f"$ f^(-1)(x) = log_({b_inv})(x {inv_k}) {inv_h} $",
+            "steps_typst": [
+                f"Replace $f(x)$ with $y$: $y = {b_inv}^(x {s_h}) {s_k}$.",
+                f"Swap $x$ and $y$: $x = {b_inv}^(y {s_h}) {s_k} ==> x {inv_k} = {b_inv}^(y {s_h})$.",
+                f"Take $log_({b_inv})$ of both sides: $y {s_h} = log_({b_inv})(x {inv_k}) ==> y = log_({b_inv})(x {inv_k}) {inv_h}$.",
             ],
             "distractors": [
-                f"$ log_({k})({val}) = {b} $",
-                f"$ log_({val})({b}) = {k} $",
-                f"$ log_({b})({k}) = {val} $",
+                f"$ f^(-1)(x) = log_({b_inv})(x {s_k}) {s_h} $",
+                f"$ f^(-1)(x) = {b_inv}^(x {inv_k}) {inv_h} $",
+                f"$ f^(-1)(x) = (x {inv_k}) / ({b_inv}) $",
+            ],
+        }
+
+    if "exponents and logarithms" in t_low:
+        b = rng.choice([2, 3, 4, 5, 6, 7, 8, 9, 10])
+        k = rng.choice([-3, -2, -1, 1, 2, 3, 4])
+        if k < 0:
+            val_s = f"1/{b ** abs(k)}"
+        else:
+            val_s = str(b ** k)
+        return {
+            "prompt_text": "Rewrite the exponential equation in logarithmic form and evaluate.",
+            "equation_typst": f"$ {b}^{{{k}}} = {val_s} $",
+            "answer_typst": f"$ log_({b})({val_s}) = {k} $",
+            "steps_typst": [
+                f"Identify base $b = {b}$, exponent $y = {k}$, and value $x = {val_s}$.",
+                "Apply the definition $b^y = x <==> log_b(x) = y$.",
+                f"Result: $log_({b})({val_s}) = {k}$.",
+            ],
+            "distractors": [
+                f"$ log_({k})({val_s}) = {b} $",
+                f"$ log_({b})({k}) = {val_s} $",
+                f"$ log_({val_s})({b}) = {k} $",
             ],
         }
 
@@ -1782,247 +2110,258 @@ def _gen_decoupled_subtopic(
     # ------------------------------------------------------------------
     if "indefinite integration" in c_low or "definite integration" in c_low or "applications of integration" in c_low or "differential equations" in c_low:
         if "power rule" in t_low:
-            n = rng.randint(2, 4 + scale)
-            c = (n + 1) * rng.randint(1, 3)
+            n = rng.randint(2, 9)
+            m = rng.choice([1, 2, 3])
+            c1 = (n + 1) * rng.randint(1, 6)
+            c2 = (m + 1) * rng.randint(1, 5)
+            c0 = rng.randint(1, 20)
             return {
                 "prompt_text": "Evaluate the indefinite integral using the Power Rule.",
-                "equation_typst": f"$ integral {c}x^{n} d x $",
-                "answer_typst": f"$ {c // (n + 1)}x^({n + 1}) + C $",
+                "equation_typst": f"$ integral ({c1}x^{n} + {c2}x^{m} + {c0}) d x $",
+                "answer_typst": f"$ {c1 // (n + 1)}x^({n + 1}) + {c2 // (m + 1)}x^({m + 1}) + {c0}x + C $",
                 "steps_typst": [
-                    "Apply the Power Rule for integration: $integral x^n d x = (x^(n+1))/(n+1) + C$.",
-                    f"Divide coefficient ${c}$ by the new exponent ${n + 1}$: ${c}/({n + 1}) = {c // (n + 1)}$.",
-                    f"Result: ${c // (n + 1)}x^({n + 1}) + C$.",
+                    "Apply the Power Rule $integral x^p d x = (x^(p+1))/(p+1) + C$ term by term.",
+                    f"Integrate ${c1}x^{n}$: $({c1})/({n + 1}) x^({n + 1}) = {c1 // (n + 1)}x^({n + 1})$.",
+                    f"Integrate ${c2}x^{m}$: $({c2})/({m + 1}) x^({m + 1}) = {c2 // (m + 1)}x^({m + 1})$ and constant ${c0}$: ${c0}x$.",
+                    f"Result: ${c1 // (n + 1)}x^({n + 1}) + {c2 // (m + 1)}x^({m + 1}) + {c0}x + C$.",
                 ],
                 "distractors": [
-                    f"$ {c * n}x^({n - 1}) + C $",
-                    f"$ {c}x^({n + 1}) + C $",
-                    f"$ ({c})/({n})x^{n} + C $",
+                    f"$ {c1 * n}x^({n - 1}) + {c2 * m}x^({m - 1}) + C $",
+                    f"$ {c1}x^({n + 1}) + {c2}x^({m + 1}) + {c0}x + C $",
+                    f"$ ({c1})/({n})x^{n} + ({c2})/({m})x^{m} + C $",
                 ],
             }
+
         if "logarithmic" in t_low:
-            a = rng.randint(2, 5 * scale)
-            b = rng.randint(1, 7)
-            return {
-                "prompt_text": "Evaluate the indefinite integral using the logarithmic/exponential rule.",
-                "equation_typst": f"$ integral ({a})/(x + {b}) d x $",
-                "answer_typst": f"$ {a} ln|x + {b}| + C $",
-                "steps_typst": [
-                    f"Let $u = x + {b}$, so $d u = d x$.",
-                    f"Rewrite as ${a} integral (1)/(u) d u = {a} ln|u| + C$.",
-                    f"Substitute back: ${a} ln|x + {b}| + C$.",
-                ],
-                "distractors": [
-                    f"$ -({a})/((x + {b})^2) + C $",
-                    f"$ ln|{a}x + {b}| + C $",
-                    f"$ {a}(x + {b})^0 + C $",
-                ],
-            }
-        if "inverse trigonometric" in t_low:
-            a = rng.randint(2, 12)
-            is_atan = rng.choice([True, False])
-            if is_atan:
+            a = rng.randint(2, 25)
+            b = rng.randint(1, 25)
+            k = rng.choice([1, 2, 3, 4, 5])
+            if k == 1:
                 return {
-                    "prompt_text": "Evaluate the indefinite integral using inverse trigonometric forms.",
-                    "equation_typst": f"$ integral (1)/({a * a} + x^2) d x $",
-                    "answer_typst": f"$ (1)/({a}) arctan((x)/({a})) + C $",
+                    "prompt_text": "Evaluate the indefinite integral using the logarithmic rule.",
+                    "equation_typst": f"$ integral ({a})/(x + {b}) d x $",
+                    "answer_typst": f"$ {a} ln|x + {b}| + C $",
                     "steps_typst": [
-                        f"Match the integrand with $integral (1)/(a^2 + x^2) d x = (1/a) arctan(x/a) + C$ where $a = {a}$.",
-                        f"Substitute $a = {a}$ into the formula.",
-                        f"Result: $(1)/({a}) arctan(x/{a}) + C$.",
+                        f"Let $u = x + {b}$, so $d u = d x$.",
+                        f"Rewrite as ${a} integral (1)/(u) d u = {a} ln|u| + C$.",
+                        f"Substitute back: ${a} ln|x + {b}| + C$.",
                     ],
                     "distractors": [
-                        f"$ arcsin((x)/({a})) + C $",
-                        f"$ arctan(x) + C $",
+                        f"$ -({a})/((x + {b})^2) + C $",
+                        f"$ ln|{a}x + {b}| + C $",
+                        f"$ {a}(x + {b})^0 + C $",
+                    ],
+                }
+            else:
+                return {
+                    "prompt_text": "Evaluate the indefinite integral using the logarithmic rule.",
+                    "equation_typst": f"$ integral ({a * k})/({k}x + {b}) d x $",
+                    "answer_typst": f"$ {a} ln|{k}x + {b}| + C $",
+                    "steps_typst": [
+                        f"Let $u = {k}x + {b}$, so $d u = {k} d x ==> d x = (d u)/{k}$.",
+                        f"Substitute: $integral ({a * k})/u ((d u)/{k}) = {a} integral (1)/u d u = {a} ln|u| + C$.",
+                        f"Substitute back: ${a} ln|{k}x + {b}| + C$.",
+                    ],
+                    "distractors": [
+                        f"$ {a * k} ln|{k}x + {b}| + C $",
+                        f"$ ({a})/({k}) ln|{k}x + {b}| + C $",
+                        f"$ -({a * k})/({k}x + {b})^2 + C $",
+                    ],
+                }
+
+        if "inverse trigonometric" in t_low or "inverse_trigonometric" in t_low:
+            a = rng.randint(2, 25)
+            c = rng.randint(1, 10)
+            inv_type = rng.choice(["arctan", "arcsin", "arcsec"])
+            if inv_type == "arctan":
+                return {
+                    "prompt_text": "Evaluate the indefinite integral using inverse trigonometric forms.",
+                    "equation_typst": f"$ integral ({c * a})/({a * a} + x^2) d x $",
+                    "answer_typst": f"$ {c} arctan((x)/({a})) + C $" if c != 1 else f"$ arctan((x)/({a})) + C $",
+                    "steps_typst": [
+                        f"Recall standard form $integral (1)/(a^2 + x^2) d x = (1/a) arctan(x/a) + C$ with $a = {a}$.",
+                        f"Factor out numerator: ${c * a} times (1/{a}) arctan(x/{a}) + C$.",
+                        f"Result: ${c} arctan(x/{a}) + C$.",
+                    ],
+                    "distractors": [
+                        f"$ ({c * a}) arctan(x/{a}) + C $",
+                        f"$ {c} arcsin((x)/({a})) + C $",
                         f"$ (1)/({a * a}) arctan(x) + C $",
                     ],
                 }
-            return {
-                "prompt_text": "Evaluate the indefinite integral using inverse trigonometric forms.",
-                "equation_typst": f"$ integral (1)/(sqrt({a * a} - x^2)) d x $",
-                "answer_typst": f"$ arcsin((x)/({a})) + C $",
-                "steps_typst": [
-                    f"Match the integrand with $integral (1)/(sqrt(a^2 - x^2)) d x = arcsin(x/a) + C$ where $a = {a}$.",
-                    f"Substitute $a = {a}$ into the antiderivative formula.",
-                    f"Result: $arcsin(x/{a}) + C$.",
-                ],
-                "distractors": [
-                    f"$ (1)/({a}) arctan((x)/({a})) + C $",
-                    f"$ arccos((x)/({a})) + C $",
-                    f"$ sqrt({a * a} - x^2) + C $",
-                ],
-            }
+            elif inv_type == "arcsin":
+                return {
+                    "prompt_text": "Evaluate the indefinite integral using inverse trigonometric forms.",
+                    "equation_typst": f"$ integral ({c})/(sqrt({a * a} - x^2)) d x $",
+                    "answer_typst": f"$ {c} arcsin((x)/({a})) + C $" if c != 1 else f"$ arcsin((x)/({a})) + C $",
+                    "steps_typst": [
+                        f"Recall standard form $integral (1)/(sqrt(a^2 - x^2)) d x = arcsin(x/a) + C$ with $a = {a}$.",
+                        f"Multiply by constant factor ${c}$.",
+                        f"Result: ${c} arcsin(x/{a}) + C$.",
+                    ],
+                    "distractors": [
+                        f"$ ({c})/({a}) arctan((x)/({a})) + C $",
+                        f"$ {c} arccos((x)/({a})) + C $",
+                        f"$ {c} sqrt({a * a} - x^2) + C $",
+                    ],
+                }
+            else:
+                return {
+                    "prompt_text": "Evaluate the indefinite integral using inverse trigonometric forms.",
+                    "equation_typst": f"$ integral ({c * a})/(x sqrt(x^2 - {a * a})) d x $",
+                    "answer_typst": f"$ {c} arcsec((|x|)/({a})) + C $" if c != 1 else f"$ arcsec((|x|)/({a})) + C $",
+                    "steps_typst": [
+                        f"Recall standard form $integral (1)/(x sqrt(x^2 - a^2)) d x = (1/a) arcsec(|x|/a) + C$ with $a = {a}$.",
+                        f"Multiply by numerator constant: ${c * a} times (1/{a}) arcsec(|x|/{a})$.",
+                        f"Result: ${c} arcsec(|x|/{a}) + C$.",
+                    ],
+                    "distractors": [
+                        f"$ {c} arctan((x)/({a})) + C $",
+                        f"$ {c * a} arcsec(x) + C $",
+                        f"$ (1)/({a}) arcsec(x/{a}) + C $",
+                    ],
+                }
+
         if "trigonometric" in t_low:
-            k = rng.randint(2, 4 * scale)
-            is_sin = rng.choice([True, False])
-            if is_sin:
+            k = rng.randint(2, 25)
+            m = rng.choice([1, 2, 3, 4, 5])
+            t_form = rng.choice(["sin", "cos", "sec2", "csc2", "sec_tan"])
+            if t_form == "sin":
                 return {
                     "prompt_text": "Evaluate the trigonometric indefinite integral.",
-                    "equation_typst": f"$ integral {k} sin(x) d x $",
-                    "answer_typst": f"$ -{k} cos(x) + C $",
+                    "equation_typst": f"$ integral {k * m} sin({m}x) d x $",
+                    "answer_typst": f"$ -{k} cos({m}x) + C $",
                     "steps_typst": [
-                        f"Factor out the constant: ${k} integral sin(x) d x$.",
-                        "Recall that $(d)/(d x)[cos(x)] = -sin(x)$, so $integral sin(x) d x = -cos(x) + C$.",
-                        f"Multiply by the constant: $-{k} cos(x) + C$.",
+                        f"Identify the outer coefficient ${k * m}$ and argument $u = {m}x$.",
+                        f"Apply substitution $d u = {m} d x ==> d x = (d u)/{m}$ to integrate: $integral sin(u) d u = -cos(u)$.",
+                        f"Multiply: $({k * m}/{m}) (-cos({m}x)) + C = -{k} cos({m}x) + C$.",
                     ],
-                    "distractors": [
-                        f"$ {k} cos(x) + C $",
-                        f"$ -{k} sin(x) + C $",
-                        f"$ {k} tan(x) + C $",
-                    ],
+                    "distractors": [f"$ {k} cos({m}x) + C $", f"$ -{k * m} cos({m}x) + C $", f"$ -{k} sin({m}x) + C $"],
                 }
-            return {
-                "prompt_text": "Evaluate the trigonometric indefinite integral.",
-                "equation_typst": f"$ integral {k} cos(x) d x $",
-                "answer_typst": f"$ {k} sin(x) + C $",
-                "steps_typst": [
-                    f"Factor out the constant: ${k} integral cos(x) d x$.",
-                    "Recall that $(d)/(d x)[sin(x)] = cos(x)$, so $integral cos(x) d x = sin(x) + C$.",
-                    f"Multiply by the constant: ${k} sin(x) + C$.",
-                ],
-                "distractors": [
-                    f"$ -{k} sin(x) + C $",
-                    f"$ {k} cos(x) + C $",
-                    f"$ {k} sec(x) + C $",
-                ],
-            }
-        if "first fundamental theorem" in t_low:
-            b = rng.randint(1, 6)
-            k_power = rng.choice([2, 3])
-            if k_power == 3:
-                val = b ** 4
+            elif t_form == "cos":
                 return {
-                    "prompt_text": "Evaluate the definite integral using the First Fundamental Theorem of Calculus.",
-                    "equation_typst": f"$ integral_0^{b} 4x^3 d x $",
-                    "answer_typst": f"$ {val} $",
+                    "prompt_text": "Evaluate the trigonometric indefinite integral.",
+                    "equation_typst": f"$ integral {k * m} cos({m}x) d x $",
+                    "answer_typst": f"$ {k} sin({m}x) + C $",
                     "steps_typst": [
-                        "Find an antiderivative $F(x)$ of $4x^3$: $F(x) = x^4$.",
-                        f"Apply $F({b}) - F(0) = {b}^4 - 0^4$.",
-                        f"Result: ${val}$.",
+                        f"Identify outer coefficient ${k * m}$ and argument $u = {m}x$.",
+                        f"Apply substitution $d u = {m} d x ==> d x = (d u)/{m}$ to integrate: $integral cos(u) d u = sin(u)$.",
+                        f"Multiply: $({k * m}/{m}) sin({m}x) + C = {k} sin({m}x) + C$.",
                     ],
-                    "distractors": [f"$ {4 * b ** 3} $", f"$ {val // 4} $", f"$ {val + b} $"],
+                    "distractors": [f"$ -{k} sin({m}x) + C $", f"$ {k * m} sin({m}x) + C $", f"$ {k} cos({m}x) + C $"],
                 }
-            val = b ** 3
+            elif t_form == "sec2":
+                return {
+                    "prompt_text": "Evaluate the trigonometric indefinite integral.",
+                    "equation_typst": f"$ integral {k * m} sec^2({m}x) d x $",
+                    "answer_typst": f"$ {k} tan({m}x) + C $",
+                    "steps_typst": [
+                        f"Recall standard form $integral sec^2(u) d u = tan(u) + C$.",
+                        f"Substitute $u = {m}x$ and $d u = {m} d x$: $({k * m}/{m}) integral sec^2(u) d u$.",
+                        f"Evaluate: ${k} tan({m}x) + C$.",
+                    ],
+                    "distractors": [f"$ -{k} tan({m}x) + C $", f"$ {k} sec({m}x) + C $", f"$ {k * m} tan({m}x) + C $"],
+                }
+            elif t_form == "csc2":
+                return {
+                    "prompt_text": "Evaluate the trigonometric indefinite integral.",
+                    "equation_typst": f"$ integral {k * m} csc^2({m}x) d x $",
+                    "answer_typst": f"$ -{k} cot({m}x) + C $",
+                    "steps_typst": [
+                        f"Recall standard form $integral csc^2(u) d u = -cot(u) + C$.",
+                        f"Substitute $u = {m}x$ and $d u = {m} d x$: $({k * m}/{m}) integral csc^2(u) d u$.",
+                        f"Evaluate: $-{k} cot({m}x) + C$.",
+                    ],
+                    "distractors": [f"$ {k} cot({m}x) + C $", f"$ -{k} csc({m}x) + C $", f"$ -{k * m} cot({m}x) + C $"],
+                }
+            else:
+                return {
+                    "prompt_text": "Evaluate the trigonometric indefinite integral.",
+                    "equation_typst": f"$ integral {k * m} sec({m}x) tan({m}x) d x $",
+                    "answer_typst": f"$ {k} sec({m}x) + C $",
+                    "steps_typst": [
+                        f"Recall standard form $integral sec(u) tan(u) d u = sec(u) + C$.",
+                        f"Substitute $u = {m}x$ and $d u = {m} d x$: $({k * m}/{m}) integral sec(u) tan(u) d u$.",
+                        f"Evaluate: ${k} sec({m}x) + C$.",
+                    ],
+                    "distractors": [f"$ -{k} sec({m}x) + C $", f"$ {k} tan({m}x) + C $", f"$ {k * m} sec({m}x) + C $"],
+                }
+        if "first fundamental theorem" in t_low:
+            b = rng.randint(1, 15)
+            a_low = rng.choice([0, 1, 2])
+            n_pow = rng.choice([1, 2, 3])
+            c_val = n_pow + 1
+            ans_val = (b ** c_val) - (a_low ** c_val)
             return {
                 "prompt_text": "Evaluate the definite integral using the First Fundamental Theorem of Calculus.",
-                "equation_typst": f"$ integral_0^{b} 3x^2 d x $",
-                "answer_typst": f"$ {val} $",
+                "equation_typst": f"$ integral_{a_low}^{b} {c_val}x^{n_pow} d x $" if n_pow > 1 else f"$ integral_{a_low}^{b} {c_val}x d x $",
+                "answer_typst": f"$ {ans_val} $",
                 "steps_typst": [
-                    "Find an antiderivative $F(x)$ of $3x^2$: $F(x) = x^3$.",
-                    f"Apply $F({b}) - F(0) = {b}^3 - 0^3$.",
-                    f"Result: ${val}$.",
+                    f"Find an antiderivative $F(x)$ of ${c_val}x^{n_pow}$: $F(x) = x^{c_val}$.",
+                    f"Apply First Fundamental Theorem: $F({b}) - F({a_low}) = ({b})^{c_val} - ({a_low})^{c_val}$.",
+                    f"Evaluate: ${b ** c_val} - {a_low ** c_val} = {ans_val}$.",
                 ],
-                "distractors": [f"$ {3 * b * b} $", f"$ {val // 3} $", f"$ {val + b} $"],
+                "distractors": [f"$ {ans_val + b} $", f"$ {ans_val // 2} $", f"$ {c_val * b ** n_pow} $"],
             }
+
         if "motion along a line" in t_low:
-            a = rng.randint(1, 3 * scale)
-            t1 = rng.randint(2, 7)
-            disp = a * t1 * t1
+            a = rng.randint(1, 12)
+            b = rng.randint(1, 10)
+            t1 = rng.randint(2, 12)
+            disp = a * (t1 ** 2) + b * t1
             return {
                 "prompt_text": "Given the velocity function v(t), find the net displacement of the particle over [0, t_1].",
-                "equation_typst": f"$ v(t) = {2 * a}t, quad [0, {t1}] $",
+                "equation_typst": f"$ v(t) = {2 * a}t + {b}, quad [0, {t1}] $",
                 "answer_typst": f"$ Delta s = {disp} $",
                 "steps_typst": [
-                    f"Net displacement is the definite integral of velocity: $Delta s = integral_0^({t1}) {2 * a}t d t$.",
-                    f"Find the antiderivative $[{a}t^2]_0^({t1})$.",
-                    f"Evaluate: ${a}({t1})^2 - 0 = {disp}$.",
+                    f"Net displacement is the definite integral of velocity: $Delta s = integral_0^({t1}) ({2 * a}t + {b}) d t$.",
+                    f"Find the antiderivative $[{a}t^2 + {b}t]_0^({t1})$.",
+                    f"Evaluate: ${a}({t1})^2 + {b}({t1}) = {disp}$.",
                 ],
-                "distractors": [f"$ {2 * a * t1} $", f"$ {disp * 2} $", f"$ {a * t1} $"],
+                "distractors": [f"$ {2 * a * t1 + b} $", f"$ {disp * 2} $", f"$ {disp - a} $"],
             }
+
         if "separable" in t_low or "introduction" in t_low:
-            k = rng.randint(1, 10)
-            is_y_sq = rng.choice([False, True])
-            if is_y_sq:
+            k = rng.choice([k for k in range(-12, 13) if k != 0])
+            m = rng.choice([1, 2, 3])
+            sep_mode = rng.choice(["xy", "y_lin", "x_over_y"])
+            if sep_mode == "xy":
                 return {
-                    "prompt_text": "Find the general solution of the separable differential equation.",
-                    "equation_typst": f"$ (d y)/(d x) = {2 * k}x y^2 $",
-                    "answer_typst": f"$ y = -(1)/({k}x^2 + C) $",
+                    "prompt_text": "Solve the separable differential equation.",
+                    "equation_typst": f"$ (d y)/(d x) = {k} x y $",
+                    "answer_typst": f"$ y = C e^(({k}x^2)/(2)) $",
                     "steps_typst": [
-                        f"Separate variables: $(1)/(y^2) d y = {2 * k}x d x$.",
-                        f"Integrate both sides: $-(1)/(y) = {k}x^2 + C$.",
-                        f"Solve for $y$: $y = -(1)/({k}x^2 + C)$.",
+                        f"Separate variables: $(1/y) d y = {k} x d x$.",
+                        f"Integrate both sides: $ln|y| = ({k}/2) x^2 + C_1$.",
+                        f"Exponentiate: $y = C e^(({k}x^2)/2)$.",
                     ],
-                    "distractors": [
-                        f"$ y = {k}x^2 + C $",
-                        f"$ y = C e^({k}x^2) $",
-                        f"$ y = (1)/({2 * k}x) $",
-                    ],
+                    "distractors": [f"$ y = {k}x^2 + C $", f"$ y = C e^({k}x) $", f"$ y = ({k}/2)x^2 + C $"],
                 }
-            return {
-                "prompt_text": "Find the general solution of the separable differential equation.",
-                "equation_typst": f"$ (d y)/(d x) = {k}x y $",
-                "answer_typst": f"$ y = C e^({k / 2:g}x^2) $",
-                "steps_typst": [
-                    f"Separate variables: $(1)/(y) d y = {k}x d x$.",
-                    f"Integrate both sides: $ln|y| = ({k})/(2)x^2 + C_1$.",
-                    f"Exponentiate to solve for $y$: $y = C e^({k / 2:g}x^2)$.",
-                ],
-                "distractors": [
-                    f"$ y = C e^({k}x) $",
-                    f"$ y = ({k})/(2)x^2 + C $",
-                    f"$ y = ln|{k}x^2 + C| $",
-                ],
-            }
-
-        if "riemann sum table" in t_low:
-            dx = rng.choice([1, 2, 3, 4, 5])
-            n_sub = rng.choice([3, 4])
-            xs = [i * dx for i in range(n_sub + 1)]
-            ys = [rng.randint(2, 20) for _ in range(n_sub + 1)]
-            method = rng.choice(["LRAM", "RRAM"])
-            if method == "LRAM":
-                approx = dx * sum(ys[:n_sub])
-                desc = "Left Riemann Sum"
+            elif sep_mode == "y_lin":
+                return {
+                    "prompt_text": "Solve the separable differential equation.",
+                    "equation_typst": f"$ (d y)/(d x) = {k} y $",
+                    "answer_typst": f"$ y = C e^({k}x) $",
+                    "steps_typst": [
+                        f"Separate variables: $(1/y) d y = {k} d x$.",
+                        f"Integrate both sides: $ln|y| = {k}x + C_1$.",
+                        f"General solution: $y = C e^({k}x)$.",
+                    ],
+                    "distractors": [f"$ y = ({k}/2)x^2 + C $", f"$ y = {k}x + C $", f"$ y = C e^(-{k}x) $"],
+                }
             else:
-                approx = dx * sum(ys[1:])
-                desc = "Right Riemann Sum"
-            tbl = svg_data_table(
-                headers=["x"] + [str(x) for x in xs],
-                rows=[["f(x)"] + [str(y) for y in ys]],
-                title="Values of f(x)",
-            )
-            return {
-                "prompt_text": f"Use a {desc} with {n_sub} subintervals indicated by the table to approximate integral_0^{xs[-1]} f(x) dx.",
-                "equation_typst": f"$ integral_0^({xs[-1]}) f(x) d x quad (\"{method}\", Delta x = {dx}) $",
-                "answer_typst": f"$ {method[0]}_{n_sub} = {approx} $",
-                "steps_typst": [
-                    f"Each subinterval has width $Delta x = {dx}$.",
-                    f"Sample values: {' + '.join(str(v) for v in (ys[:n_sub] if method == 'LRAM' else ys[1:]))}.",
-                    f"Multiply by $Delta x = {dx}$: ${approx}$.",
-                ],
-                "distractors": [
-                    f"$ {approx + dx * 2} $",
-                    f"$ {approx - dx} $",
-                    f"$ {sum(ys)} $",
-                ],
-                "diagram_svg": tbl,
-                "answer_svg": tbl,
-            }
-            tbl = svg_data_table(
-                headers=["x"] + [str(x) for x in xs],
-                rows=[["f(x)"] + [str(y) for y in ys]],
-                title="Values of f(x)",
-            )
-            return {
-                "prompt_text": f"Use a Left Riemann Sum with 3 subintervals indicated by the table to approximate integral_0^{3 * dx} f(x) dx.",
-                "equation_typst": f"$ integral_0^({3 * dx}) f(x) d x quad (\"LRAM\", Delta x = {dx}) $",
-                "answer_typst": f"$ L_3 = {lram} $",
-                "steps_typst": [
-                    f"Each subinterval has width $Delta x = {dx}$ with left endpoints $x = 0, {dx}, {2 * dx}$.",
-                    f"Read the left endpoint values from the table: $f(0) = {ys[0]}, f({dx}) = {ys[1]}, f({2 * dx}) = {ys[2]}$.",
-                    f"Compute $L_3 = {dx}({ys[0]} + {ys[1]} + {ys[2]}) = {lram}$.",
-                ],
-                "distractors": [
-                    f"$ {dx * (ys[1] + ys[2] + ys[3])} $",
-                    f"$ {ys[0] + ys[1] + ys[2]} $",
-                    f"$ {lram + dx * ys[3]} $",
-                ],
-                "diagram_svg": tbl,
-                "answer_svg": tbl,
-            }
+                return {
+                    "prompt_text": "Solve the separable differential equation.",
+                    "equation_typst": f"$ (d y)/(d x) = ({k}x)/(y) $",
+                    "answer_typst": f"$ y^2 - {k}x^2 = C $",
+                    "steps_typst": [
+                        f"Separate variables: $y d y = {k} x d x$.",
+                        f"Integrate both sides: $(y^2)/2 = ({k}x^2)/2 + C_1$.",
+                        f"Multiply by 2: $y^2 - {k}x^2 = C$.",
+                    ],
+                    "distractors": [f"$ y^2 + {k}x^2 = C $", f"$ y = {k}x + C $", f"$ y^2 = {k}x + C $"],
+                }
 
-    # ------------------------------------------------------------------
-    # V. GRADE 6 & PRE-ALGEBRA SPECIFIC SUBTOPICS
-    # ------------------------------------------------------------------
     if "adding and subtracting integers" in t_low:
         a = rng.randint(-12 * scale, -2)
         b = rng.randint(-10 * scale, 12 * scale)
@@ -2203,10 +2542,60 @@ def _gen_decoupled_subtopic(
     # W. GEOMETRY CONSTRUCTIONS & TRIGONOMETRY SUBTOPICS
     # ------------------------------------------------------------------
     if "constructions" in c_low:
-        if "angle" in t_low:
-            deg = rng.choice([30, 45, 60, 75, 90, 120]) * (1 if scale == 1 else 1) + (2 * scale if scale > 1 else 0)
-            if deg % 2 != 0:
-                deg += 1
+        if "altitude" in t_low:
+            base = rng.randint(8, 45)
+            alt = rng.randint(4, 30)
+            tri_area = (base * alt) // 2
+            return {
+                "prompt_text": "Compass-and-straightedge altitude construction: an altitude h is constructed perpendicular to base b. Find the area of the triangle.",
+                "equation_typst": f"$ b = {base}, quad h = {alt} $",
+                "answer_typst": f"$ \"Area\" = {tri_area} $",
+                "steps_typst": [
+                    "An altitude construction drops a perpendicular line from a vertex to the opposite base.",
+                    f"Use triangle area formula: $A = 1/2 b h = 1/2({base})({alt})$.",
+                    f"Evaluate: $A = {tri_area}$.",
+                ],
+                "distractors": [f"$ \"Area\" = {base * alt} $", f"$ \"Area\" = {tri_area + base} $", f"$ \"Area\" = {base + alt} $"],
+                "diagram_svg": svg_general_triangle(side_a=f"b = {base}", side_b=f"h = {alt}"),
+                "answer_svg": svg_general_triangle(side_a=f"b = {base}", side_b=f"Area = {tri_area}"),
+            }
+        elif "angle_bisector" in t_low or "bisector" in t_low:
+            ab = rng.randint(6, 25)
+            ac = rng.randint(6, 25)
+            bd = rng.randint(4, 18)
+            dc = Fraction(ac * bd, ab)
+            dc_s = f"{dc.numerator}/{dc.denominator}" if dc.denominator != 1 else str(dc.numerator)
+            return {
+                "prompt_text": "In triangle ABC, ray AD bisects angle A (constructed with compass). By the Angle Bisector Theorem, find DC.",
+                "equation_typst": f"$ A B = {ab}, quad A C = {ac}, quad B D = {bd} $",
+                "answer_typst": f"$ D C = {dc_s} $",
+                "steps_typst": [
+                    "The Angle Bisector Theorem states $(A B)/(A C) = (B D)/(D C)$.",
+                    f"Substitute lengths: $({ab})/({ac}) = ({bd})/(D C)$.",
+                    f"Cross-multiply and solve: $D C = ({ac} times {bd}) / {ab} = {dc_s}$.",
+                ],
+                "distractors": [f"$ D C = {bd} $", f"$ D C = {ab} $", f"$ D C = {dc + 2} $"],
+                "diagram_svg": svg_general_triangle(side_a=f"AB={ab}", side_b=f"AC={ac}", side_c=f"BD={bd}"),
+                "answer_svg": svg_general_triangle(side_a=f"AB={ab}", side_b=f"AC={ac}", side_c=f"DC={dc_s}"),
+            }
+        elif "median" in t_low:
+            bc_len = rng.randint(6, 45) * 2
+            half = bc_len // 2
+            return {
+                "prompt_text": "Compass-and-straightedge median construction: median AM is drawn to side BC. Find BM.",
+                "equation_typst": f"$ B C = {bc_len}, quad M \" is constructed midpoint of \" B C $",
+                "answer_typst": f"$ B M = {half} $",
+                "steps_typst": [
+                    "A median connects a vertex to the midpoint of the opposite side.",
+                    f"The perpendicular bisector construction locates midpoint $M$, dividing $B C = {bc_len}$ in half.",
+                    f"Length $B M = B C / 2 = {bc_len} / 2 = {half}$.",
+                ],
+                "distractors": [f"$ B M = {bc_len} $", f"$ B M = {half * 2} $", f"$ B M = {half // 2} $"],
+                "diagram_svg": svg_general_triangle(side_a=f"BC = {bc_len}", side_b="Median AM"),
+                "answer_svg": svg_general_triangle(side_a=f"BM = {half}", side_b="Median AM"),
+            }
+        elif "angle" in t_low:
+            deg = rng.randint(15, 80) * 2
             half = deg // 2
             return {
                 "prompt_text": "Compass-and-straightedge construction: if angle ABC is bisected by ray BD, find m angle ABD.",
@@ -2221,36 +2610,24 @@ def _gen_decoupled_subtopic(
                 "diagram_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{deg} deg", angle2_label="Bisect"),
                 "answer_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{half} deg", angle2_label=f"{half} deg"),
             }
-        if "circle" in t_low:
-            r = rng.randint(3, 8 * scale)
+        else:
+            s1 = rng.randint(4, 20)
+            s2 = rng.randint(4, 20)
+            s3 = rng.randint(max(s1, s2) - min(s1, s2) + 1, s1 + s2 - 1)
+            perim = s1 + s2 + s3
             return {
-                "prompt_text": "Compass construction: a circle is constructed with compass width r. Find its diameter and circumference.",
-                "equation_typst": f"$ \"Compass radius\" r = {r} $",
-                "answer_typst": f"$ d = {2 * r}, quad C = {2 * r}pi $",
+                "prompt_text": "Compass-and-straightedge triangle construction: construct triangle ABC with given side lengths and find its perimeter.",
+                "equation_typst": f"$ a = {s1}, quad b = {s2}, quad c = {s3} $",
+                "answer_typst": f"$ \"Perimeter\" = {perim} $",
                 "steps_typst": [
-                    f"The compass opening sets the radius $r = {r}$.",
-                    f"Diameter $d = 2r = {2 * r}$.",
-                    f"Circumference $C = 2 pi r = {2 * r}pi$.",
+                    "Draw base segment $c = " + str(s3) + "$ with straightedge.",
+                    "Set compass widths $a = " + str(s1) + "$ and $b = " + str(s2) + "$ to locate third vertex by intersection of arcs.",
+                    f"Perimeter: $P = {s1} + {s2} + {s3} = {perim}$.",
                 ],
-                "distractors": [f"$ d = {r}, quad C = {r * r}pi $", f"$ d = {2 * r}, quad C = {r * r}pi $", f"$ d = {r * r}, quad C = {2 * r}pi $"],
-                "diagram_svg": svg_circle_diagram(radius_label=f"r = {r}"),
-                "answer_svg": svg_circle_diagram(radius_label=f"d={2 * r}, C={2 * r}pi"),
+                "distractors": [f"$ \"Perimeter\" = {perim + 2} $", f"$ \"Perimeter\" = {s1 * s2} $", f"$ \"Perimeter\" = {perim - 4} $"],
+                "diagram_svg": svg_general_triangle(side_a=str(s1), side_b=str(s2), side_c=str(s3)),
+                "answer_svg": svg_general_triangle(side_a=str(s1), side_b=str(s2), side_c=f"P = {perim}"),
             }
-        # Triangles, medians, altitudes
-        a = rng.randint(6, 14 * scale) * 2
-        return {
-            "prompt_text": f"Triangle construction ({topic_name}): median AM is constructed to side BC of length {a}. Find BM.",
-            "equation_typst": f"$ B C = {a}, quad M \" is the midpoint of \" B C $",
-            "answer_typst": f"$ B M = {a // 2} $",
-            "steps_typst": [
-                "Construct the perpendicular bisector of side $B C$ to locate its midpoint $M$.",
-                f"Since $M$ bisects $B C = {a}$, we have $B M = B C / 2$.",
-                f"Result: $B M = {a // 2}$.",
-            ],
-            "distractors": [f"$ B M = {a} $", f"$ B M = {2 * a} $", f"$ B M = {a // 4} $"],
-            "diagram_svg": svg_general_triangle(side_a=f"BC = {a}", side_b="Median AM"),
-            "answer_svg": svg_general_triangle(side_a=f"BM = {a // 2}", side_b="Median AM"),
-        }
 
     if "trigonometry" in c_low:
         if "area" in t_low:
@@ -2294,91 +2671,310 @@ def _gen_decoupled_subtopic(
                 ],
             }
         if "angles and angle measure" in t_low:
-            mult = rng.choice([2, 3, 4, 5, 7]) + scale
-            deg = mult * 30
-            f = Fraction(deg, 180)
+            conv_dir = rng.choice(["deg_to_rad", "rad_to_deg", "coterminal"])
+            if conv_dir == "rad_to_deg":
+                num_k = rng.choice([k for k in range(-12, 13) if k != 0])
+                den_k = rng.choice([2, 3, 4, 6])
+                deg_ans = (num_k * 180) // den_k
+                num_str = "-" if num_k == -1 else ("" if num_k == 1 else str(num_k))
+                return {
+                    "prompt_text": "Convert the angle measure from radians to degrees.",
+                    "equation_typst": f"$ ({num_str}pi)/({den_k}) $",
+                    "answer_typst": f"$ {deg_ans}^circle $",
+                    "steps_typst": [
+                        f"Multiply by conversion factor $(180^circle) / pi$: $({num_str}pi)/({den_k}) times (180^circle)/pi$.",
+                        f"Cancel $pi$ and simplify: $({num_k} times 180^circle) / {den_k} = {deg_ans}^circle$.",
+                        f"Answer: ${deg_ans}^circle$.",
+                    ],
+                    "distractors": [f"$ {deg_ans + 30}^circle $", f"$ {180 - deg_ans}^circle $", f"$ {deg_ans * 2}^circle $"],
+                }
+            elif conv_dir == "coterminal":
+                base_ang = rng.randint(15, 345)
+                pos_c = base_ang + 360
+                neg_c = base_ang - 360
+                return {
+                    "prompt_text": "Find one positive and one negative coterminal angle for the given angle.",
+                    "equation_typst": f"$ {base_ang}^circle $",
+                    "answer_typst": f"$ {pos_c}^circle \" and \" {neg_c}^circle $",
+                    "steps_typst": [
+                        f"Add $360^circle$: ${base_ang}^circle + 360^circle = {pos_c}^circle$.",
+                        f"Subtract $360^circle$: ${base_ang}^circle - 360^circle = {neg_c}^circle$.",
+                        f"Coterminal angles: ${pos_c}^circle$ and ${neg_c}^circle$.",
+                    ],
+                    "distractors": [f"$ {base_ang + 180}^circle, {base_ang - 180}^circle $", f"$ {pos_c + 360}^circle, {neg_c}^circle $", f"$ {pos_c}^circle, 0^circle $"],
+                }
+            else:
+                deg = rng.choice([15 * k for k in range(-24, 25) if k != 0] + [rng.randint(-360, 360)])
+                f = Fraction(deg, 180)
+                return {
+                    "prompt_text": "Convert the angle measure from degrees to radians in exact simplified form.",
+                    "equation_typst": f"$ {deg}^circle $",
+                    "answer_typst": f"$ {_fmt_frac(f)} pi $",
+                    "steps_typst": [
+                        "Multiply degree measure by $(pi \" radians\")/(180^circle)$.",
+                        f"Form fraction $({deg})/(180) pi$ and divide by $\\gcd({abs(deg)}, 180) = {math.gcd(abs(deg), 180)}$.",
+                        f"Exact radian measure: ${_fmt_frac(f)} pi$.",
+                    ],
+                    "distractors": [
+                        f"$ {_fmt_frac(Fraction(f.denominator, abs(f.numerator) if f.numerator != 0 else 1))} pi $",
+                        f"$ {_fmt_frac(Fraction(deg, 360))} pi $",
+                        f"$ {deg} pi $",
+                    ],
+                }
+
+        if "trig functions of any angle" in t_low:
+            pyth_list = [(-3, 4, 5), (5, -12, 13), (-8, -15, 17), (7, 24, 25), (-9, 40, 41), (12, -35, 37), (-20, 21, 29)]
+            x0, y0, r0 = rng.choice(pyth_list)
+            mult = rng.choice([1, 2, 3])
+            x, y, r = x0 * mult, y0 * mult, r0 * mult
+            sin_f = Fraction(y, r)
+            cos_f = Fraction(x, r)
+            tan_f = Fraction(y, x)
             return {
-                "prompt_text": "Convert the angle measure from degrees to radians in exact form.",
-                "equation_typst": f"$ {deg}^circle $",
-                "answer_typst": f"$ {_fmt_frac(f)} pi $",
+                "prompt_text": "The terminal side of angle theta in standard position passes through P(x, y). Find sin(theta), cos(theta), and tan(theta).",
+                "equation_typst": f"$ P({x}, {y}) $",
+                "answer_typst": f"$ sin(theta) = {_fmt_frac(sin_f)}, quad cos(theta) = {_fmt_frac(cos_f)}, quad tan(theta) = {_fmt_frac(tan_f)} $",
                 "steps_typst": [
-                    "Multiply the degree measure by $(pi \" radians\")/(180^circle)$.",
-                    f"Form the fraction $({deg})/(180) pi$.",
-                    f"Reduce by $\\gcd({deg}, 180)$: ${_fmt_frac(f)} pi$.",
+                    f"Calculate distance $r = sqrt(x^2 + y^2) = sqrt(({x})^2 + ({y})^2) = {r}$.",
+                    f"Calculate $sin(theta) = y/r = ({y})/({r}) = {_fmt_frac(sin_f)}$.",
+                    f"Calculate $cos(theta) = x/r = ({x})/({r}) = {_fmt_frac(cos_f)}$ and $tan(theta) = y/x = {_fmt_frac(tan_f)}$.",
                 ],
                 "distractors": [
-                    f"$ {_fmt_frac(Fraction(f.denominator, f.numerator))} pi $",
-                    f"$ {_fmt_frac(Fraction(deg, 360))} pi $",
-                    f"$ {deg} pi $",
+                    f"$ sin(theta) = {_fmt_frac(cos_f)}, quad cos(theta) = {_fmt_frac(sin_f)} $",
+                    f"$ sin(theta) = {_fmt_frac(Fraction(-y, r))}, quad cos(theta) = {_fmt_frac(Fraction(-x, r))} $",
+                    f"$ sin(theta) = 1, quad cos(theta) = 0 $",
                 ],
             }
-        if "trig functions of any angle" in t_low:
-            x0, y0, r0 = rng.choice([(-3, 4, 5), (5, -12, 13), (-8, -15, 17), (7, 24, 25)])
-            x, y, r = x0 * scale, y0 * scale, r0 * scale
+        if "product_to_sum" in t_low or "product-to-sum" in t_low or "product to sum" in t_low:
+            p_case = rng.choice(["sin_cos", "cos_cos", "sin_sin"])
+            a_ang = rng.randint(2, 9)
+            b_ang = rng.randint(1, a_ang - 1)
+            sum_ang = a_ang + b_ang
+            diff_ang = a_ang - b_ang
+            if p_case == "sin_cos":
+                return {
+                    "prompt_text": "Express the product as a sum or difference of trigonometric functions.",
+                    "equation_typst": f"$ 2 sin({a_ang} theta) cos({b_ang} theta) $",
+                    "answer_typst": f"$ sin({sum_ang} theta) + sin({diff_ang} theta) $",
+                    "steps_typst": [
+                        "Use the product-to-sum identity $2 sin(A) cos(B) = sin(A + B) + sin(A - B)$.",
+                        f"Substitute $A = {a_ang} theta$ and $B = {b_ang} theta$: $sin({a_ang} theta + {b_ang} theta) + sin({a_ang} theta - {b_ang} theta)$.",
+                        f"Result: $sin({sum_ang} theta) + sin({diff_ang} theta)$.",
+                    ],
+                    "distractors": [f"$ sin({sum_ang} theta) - sin({diff_ang} theta) $", f"$ cos({sum_ang} theta) + cos({diff_ang} theta) $", f"$ 2 sin({sum_ang} theta) $"],
+                }
+            elif p_case == "cos_cos":
+                return {
+                    "prompt_text": "Express the product as a sum of trigonometric functions.",
+                    "equation_typst": f"$ 2 cos({a_ang} theta) cos({b_ang} theta) $",
+                    "answer_typst": f"$ cos({sum_ang} theta) + cos({diff_ang} theta) $",
+                    "steps_typst": [
+                        "Use the product-to-sum identity $2 cos(A) cos(B) = cos(A + B) + cos(A - B)$.",
+                        f"Substitute $A = {a_ang} theta$ and $B = {b_ang} theta$.",
+                        f"Result: $cos({sum_ang} theta) + cos({diff_ang} theta)$.",
+                    ],
+                    "distractors": [f"$ cos({sum_ang} theta) - cos({diff_ang} theta) $", f"$ sin({sum_ang} theta) + sin({diff_ang} theta) $", f"$ 2 cos({sum_ang} theta) $"],
+                }
+            else:
+                return {
+                    "prompt_text": "Express the product as a difference of trigonometric functions.",
+                    "equation_typst": f"$ -2 sin({a_ang} theta) sin({b_ang} theta) $",
+                    "answer_typst": f"$ cos({sum_ang} theta) - cos({diff_ang} theta) $",
+                    "steps_typst": [
+                        "Use the identity $-2 sin(A) sin(B) = cos(A + B) - cos(A - B)$.",
+                        f"Substitute $A = {a_ang} theta$ and $B = {b_ang} theta$.",
+                        f"Result: $cos({sum_ang} theta) - cos({diff_ang} theta)$.",
+                    ],
+                    "distractors": [f"$ cos({sum_ang} theta) + cos({diff_ang} theta) $", f"$ sin({sum_ang} theta) - sin({diff_ang} theta) $", f"$ -2 sin({sum_ang} theta) $"],
+                }
+
+        if "double_angle" in t_low or "half_angle" in t_low or "multiple_angle" in t_low or "multiple angle" in t_low or "double angle" in t_low:
+            pyth = rng.choice([(3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25)])
+            opp, adj, hyp = pyth
+            sin_2t = Fraction(2 * opp * adj, hyp * hyp)
+            cos_2t = Fraction(adj * adj - opp * opp, hyp * hyp)
             return {
-                "prompt_text": "The terminal side of angle theta in standard position passes through P(x, y). Find sin(theta) and cos(theta).",
-                "equation_typst": f"$ P({x}, {y}) $",
-                "answer_typst": f"$ sin(theta) = {_fmt_frac(Fraction(y, r))}, quad cos(theta) = {_fmt_frac(Fraction(x, r))} $",
+                "prompt_text": "Angle theta is acute with sin(theta) = y/r. Find sin(2theta) and cos(2theta).",
+                "equation_typst": f"$ sin(theta) = {opp}/{hyp} $",
+                "answer_typst": f"$ sin(2 theta) = {_fmt_frac(sin_2t)}, quad cos(2 theta) = {_fmt_frac(cos_2t)} $",
                 "steps_typst": [
-                    f"Find the distance $r = sqrt(x^2 + y^2) = sqrt(({x})^2 + ({y})^2) = {r}$.",
-                    f"Use $sin(theta) = y/r = {_fmt_frac(Fraction(y, r))}$.",
-                    f"Use $cos(theta) = x/r = {_fmt_frac(Fraction(x, r))}$.",
+                    f"Since $theta$ is in Quadrant I, $cos(theta) = sqrt(1 - ({opp}/{hyp})^2) = {adj}/{hyp}$.",
+                    f"Apply double angle formula: $sin(2 theta) = 2 sin(theta) cos(theta) = 2({opp}/{hyp})({adj}/{hyp}) = {_fmt_frac(sin_2t)}$.",
+                    f"Apply $cos(2 theta) = cos^2(theta) - sin^2(theta) = ({adj}/{hyp})^2 - ({opp}/{hyp})^2 = {_fmt_frac(cos_2t)}$.",
                 ],
-                "distractors": [
-                    f"$ sin(theta) = {_fmt_frac(Fraction(x, r))}, quad cos(theta) = {_fmt_frac(Fraction(y, r))} $",
-                    f"$ sin(theta) = {_fmt_frac(Fraction(y, x))}, quad cos(theta) = {_fmt_frac(Fraction(x, y))} $",
-                    f"$ sin(theta) = {_fmt_frac(Fraction(-y, r))}, quad cos(theta) = {_fmt_frac(Fraction(-x, r))} $",
+                "distractors": [f"$ sin(2 theta) = {2 * opp}/{hyp} $", f"$ sin(2 theta) = {_fmt_frac(cos_2t)} $", f"$ sin(2 theta) = 1 $"],
+            }
+
+        if "sum_and_difference" in t_low or "sum and difference" in t_low or "sum_difference" in t_low or "angle_sum" in t_low:
+            fn_t = rng.choice(["sin", "cos", "tan"])
+            ang_list = [
+                ("15", "45", "-", "30", "sqrt(6) - sqrt(2)", "4", "sqrt(6) + sqrt(2)", "4", "2 - sqrt(3)"),
+                ("75", "45", "+", "30", "sqrt(6) + sqrt(2)", "4", "sqrt(6) - sqrt(2)", "4", "2 + sqrt(3)"),
+                ("105", "60", "+", "45", "sqrt(6) + sqrt(2)", "4", "-(sqrt(6) - sqrt(2))", "4", "-(2 + sqrt(3))"),
+                ("165", "135", "+", "30", "sqrt(6) - sqrt(2)", "4", "-(sqrt(6) + sqrt(2))", "4", "-(2 - sqrt(3))"),
+                ("195", "225", "-", "30", "-(sqrt(6) - sqrt(2))", "4", "-(sqrt(6) + sqrt(2))", "4", "2 - sqrt(3)"),
+                ("255", "225", "+", "30", "-(sqrt(6) + sqrt(2))", "4", "-(sqrt(6) - sqrt(2))", "4", "2 + sqrt(3)"),
+                ("285", "315", "-", "30", "-(sqrt(6) + sqrt(2))", "4", "sqrt(6) - sqrt(2)", "4", "-(2 + sqrt(3))"),
+                ("345", "315", "+", "30", "-(sqrt(6) - sqrt(2))", "4", "sqrt(6) + sqrt(2)", "4", "-(2 - sqrt(3))"),
+            ]
+            ang_name, a1, sign_op, a2, s_num, s_den, c_num, c_den, tan_val = rng.choice(ang_list)
+            k_mult = rng.choice([1, 2, 3, 4, 5])
+            if fn_t == "sin":
+                ans_str = f"$ ({s_num}) / ({s_den}) $" if k_mult == 1 else f"$ ({k_mult}({s_num})) / ({s_den}) $"
+                id_formula = f"sin(alpha {sign_op} beta) = sin(alpha) cos(beta) {sign_op} cos(alpha) sin(beta)"
+            elif fn_t == "cos":
+                ans_str = f"$ ({c_num}) / ({c_den}) $" if k_mult == 1 else f"$ ({k_mult}({c_num})) / ({c_den}) $"
+                rev_sign = "-" if sign_op == "+" else "+"
+                id_formula = f"cos(alpha {sign_op} beta) = cos(alpha) cos(beta) {rev_sign} sin(alpha) sin(beta)"
+            else:
+                ans_str = f"$ {tan_val} $" if k_mult == 1 else f"$ {k_mult}({tan_val}) $"
+                id_formula = f"tan(alpha {sign_op} beta) = (tan(alpha) {sign_op} tan(beta)) / (1 {'-' if sign_op == '+' else '+'} tan(alpha) tan(beta))"
+
+            prefix = f"{k_mult} " if k_mult > 1 else ""
+            return {
+                "prompt_text": f"Use the sum or difference identity to find the exact value of {prefix}{fn_t}({ang_name} deg).",
+                "equation_typst": f"$ {prefix}{fn_t}({ang_name}^circle) = {prefix}{fn_t}({a1}^circle {sign_op} {a2}^circle) $",
+                "answer_typst": ans_str,
+                "steps_typst": [
+                    f"Express ${ang_name}^circle$ as a sum or difference of special angles: ${a1}^circle {sign_op} {a2}^circle$.",
+                    f"Apply identity ${id_formula}$.",
+                    f"Substitute exact values of special angles and simplify to find ${ans_str.replace('$', '')}$.",
                 ],
+                "distractors": [f"$ ({s_num}) / 2 $", "$ 1/2 $", "$ (sqrt(3))/2 $"],
             }
         if "identities" in t_low:
-            k = rng.randint(2, 5 * scale)
-            return {
-                "prompt_text": f"Simplify the trigonometric expression using {topic_name}.",
-                "equation_typst": f"$ {k} sin^2(theta) + {k} cos^2(theta) $",
-                "answer_typst": f"$ {k} $",
-                "steps_typst": [
-                    f"Factor out the common coefficient ${k}$: ${k}(sin^2(theta) + cos^2(theta))$.",
-                    "Apply the Pythagorean identity $sin^2(theta) + cos^2(theta) = 1$.",
-                    f"Multiply: ${k}(1) = {k}$.",
-                ],
-                "distractors": [f"$ {k} tan^2(theta) $", "$ 1 $", f"$ {2 * k} $"],
-            }
+            id_family = rng.choice(["pyth_sin_cos", "pyth_sec_tan", "quotient", "reciprocal"])
+            k = rng.randint(2, 20)
+            if id_family == "pyth_sec_tan":
+                return {
+                    "prompt_text": "Simplify the trigonometric expression using fundamental identities.",
+                    "equation_typst": f"$ {k} sec^2(theta) - {k} tan^2(theta) $",
+                    "answer_typst": f"$ {k} $",
+                    "steps_typst": [
+                        f"Factor out common factor ${k}$: ${k}(sec^2(theta) - tan^2(theta))$.",
+                        "Recall the identity $1 + tan^2(theta) = sec^2(theta) ==> sec^2(theta) - tan^2(theta) = 1$.",
+                        f"Multiply: ${k}(1) = {k}$.",
+                    ],
+                    "distractors": [f"$ {k} csc^2(theta) $", "$ 1 $", f"$ {2 * k} $"],
+                }
+            elif id_family == "quotient":
+                return {
+                    "prompt_text": "Simplify the trigonometric expression using quotient and reciprocal identities.",
+                    "equation_typst": f"$ {k} cos(theta) tan(theta) $",
+                    "answer_typst": f"$ {k} sin(theta) $",
+                    "steps_typst": [
+                        "Use quotient identity $tan(theta) = sin(theta)/cos(theta)$.",
+                        f"Substitute: ${k} cos(theta) times (sin(theta)/cos(theta))$.",
+                        f"Cancel $cos(theta)$: ${k} sin(theta)$.",
+                    ],
+                    "distractors": [f"$ {k} cos(theta) $", f"$ {k} $", f"$ {k} sec(theta) $"],
+                }
+            elif id_family == "reciprocal":
+                return {
+                    "prompt_text": "Simplify the trigonometric expression using reciprocal identities.",
+                    "equation_typst": f"$ {k} sin(theta) csc(theta) $",
+                    "answer_typst": f"$ {k} $",
+                    "steps_typst": [
+                        "Use reciprocal identity $csc(theta) = 1 / sin(theta)$.",
+                        f"Substitute: ${k} sin(theta) times (1 / sin(theta))$.",
+                        f"Result: ${k}$.",
+                    ],
+                    "distractors": [f"$ {k} sin^2(theta) $", "$ 1 $", f"$ {k} cot(theta) $"],
+                }
+            else:
+                return {
+                    "prompt_text": "Simplify the trigonometric expression using fundamental identities.",
+                    "equation_typst": f"$ {k} sin^2(theta) + {k} cos^2(theta) $",
+                    "answer_typst": f"$ {k} $",
+                    "steps_typst": [
+                        f"Factor out common factor ${k}$: ${k}(sin^2(theta) + cos^2(theta))$.",
+                        "Apply Pythagorean identity $sin^2(theta) + cos^2(theta) = 1$.",
+                        f"Result: ${k}(1) = {k}$.",
+                    ],
+                    "distractors": [f"$ {k} tan^2(theta) $", "$ 1 $", f"$ {2 * k} $"],
+                }
+
         if "equation" in t_low:
-            k = rng.choice([1, 2, 3]) * scale
+            eq_pool = [
+                ("2 sin(theta) - 1 = 0", "(pi)/(6), (5pi)/(6)", "I and II", "pi/6"),
+                ("2 sin(theta) + 1 = 0", "(7pi)/(6), (11pi)/(6)", "III and IV", "pi/6"),
+                ("2 sin(theta) - sqrt(2) = 0", "(pi)/(4), (3pi)/(4)", "I and II", "pi/4"),
+                ("2 sin(theta) + sqrt(2) = 0", "(5pi)/(4), (7pi)/(4)", "III and IV", "pi/4"),
+                ("2 sin(theta) - sqrt(3) = 0", "(pi)/(3), (2pi)/(3)", "I and II", "pi/3"),
+                ("2 sin(theta) + sqrt(3) = 0", "(4pi)/(3), (5pi)/(3)", "III and IV", "pi/3"),
+                ("2 cos(theta) - 1 = 0", "(pi)/(3), (5pi)/(3)", "I and IV", "pi/3"),
+                ("2 cos(theta) + 1 = 0", "(2pi)/(3), (4pi)/(3)", "II and III", "pi/3"),
+                ("2 cos(theta) - sqrt(2) = 0", "(pi)/(4), (7pi)/(4)", "I and IV", "pi/4"),
+                ("2 cos(theta) + sqrt(2) = 0", "(3pi)/(4), (5pi)/(4)", "II and III", "pi/4"),
+                ("2 cos(theta) - sqrt(3) = 0", "(pi)/(6), (11pi)/(6)", "I and IV", "pi/6"),
+                ("2 cos(theta) + sqrt(3) = 0", "(5pi)/(6), (7pi)/(6)", "II and III", "pi/6"),
+                ("tan(theta) - 1 = 0", "(pi)/(4), (5pi)/(4)", "I and III", "pi/4"),
+                ("tan(theta) + 1 = 0", "(3pi)/(4), (7pi)/(4)", "II and IV", "pi/4"),
+                ("sqrt(3) tan(theta) - 1 = 0", "(pi)/(6), (7pi)/(6)", "I and III", "pi/6"),
+                ("tan(theta) - sqrt(3) = 0", "(pi)/(3), (4pi)/(3)", "I and III", "pi/3"),
+                ("2 sin^2(theta) - sin(theta) = 0", "0, (pi)/(6), (5pi)/(6), pi", "I and II with axis", "pi/6"),
+                ("2 cos^2(theta) - cos(theta) = 0", "(pi)/(3), (pi)/(2), (3pi)/(2), (5pi)/(3)", "I and IV with axis", "pi/3"),
+                ("2 sin^2(theta) + 3 sin(theta) + 1 = 0", "(7pi)/(6), (3pi)/(2), (11pi)/(6)", "III and IV", "pi/6"),
+                ("2 cos^2(theta) + cos(theta) - 1 = 0", "(pi)/(3), pi, (5pi)/(3)", "I and IV", "pi/3"),
+                ("4 sin^2(theta) - 3 = 0", "(pi)/(3), (2pi)/(3), (4pi)/(3), (5pi)/(3)", "all quadrants", "pi/3"),
+                ("4 cos^2(theta) - 3 = 0", "(pi)/(6), (5pi)/(6), (7pi)/(6), (11pi)/(6)", "all quadrants", "pi/6"),
+                ("tan^2(theta) - 3 = 0", "(pi)/(3), (2pi)/(3), (4pi)/(3), (5pi)/(3)", "all quadrants", "pi/3"),
+                ("3 tan^2(theta) - 1 = 0", "(pi)/(6), (5pi)/(6), (7pi)/(6), (11pi)/(6)", "all quadrants", "pi/6"),
+                ("sin(2 theta) - cos(theta) = 0", "(pi)/(6), (pi)/(2), (5pi)/(6), (3pi)/(2)", "double-angle substitution", "pi/6"),
+                ("cos(2 theta) + sin(theta) = 0", "(pi)/(2), (7pi)/(6), (11pi)/(6)", "double-angle substitution", "pi/6"),
+                ("cos(2 theta) - cos(theta) = 0", "0, (2pi)/(3), (4pi)/(3)", "double-angle substitution", "pi/3"),
+            ]
+            c_factor = rng.choice([1, 2, 3, 5])
+            eq_s, ans_str, quad_str, ref_ang = rng.choice(eq_pool)
+            if c_factor > 1:
+                lhs = eq_s.split("=")[0].strip()
+                eq_s = f"{c_factor}({lhs}) = 0"
+
             return {
                 "prompt_text": "Solve the trigonometric equation on the interval [0, 2pi).",
-                "equation_typst": f"$ 2 cos(theta) - 1 = 0 quad (\"or scale \" k = {k}) $",
-                "answer_typst": "$ theta = (pi)/(3), (5pi)/(3) $",
+                "equation_typst": f"$ {eq_s} $",
+                "answer_typst": f"$ theta = {ans_str} $",
                 "steps_typst": [
-                    "Isolate $cos(theta)$: $2 cos(theta) = 1 arrow.r.double cos(theta) = 1/2$.",
-                    "Identify the quadrants where cosine is positive (Quadrants I and IV) with reference angle $pi/3$.",
-                    "Solutions in $[0, 2pi)$: $theta = pi/3$ and $theta = 5pi/3$.",
+                    f"Isolate or factor the trigonometric expression: ${eq_s}$.",
+                    f"Reference angle is ${ref_ang}$, with solutions in Quadrants / positions: {quad_str}.",
+                    f"All solutions in $[0, 2pi)$ in ascending order: $theta = {ans_str}$.",
                 ],
                 "distractors": [
                     "$ theta = (pi)/(6), (11pi)/(6) $",
-                    "$ theta = (2pi)/(3), (4pi)/(3) $",
                     "$ theta = (pi)/(3), (2pi)/(3) $",
+                    "$ theta = 0, pi $",
                 ],
             }
-
         if "inverse trig" in t_low:
-            vals = [
+            inv_pool = [
                 ("arcsin(1/2)", "(pi)/(6)", "(pi)/(3)"),
+                ("arcsin(-(1)/(2))", "-(pi)/(6)", "(7pi)/(6)"),
                 ("arccos(1/2)", "(pi)/(3)", "(pi)/(6)"),
-                ("arctan(1)", "(pi)/(4)", "(pi)/(3)"),
-                ("arcsin((sqrt(3))/(2))", "(pi)/(3)", "(pi)/(6)"),
                 ("arccos(-(1)/(2))", "(2pi)/(3)", "(pi)/(3)"),
+                ("arctan(1)", "(pi)/(4)", "(pi)/(3)"),
+                ("arctan(-1)", "-(pi)/(4)", "(3pi)/(4)"),
+                ("arcsin((sqrt(3))/(2))", "(pi)/(3)", "(pi)/(6)"),
+                ("arccos((sqrt(3))/(2))", "(pi)/(6)", "(pi)/(3)"),
                 ("arctan(sqrt(3))", "(pi)/(3)", "(pi)/(6)"),
+                ("arctan(-(sqrt(3)))", "-(pi)/(3)", "(2pi)/(3)"),
+                ("arcsin((sqrt(2))/(2))", "(pi)/(4)", "(pi)/(2)"),
+                ("arccos((sqrt(2))/(2))", "(pi)/(4)", "(3pi)/(4)"),
+                ("arcsin(0)", "0", "pi"),
+                ("arccos(0)", "(pi)/(2)", "0"),
+                ("arctan(0)", "0", "(pi)/(2)"),
+                ("arcsin(1)", "(pi)/(2)", "pi"),
+                ("arccos(1)", "0", "(pi)/(2)"),
+                ("arccos(-1)", "pi", "-(pi)/(2)"),
             ]
-            expr, ans, dist1 = vals[(rng.randint(0, 5) + scale) % len(vals)]
+            expr, ans, dist1 = rng.choice(inv_pool)
             return {
                 "prompt_text": "Evaluate the inverse trigonometric expression in radians (principal value).",
                 "equation_typst": f"$ {expr} $",
                 "answer_typst": f"$ {ans} $",
                 "steps_typst": [
-                    "Recall the principal range of the inverse trigonometric function.",
-                    f"Find the angle $theta$ in the principal range whose trigonometric ratio matches ${expr}$.",
-                    f"Exact value: ${ans}$.",
+                    "Recall the principal range: $arcsin in [-pi/2, pi/2]$, $arccos in [0, pi]$, $arctan in (-pi/2, pi/2)$.",
+                    f"Find angle $theta$ in the principal range whose ratio matches ${expr}$.",
+                    f"Exact principal value: ${ans}$.",
                 ],
                 "distractors": [f"$ {dist1} $", f"$ -{ans} $", "$ (pi)/(2) $"],
             }
@@ -2425,8 +3021,8 @@ def _gen_decoupled_subtopic(
         }
 
     if "factoring quadratic form" in t_low:
-        a = rng.randint(1, 3) * scale
-        b = rng.randint(a + 1, a + 4)
+        a = rng.randint(1, 10)
+        b = rng.randint(a + 1, a + 12)
         s = a * a + b * b
         p = (a * a) * (b * b)
         return {
@@ -2554,93 +3150,192 @@ def _gen_decoupled_subtopic(
         }
 
     if "rotations of conic sections" in t_low:
-        b = rng.randint(2, 6 * scale)
-        return {
-            "prompt_text": "Find the angle of rotation theta (0 < theta < 90 deg) that eliminates the xy-term.",
-            "equation_typst": f"$ x^2 + {b}x y + y^2 - 8 = 0 $",
-            "answer_typst": "$ theta = 45^circle $",
-            "steps_typst": [
-                f"Identify $A = 1, B = {b}, C = 1$ in $A x^2 + B x y + C y^2 + D x + E y + F = 0$.",
-                "Use $\\cot(2 theta) = (A - C)/B = (1 - 1)/B = 0$.",
-                "Since $2 theta = 90^circle$, the rotation angle is $theta = 45^circle$.",
-            ],
-            "distractors": ["$ theta = 30^circle $", "$ theta = 60^circle $", "$ theta = 90^circle $"],
-        }
+        rot_case = rng.choice(["45_deg", "30_deg", "60_deg", "general"])
+        if rot_case == "30_deg":
+            return {
+                "prompt_text": "Find the acute angle of rotation theta (0 < theta < 90 deg) that eliminates the xy-term.",
+                "equation_typst": "$ x^2 + 2 sqrt(3) x y + 3 y^2 - 12 = 0 $",
+                "answer_typst": "$ theta = 30^circle $",
+                "steps_typst": [
+                    "Identify $A = 1, B = 2 sqrt(3), C = 3$.",
+                    "Use $\\cot(2 theta) = (A - C)/B = (1 - 3)/(2 sqrt(3)) = -1/sqrt(3)$.",
+                    "Then $2 theta = 120^circle ==> theta = 60^circle$ or choose acute angle $theta = 30^circle$.",
+                ],
+                "distractors": ["$ theta = 45^circle $", "$ theta = 60^circle $", "$ theta = 15^circle $"],
+            }
+        elif rot_case == "60_deg":
+            return {
+                "prompt_text": "Find the acute angle of rotation theta (0 < theta < 90 deg) that eliminates the xy-term.",
+                "equation_typst": "$ 3 x^2 + 2 sqrt(3) x y + y^2 - 16 = 0 $",
+                "answer_typst": "$ theta = 30^circle $",
+                "steps_typst": [
+                    "Identify $A = 3, B = 2 sqrt(3), C = 1$.",
+                    "Use $\\cot(2 theta) = (A - C)/B = (3 - 1)/(2 sqrt(3)) = 1/sqrt(3)$.",
+                    "Since $\\cot(2 theta) = 1/sqrt(3)$, $2 theta = 60^circle ==> theta = 30^circle$.",
+                ],
+                "distractors": ["$ theta = 45^circle $", "$ theta = 60^circle $", "$ theta = 15^circle $"],
+            }
+        else:
+            b_coef = rng.randint(2, 20)
+            const_k = rng.randint(4, 30)
+            return {
+                "prompt_text": "Find the acute angle of rotation theta (0 < theta < 90 deg) that eliminates the xy-term.",
+                "equation_typst": f"$ x^2 + {b_coef}x y + y^2 - {const_k} = 0 $",
+                "answer_typst": "$ theta = 45^circle $",
+                "steps_typst": [
+                    f"Identify $A = 1, B = {b_coef}, C = 1$.",
+                    f"Use $\\cot(2 theta) = (A - C)/B = (1 - 1)/{b_coef} = 0$.",
+                    "Since $\\cot(2 theta) = 0$, $2 theta = 90^circle ==> theta = 45^circle$.",
+                ],
+                "distractors": ["$ theta = 30^circle $", "$ theta = 60^circle $", "$ theta = 90^circle $"],
+            }
 
     if "general sequences" in t_low or "general series" in t_low or "power series" in t_low:
-        c = rng.randint(1, 3 * scale)
+        c = rng.randint(2, 30)
+        a_coef = rng.randint(2, 7)
         if "power series" in t_low:
+            x0_shift = rng.choice([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5])
+            x_term = f"x" if x0_shift == 0 else (f"(x - {x0_shift})" if x0_shift > 0 else f"(x + {abs(x0_shift)})")
+            int_left = x0_shift - c
+            int_right = x0_shift + c
             return {
                 "prompt_text": "Find the radius and interval of convergence of the geometric power series.",
-                "equation_typst": f"$ sum_(n=0)^infinity ((x)/({c}))^n $",
-                "answer_typst": f"$ R = {c}, quad I = (-{c}, {c}) $",
+                "equation_typst": f"$ sum_(n=0)^infinity ({x_term}/{c})^n $",
+                "answer_typst": f"$ R = {c}, quad I = ({int_left}, {int_right}) $",
                 "steps_typst": [
-                    f"This is a geometric series with common ratio $r = x/{c}$.",
-                    f"It converges when $|x/{c}| < 1 arrow.r.double |x| < {c}$.",
-                    f"Radius of convergence $R = {c}$ and interval $I = (-{c}, {c})$.",
+                    f"This is a geometric series with common ratio $r = {x_term}/{c}$.",
+                    f"Convergence requires $|r| < 1 ==> |{x_term}| < {c}$.",
+                    f"Radius $R = {c}$, and interval of convergence $I = ({int_left}, {int_right})$.",
                 ],
                 "distractors": [
-                    f"$ R = 1/({c}), quad I = (-1/{c}, 1/{c}) $",
-                    f"$ R = {c}, quad I = [-{c}, {c}] $",
+                    f"$ R = 1/({c}), quad I = (-{c}, {c}) $",
+                    f"$ R = {c}, quad I = [{int_left}, {int_right}] $",
                     "$ R = infinity, quad I = (-infinity, infinity) $",
                 ],
             }
         if "series" in t_low:
-            s = sum(n * n + c for n in range(1, 5))
+            seq_family = rng.choice(["quadratic", "linear", "geometric"])
+            if seq_family == "linear":
+                terms = [a_coef * n + c for n in range(1, 5)]
+                s = sum(terms)
+                return {
+                    "prompt_text": "Evaluate the finite arithmetic series by expanding the summation.",
+                    "equation_typst": f"$ sum_(n=1)^4 ({a_coef}n + {c}) $",
+                    "answer_typst": f"$ {s} $",
+                    "steps_typst": [
+                        f"Substitute $n = 1, 2, 3, 4$: ${' + '.join(str(t) for t in terms)}$.",
+                        f"Evaluate the terms: $a_1={terms[0]}, a_2={terms[1]}, a_3={terms[2]}, a_4={terms[3]}$.",
+                        f"Sum: ${s}$.",
+                    ],
+                    "distractors": [f"$ {s + a_coef} $", f"$ {s - c} $", f"$ {4 * terms[0]} $"],
+                }
+            elif seq_family == "geometric":
+                r_geo = rng.choice([2, 3])
+                terms = [a_coef * (r_geo ** (n - 1)) for n in range(1, 5)]
+                s = sum(terms)
+                return {
+                    "prompt_text": "Evaluate the finite geometric series.",
+                    "equation_typst": f"$ sum_(n=1)^4 {a_coef}({r_geo})^(n-1) $",
+                    "answer_typst": f"$ {s} $",
+                    "steps_typst": [
+                        f"Terms: $a_1={terms[0]}, a_2={terms[1]}, a_3={terms[2]}, a_4={terms[3]}$.",
+                        f"Sum of terms: ${' + '.join(str(t) for t in terms)} = {s}$.",
+                        f"Formula check: $S_4 = ({terms[0]}(1 - {r_geo}^4)) / (1 - {r_geo}) = {s}$.",
+                    ],
+                    "distractors": [f"$ {s + terms[0]} $", f"$ {terms[-1]} $", f"$ {s * 2} $"],
+                }
+            else:
+                terms = [n * n + c for n in range(1, 5)]
+                s = sum(terms)
+                return {
+                    "prompt_text": "Evaluate the finite series by expanding the summation.",
+                    "equation_typst": f"$ sum_(n=1)^4 (n^2 + {c}) $",
+                    "answer_typst": f"$ {s} $",
+                    "steps_typst": [
+                        f"Substitute $n = 1, 2, 3, 4$: $({1 + c}) + ({4 + c}) + ({9 + c}) + ({16 + c})$.",
+                        f"Group terms: $(1 + 4 + 9 + 16) + 4({c}) = 30 + {4 * c}$.",
+                        f"Sum = ${s}$.",
+                    ],
+                    "distractors": [f"$ {30 + c} $", f"$ {s + 4} $", f"$ {16 + c} $"],
+                }
+
+        seq_type = rng.choice(["linear", "quadratic", "alternating"])
+        if seq_type == "linear":
+            t1, t2, t3, t4 = [a_coef * n + c for n in range(1, 5)]
             return {
-                "prompt_text": "Evaluate the finite series by expanding the summation.",
-                "equation_typst": f"$ sum_(n=1)^4 (n^2 + {c}) $",
-                "answer_typst": f"$ {s} $",
+                "prompt_text": "Find the first four terms of the arithmetic sequence given by the explicit formula.",
+                "equation_typst": f"$ a_n = {a_coef}n + {c} $",
+                "answer_typst": f"$ {t1}, {t2}, {t3}, {t4} $",
                 "steps_typst": [
-                    f"Substitute $n = 1, 2, 3, 4$: $({1 + c}) + ({4 + c}) + ({9 + c}) + ({16 + c})$.",
-                    f"Group terms: $(1 + 4 + 9 + 16) + 4({c}) = 30 + {4 * c}$.",
-                    f"Sum = ${s}$.",
+                    f"Substitute $n = 1, 2$: $a_1 = {a_coef}(1) + {c} = {t1}$, $a_2 = {a_coef}(2) + {c} = {t2}$.",
+                    f"Substitute $n = 3, 4$: $a_3 = {a_coef}(3) + {c} = {t3}$, $a_4 = {a_coef}(4) + {c} = {t4}$.",
+                    f"First four terms: ${t1}, {t2}, {t3}, {t4}$.",
                 ],
-                "distractors": [f"$ {30 + c} $", f"$ {s + 4} $", f"$ {16 + c} $"],
+                "distractors": [f"$ {c}, {t1}, {t2}, {t3} $", f"$ {t1 + 1}, {t2 + 1}, {t3 + 1}, {t4 + 1} $", f"$ {a_coef}, {a_coef * 2}, {a_coef * 3}, {a_coef * 4} $"],
             }
-        return {
-            "prompt_text": "Find the first four terms of the sequence given by the explicit formula.",
-            "equation_typst": f"$ a_n = n^2 + {c} $",
-            "answer_typst": f"$ {1 + c}, {4 + c}, {9 + c}, {16 + c} $",
-            "steps_typst": [
-                f"For $n = 1, 2$: $a_1 = 1^2 + {c} = {1 + c}$ and $a_2 = 2^2 + {c} = {4 + c}$.",
-                f"For $n = 3, 4$: $a_3 = 3^2 + {c} = {9 + c}$ and $a_4 = 4^2 + {c} = {16 + c}$.",
-                f"First four terms: ${1 + c}, {4 + c}, {9 + c}, {16 + c}$.",
-            ],
-            "distractors": [
-                f"$ {c}, {1 + c}, {4 + c}, {9 + c} $",
-                f"$ {2 + c}, {4 + c}, {6 + c}, {8 + c} $",
-                f"$ {1 + c}, {2 + c}, {3 + c}, {4 + c} $",
-            ],
-        }
+        elif seq_type == "alternating":
+            t1, t2, t3, t4 = [((-1) ** n) * (a_coef * n) for n in range(1, 5)]
+            return {
+                "prompt_text": "Find the first four terms of the alternating sequence.",
+                "equation_typst": f"$ a_n = (-1)^n ({a_coef}n) $",
+                "answer_typst": f"$ {t1}, {t2}, {t3}, {t4} $",
+                "steps_typst": [
+                    f"For $n = 1$: $a_1 = (-1)^1({a_coef} times 1) = {t1}$.",
+                    f"For $n = 2$: $a_2 = (-1)^2({a_coef} times 2) = {t2}$.",
+                    f"For $n = 3, 4$: $a_3 = {t3}, a_4 = {t4}$.",
+                ],
+                "distractors": [f"$ {abs(t1)}, {abs(t2)}, {abs(t3)}, {abs(t4)} $", f"$ {-t1}, {-t2}, {-t3}, {-t4} $", f"$ {t1}, {t1 * 2}, {t1 * 3}, {t1 * 4} $"],
+            }
+        else:
+            t1, t2, t3, t4 = [n * n + c for n in range(1, 5)]
+            return {
+                "prompt_text": "Find the first four terms of the sequence given by the explicit formula.",
+                "equation_typst": f"$ a_n = n^2 + {c} $",
+                "answer_typst": f"$ {t1}, {t2}, {t3}, {t4} $",
+                "steps_typst": [
+                    f"For $n = 1, 2$: $a_1 = 1^2 + {c} = {t1}$ and $a_2 = 2^2 + {c} = {t2}$.",
+                    f"For $n = 3, 4$: $a_3 = 3^2 + {c} = {t3}$ and $a_4 = 4^2 + {c} = {t4}$.",
+                    f"First four terms: ${t1}, {t2}, {t3}, {t4}$.",
+                ],
+                "distractors": [
+                    f"$ {c}, {t1}, {t2}, {t3} $",
+                    f"$ {2 + c}, {4 + c}, {6 + c}, {8 + c} $",
+                    f"$ {1 + c}, {2 + c}, {3 + c}, {4 + c} $",
+                ],
+            }
 
     if t_low == "basics" and "vectors" in c_low:
-        a0, b0, c0 = rng.choice([(3, 4, 5), (6, 8, 10), (5, 12, 13)])
-        vx, vy, mag = a0 * scale, b0 * scale, c0 * scale
+        vx = rng.choice([k for k in range(-15, 16) if k != 0])
+        vy = rng.choice([k for k in range(-15, 16) if k != 0])
+        mag_sq_2d = vx * vx + vy * vy
+        mag_int = int(math.isqrt(mag_sq_2d))
+        mag_2d_s = str(mag_int) if mag_int * mag_int == mag_sq_2d else f"sqrt({mag_sq_2d})"
         if "three-dimensional" in c_low:
-            vz = rng.randint(1, 4) * scale
+            vz = rng.choice([k for k in range(-12, 13) if k != 0])
             mag_sq = vx * vx + vy * vy + vz * vz
+            mag_3d_int = int(math.isqrt(mag_sq))
+            mag_3d_s = str(mag_3d_int) if mag_3d_int * mag_3d_int == mag_sq else f"sqrt({mag_sq})"
             return {
-                "prompt_text": "Find the component form and magnitude of the 3D vector v.",
+                "prompt_text": "Find the magnitude ||v|| of the 3D vector v.",
                 "equation_typst": f"$ bold(v) = angle.l {vx}, {vy}, {vz} angle.r $",
-                "answer_typst": f"$ ||bold(v)|| = sqrt({mag_sq}) $",
+                "answer_typst": f"$ ||bold(v)|| = {mag_3d_s} $",
                 "steps_typst": [
-                    "Use the 3D vector magnitude formula $||bold(v)|| = sqrt(v_x^2 + v_y^2 + v_z^2)$.",
-                    f"Square and add components: ${vx}^2 + {vy}^2 + {vz}^2 = {mag_sq}$.",
-                    f"Magnitude: $sqrt({mag_sq})$.",
+                    "Use 3D magnitude formula $||bold(v)|| = sqrt(v_x^2 + v_y^2 + v_z^2)$.",
+                    f"Square components: $({vx})^2 + ({vy})^2 + ({vz})^2 = {vx * vx} + {vy * vy} + {vz * vz} = {mag_sq}$.",
+                    f"Magnitude: $||bold(v)|| = {mag_3d_s}$.",
                 ],
-                "distractors": [f"$ {vx + vy + vz} $", f"$ {mag_sq} $", f"$ sqrt({vx * vx + vy * vy}) $"],
+                "distractors": [f"$ {abs(vx) + abs(vy) + abs(vz)} $", f"$ {mag_sq} $", f"$ sqrt({vx * vx + vy * vy}) $"],
             }
         return {
             "prompt_text": "Find the magnitude ||v|| of the 2D vector.",
             "equation_typst": f"$ bold(v) = angle.l {vx}, {vy} angle.r $",
-            "answer_typst": f"$ ||bold(v)|| = {mag} $",
+            "answer_typst": f"$ ||bold(v)|| = {mag_2d_s} $",
             "steps_typst": [
-                "Use the magnitude formula $||bold(v)|| = sqrt(v_x^2 + v_y^2)$.",
-                f"Substitute components: $sqrt({vx}^2 + {vy}^2) = sqrt({vx * vx + vy * vy})$.",
-                f"Simplify: $||bold(v)|| = {mag}$.",
+                "Use magnitude formula $||bold(v)|| = sqrt(v_x^2 + v_y^2)$.",
+                f"Square and sum components: $({vx})^2 + ({vy})^2 = {vx * vx} + {vy * vy} = {mag_sq_2d}$.",
+                f"Simplify: $||bold(v)|| = {mag_2d_s}$.",
             ],
-            "distractors": [f"$ {vx + vy} $", f"$ {mag * mag} $", f"$ {abs(vy - vx)} $"],
+            "distractors": [f"$ {abs(vx) + abs(vy)} $", f"$ {mag_sq_2d} $", f"$ {abs(vy - vx)} $"],
         }
 
     if "indefinite integrals" in t_low:
@@ -2687,24 +3382,58 @@ def _gen_decoupled_subtopic(
         }
 
     if "circumference and area" in t_low:
-        r = rng.randint(2, 6 * scale)
-        return {
-            "prompt_text": "Find the exact circumference and area of the circle in terms of pi.",
-            "equation_typst": f"$ r = {r} $",
-            "answer_typst": f"$ C = {2 * r}pi, quad A = {r * r}pi $",
-            "steps_typst": [
-                f"Use the circumference formula $C = 2 pi r = 2 pi ({r}) = {2 * r}pi$.",
-                f"Use the area formula $A = pi r^2 = pi ({r})^2 = {r * r}pi$.",
-                f"Circumference = ${2 * r}pi$, Area = ${r * r}pi$.",
-            ],
-            "distractors": [
-                f"$ C = {r * r}pi, quad A = {2 * r}pi $",
-                f"$ C = {r}pi, quad A = {2 * r}pi $",
-                f"$ C = {2 * r}pi, quad A = {4 * r * r}pi $",
-            ],
-            "diagram_svg": svg_circle_diagram(radius_label=f"r = {r}"),
-            "answer_svg": svg_circle_diagram(radius_label=f"C={2*r}pi, A={r*r}pi"),
-        }
+        circ_mode = rng.choice(["given_radius", "given_diameter", "given_circ"])
+        if circ_mode == "given_diameter":
+            d = rng.randint(4, 50) * 2
+            r = d // 2
+            return {
+                "prompt_text": "Find the exact circumference and area of the circle in terms of pi given diameter d.",
+                "equation_typst": f"$ d = {d} $",
+                "answer_typst": f"$ C = {d}pi, quad A = {r * r}pi $",
+                "steps_typst": [
+                    f"Find radius: $r = d / 2 = {d} / 2 = {r}$.",
+                    f"Circumference: $C = pi d = {d}pi$.",
+                    f"Area: $A = pi r^2 = pi ({r})^2 = {r * r}pi$.",
+                ],
+                "distractors": [f"$ C = {2 * d}pi, quad A = {d * d}pi $", f"$ C = {r}pi, quad A = {r * r}pi $", f"$ C = {d}pi, quad A = {2 * r}pi $"],
+                "diagram_svg": svg_circle_diagram(radius_label=f"d = {d}"),
+                "answer_svg": svg_circle_diagram(radius_label=f"C={d}pi, A={r * r}pi"),
+            }
+        elif circ_mode == "given_circ":
+            r = rng.randint(3, 40)
+            c_val = 2 * r
+            return {
+                "prompt_text": "Given the circumference of a circle, find its radius and exact area in terms of pi.",
+                "equation_typst": f"$ C = {c_val}pi $",
+                "answer_typst": f"$ r = {r}, quad A = {r * r}pi $",
+                "steps_typst": [
+                    f"Use circumference formula $C = 2 pi r = {c_val}pi ==> r = {c_val} / 2 = {r}$.",
+                    f"Compute area: $A = pi r^2 = pi ({r})^2 = {r * r}pi$.",
+                    f"Result: $r = {r}, A = {r * r}pi$.",
+                ],
+                "distractors": [f"$ r = {c_val}, quad A = {c_val * c_val}pi $", f"$ r = {r}, quad A = {c_val}pi $", f"$ r = {r // 2}, quad A = {r * r}pi $"],
+                "diagram_svg": svg_circle_diagram(radius_label=f"C = {c_val}pi"),
+                "answer_svg": svg_circle_diagram(radius_label=f"r={r}, A={r * r}pi"),
+            }
+        else:
+            r = rng.randint(2, 45)
+            return {
+                "prompt_text": "Find the exact circumference and area of the circle in terms of pi.",
+                "equation_typst": f"$ r = {r} $",
+                "answer_typst": f"$ C = {2 * r}pi, quad A = {r * r}pi $",
+                "steps_typst": [
+                    f"Circumference formula $C = 2 pi r = 2 pi ({r}) = {2 * r}pi$.",
+                    f"Area formula $A = pi r^2 = pi ({r})^2 = {r * r}pi$.",
+                    f"Circumference = ${2 * r}pi$, Area = ${r * r}pi$.",
+                ],
+                "distractors": [
+                    f"$ C = {r * r}pi, quad A = {2 * r}pi $",
+                    f"$ C = {r}pi, quad A = {2 * r}pi $",
+                    f"$ C = {2 * r}pi, quad A = {4 * r * r}pi $",
+                ],
+                "diagram_svg": svg_circle_diagram(radius_label=f"r = {r}"),
+                "answer_svg": svg_circle_diagram(radius_label=f"C={2*r}pi, A={r*r}pi"),
+            }
 
     if "angle bisectors" in t_low and "triangle" in c_low:
         k = rng.randint(2, 4 * scale)
