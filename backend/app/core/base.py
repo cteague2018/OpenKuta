@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import random
+import re
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ProblemDifficulty(str, Enum):
@@ -38,6 +39,34 @@ class BaseProblem(BaseModel):
     answer_svg: Optional[str] = Field(default=None, description="Optional SVG diagram/graph/plot rendered in the answer key")
     generator_id: Optional[str] = Field(default=None, description="Generator ID that produced this problem")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Arbitrary generator metadata")
+
+    @model_validator(mode="before")
+    @classmethod
+    def sanitize_math_fields(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            def clean_str(val: str) -> str:
+                if not isinstance(val, str):
+                    return val
+                # Strip redundant '+ 0' and '- 0' terms
+                s = re.sub(r'(?<=[a-zA-Z0-9_\)])(\s*[+-]\s*0\b(?!\.))+', '', val)
+                s = re.sub(r'(\b[+-]\s*0\b(?!\.)\s*)+', '', s)
+                # Normalize Typst arrows to standard double arrows/implications
+                s = re.sub(r'\barrow\.r\.double\b', '==>', s)
+                s = re.sub(r'\barrow\.r\b', '->', s)
+                s = re.sub(r'\barrow\.l\.double\b', '<==', s)
+                s = re.sub(r'\barrow\.l\b', '<-', s)
+                s = re.sub(r'\barrow\.l\.r\.double\b', '<==>', s)
+                s = re.sub(r'\barrow\.l\.r\b', '<->', s)
+                return s
+
+            for key in ["equation_typst", "answer_typst", "prompt_text"]:
+                if key in data and isinstance(data[key], str):
+                    data[key] = clean_str(data[key])
+            if "steps_typst" in data and isinstance(data["steps_typst"], list):
+                data["steps_typst"] = [clean_str(item) for item in data["steps_typst"]]
+            if "distractors" in data and isinstance(data["distractors"], list):
+                data["distractors"] = [clean_str(item) for item in data["distractors"]]
+        return data
 
     @property
     def equation_latex(self) -> str:

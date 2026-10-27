@@ -405,8 +405,8 @@ def gen_adv_problem(
     if "graphing radical" in t_low or "domain and range of radical" in t_low:
         h = rng.randint(-4, 2)
         k = rng.randint(-3, 3)
-        h_str = f"- {h}" if h >= 0 else f"+ {abs(h)}"
-        k_str = f"+ {k}" if k >= 0 else f"- {abs(k)}"
+        h_str = f"- {h}" if h > 0 else (f"+ {abs(h)}" if h < 0 else "")
+        k_str = f"+ {k}" if k > 0 else (f"- {abs(k)}" if k < 0 else "")
 
         def _fn_rad(x, _h=h, _k=k):
             return (math.sqrt(x - _h) + _k) if x >= _h else float("nan")
@@ -415,7 +415,7 @@ def gen_adv_problem(
             "equation_typst": f"$ f(x) = sqrt(x {h_str}) {k_str} $",
             "answer_typst": f"$ \"Domain\": [{h}, infinity), quad \"Range\": [{k}, infinity) $",
             "steps_typst": [
-                f"The radicand must be non-negative: $x {h_str} >= 0 arrow.r.double x >= {h}$.",
+                f"The radicand must be non-negative: ${'x ' + h_str if h_str else 'x'} >= 0 ==> x >= {h}$.",
                 f"Since $sqrt(x {h_str}) >= 0$, the minimum output is $y = {k}$ at the endpoint $({h}, {k})$.",
                 f"Domain: $[{h}, infinity)$, Range: $[{k}, infinity)$.",
             ],
@@ -1060,16 +1060,17 @@ def gen_adv_problem(
         c_val = (r1 + r2) // 2
         b = -(r1 + r2)
         c_const = r1 * r2
-        b_str = f"+ {b}x" if b >= 0 else f"- {abs(b)}x"
-        c_str = f"+ {c_const}" if c_const >= 0 else f"- {abs(c_const)}"
+        b_str = f"+ {b}x" if b > 0 else (f"- {abs(b)}x" if b < 0 else "")
+        c_str = f"+ {c_const}" if c_const > 0 else (f"- {abs(c_const)}" if c_const < 0 else "")
+        b_deriv = f"+ {b}" if b > 0 else (f"- {abs(b)}" if b < 0 else "")
         return {
             "prompt_text": "Find the value c in the open interval (a, b) that satisfies Rolle's Theorem / the Mean Value Theorem.",
             "equation_typst": f"$ f(x) = x^2 {b_str} {c_str} quad \"on\" [{r1}, {r2}] $",
             "answer_typst": f"$ c = {c_val} $",
             "steps_typst": [
                 f"Compute the average rate of change on $[{r1}, {r2}]$: $(f({r2}) - f({r1}))/({r2} - ({r1})) = 0$.",
-                f"Differentiate: $f'(x) = 2x {'+ ' + str(b) if b >= 0 else '- ' + str(abs(b))}$.",
-                f"Solve $f'(c) = 0$: $2c = {-b} arrow.r.double c = {c_val}$.",
+                f"Differentiate: $f'(x) = 2x {b_deriv}$.",
+                f"Solve $f'(c) = 0$: $2c = {-b} ==> c = {c_val}$.",
             ],
             "distractors": [f"$ c = {-c_val} $", f"$ c = {r2} $", f"$ c = {c_val + 1} $"],
         }

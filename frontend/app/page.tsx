@@ -104,10 +104,25 @@ function typstToLatex(raw: string): string {
   s = s.replace(/sqrt\(([^)]+)\)/g, "\\sqrt{$1}");
   s = s.replace(/\bquad\b/g, "\\quad ");
   s = s.replace(/cases\(([^,]+),\s*([^)]+)\)/g, "\\begin{cases} $1 \\\\ $2 \\end{cases}");
+  s = s.replace(/\barrow\.r\.double\b/g, "\\implies ");
+  s = s.replace(/\barrow\.r\b/g, "\\to ");
+  s = s.replace(/\barrow\.l\.double\b/g, "\\impliedby ");
+  s = s.replace(/\barrow\.l\b/g, "\\leftarrow ");
+  s = s.replace(/\barrow\.l\.r\.double\b/g, "\\iff ");
+  s = s.replace(/\barrow\.l\.r\b/g, "\\leftrightarrow ");
+  s = s.replace(/2rightarrow/g, "\\implies ");
   s = s.replace(/==>/g, "\\implies ");
+  s = s.replace(/<==>/g, "\\iff ");
+  s = s.replace(/<==/g, "\\impliedby ");
+  s = s.replace(/-->|->/g, "\\to ");
+  s = s.replace(/\bapprox\b/g, "\\approx ");
   s = s.replace(/\s*dot\s*/g, " \\cdot ");
   s = s.replace(/\s*times\s*/g, " \\times ");
   s = s.replace(/\s*\*\s*/g, " \\cdot ");
+
+  // Strip redundant trailing or intermediate '+ 0' and '- 0'
+  s = s.replace(/(?<=[a-zA-Z0-9_\)])(\s*[+-]\s*0\b(?!\.))+/g, "");
+  s = s.replace(/(\b[+-]\s*0\b(?!\.)\s*)+/g, "");
 
   // Vectors & angles
   s = s.replace(/\bangle\.l\b/g, "\\langle ");
@@ -2084,7 +2099,13 @@ export default function OpenMathForgeApp() {
 
                                     {/* Answer Key Overlay: Expands to Fill Real Estate with Large, Crisp Graph & Clear Steps */}
                                     {showAnswerKey ? (
-                                      <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-1.5 flex-1 flex flex-col justify-between min-h-0">
+                                      <div
+                                        className={`bg-amber-50/90 border border-amber-200 rounded p-2.5 text-xs text-amber-950 mt-1.5 flex-1 flex flex-col min-h-0 ${
+                                          prob.answer_svg
+                                            ? "justify-between"
+                                            : "justify-start space-y-2"
+                                        }`}
+                                      >
                                         <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60 shrink-0">
                                           <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
                                           {prob.correct_choice && (
@@ -2103,15 +2124,21 @@ export default function OpenMathForgeApp() {
                                           />
                                         )}
 
-                                        {/* Solution Steps: Cleanly formatted at bottom of answer card */}
+                                        {/* Solution Steps: Cleanly formatted at bottom of answer card or flowing directly below Ans */}
                                         {prob.steps_typst && prob.steps_typst.length > 0 && (
-                                          <div className={`mt-1 space-y-0.5 text-[9.5px] leading-snug text-amber-950 ${prob.answer_svg ? "border-t border-amber-200/60 pt-1" : ""}`}>
-                                            <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider">
+                                          <div
+                                            className={`text-amber-950 ${
+                                              prob.answer_svg
+                                                ? "mt-1 space-y-0.5 text-[9.5px] leading-snug border-t border-amber-200/60 pt-1"
+                                                : "space-y-1.5 text-[11px] leading-relaxed pt-1"
+                                            }`}
+                                          >
+                                            <div className={`${prob.answer_svg ? "text-[8.5px]" : "text-[9.5px]"} font-bold text-amber-800 uppercase tracking-wider mb-0.5`}>
                                               Solution Steps:
                                             </div>
                                             {prob.steps_typst.map((st, sIdx) => (
-                                              <div key={sIdx} className="flex items-start gap-1">
-                                                <span className="text-amber-600 font-mono text-[9px] font-semibold shrink-0 mt-0.5">
+                                              <div key={sIdx} className="flex items-start gap-1.5">
+                                                <span className={`text-amber-600 font-mono font-semibold shrink-0 mt-0.5 ${prob.answer_svg ? "text-[9px]" : "text-[10px]"}`}>
                                                   {sIdx + 1}.
                                                 </span>
                                                 <div className="min-w-0 break-words">
