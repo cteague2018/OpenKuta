@@ -1982,7 +1982,7 @@ export default function OpenMathForgeApp() {
                       )}
 
                       {/* Auto-Fitting Problem Grid: Fills 100% available vertical height within strict 8.5" x 11" bounds */}
-                      <div className="flex-1 my-3 flex flex-col min-h-0">
+                      <div className="flex-1 my-1.5 flex flex-col min-h-0">
                         {pageDirections && (
                           <div className="text-sm font-bold text-slate-900 pb-1 mb-1.5 tracking-tight shrink-0">
                             {pageDirections}
@@ -2013,16 +2013,17 @@ export default function OpenMathForgeApp() {
                               }
                               if (pageRowCount === 2) {
                                 if (!showAnswerKey) {
-                                  // Student mode: prominent, textbook-standard coordinate plane (2.25 inches) for drawing/plotting
-                                  return "[&>svg]:max-h-[235px] [&>svg]:h-[220px] [&>svg]:w-auto [&>svg]:max-w-[245px]";
+                                  // Student mode: prominent, textbook-standard coordinate plane (2.35 inches) for drawing/plotting
+                                  return "[&>svg]:max-h-[240px] [&>svg]:h-[225px] [&>svg]:w-auto [&>svg]:max-w-[250px]";
                                 }
                                 const hasChoices = Boolean(prob.choices && prob.choices.length >= 4);
-                                const hasManySteps = Boolean(prob.steps_typst && prob.steps_typst.length > 2);
+                                const hasManySteps = Boolean(prob.steps_typst && prob.steps_typst.length > 3);
                                 if (hasChoices || hasManySteps) {
-                                  // Generous clearance for multi-step solution steps (zero cutting off)
-                                  return "[&>svg]:max-h-[160px] [&>svg]:h-[150px] [&>svg]:w-auto [&>svg]:max-w-[170px]";
+                                  // Generous clearance for 4-6 solution steps with larger 175px graph
+                                  return "[&>svg]:max-h-[185px] [&>svg]:h-[175px] [&>svg]:w-auto [&>svg]:max-w-[195px]";
                                 }
-                                return "[&>svg]:max-h-[190px] [&>svg]:h-[175px] [&>svg]:w-auto [&>svg]:max-w-[195px]";
+                                // Few steps or direct answer: graph expands to 190px
+                                return "[&>svg]:max-h-[200px] [&>svg]:h-[190px] [&>svg]:w-auto [&>svg]:max-w-[210px]";
                               }
                               if (pageRowCount === 3) {
                                 return showAnswerKey
@@ -2040,7 +2041,7 @@ export default function OpenMathForgeApp() {
                             return (
                               <div
                                 key={`${prob.id}_${displayIdx}`}
-                                className="border border-slate-300 rounded p-3 flex flex-col justify-between bg-white relative h-full transition-all duration-150 overflow-hidden"
+                                className="border border-slate-300 rounded p-2.5 px-3 flex flex-col justify-between bg-white relative h-full transition-all duration-150 overflow-hidden"
                               >
                                 {isOneColVisual ? (
                                   /* 1-Column Horizontal Split Layout: Maximizes 736px width for large graphs & scratchwork */
@@ -2145,23 +2146,23 @@ export default function OpenMathForgeApp() {
                                   /* Multi-Column Layout: Fills Vertical Real Estate with Prominent, Crisp Graphs */
                                   <div className="flex flex-col justify-between h-full">
                                     <div className="shrink-0">
-                                      <div className="flex items-center justify-between mb-0.5">
-                                        <div className="flex items-center space-x-1.5 shrink-0">
-                                          <span className="font-bold text-slate-900">{displayIdx + 1})</span>
+                                      {/* Problem Header: Number + Equation shifted up into a single line */}
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <div className="flex items-center space-x-1 shrink-0">
+                                          <span className="font-bold text-slate-900 text-sm">{displayIdx + 1})</span>
                                           <button
                                             onClick={() => handleRegenerateSingleProblem(displayIdx)}
                                             data-testid="regenerate-single-problem"
                                             title="Regenerate Single Problem"
                                             aria-label="Regenerate Single Problem"
-                                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
+                                            className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
                                           >
                                             <RefreshCw className="w-3 h-3" />
                                           </button>
                                         </div>
-                                      </div>
-
-                                      <div className="py-1 text-center text-sm font-medium text-slate-900">
-                                        <ProblemEquation raw={prob.equation_typst} />
+                                        <div className="flex-1 text-center text-sm font-medium text-slate-900 min-w-0">
+                                          <ProblemEquation raw={prob.equation_typst} inline />
+                                        </div>
                                       </div>
 
                                        {/* Primary Diagram Slot: 1:1 Teacher/Student Alignment. Shows blank diagram in student mode, or solved diagram with plotted lines in Answer Key mode */}
@@ -2195,7 +2196,7 @@ export default function OpenMathForgeApp() {
 
                                      {/* Answer Key Overlay: Expands to Fill Real Estate with Highlighted Answer & Full Solution Steps (Zero Clipping) */}
                                      {showAnswerKey ? (
-                                       <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-1.5 flex-1 flex flex-col justify-start min-h-0">
+                                       <div className="bg-amber-50/90 border border-amber-200 rounded p-1.5 px-2 text-xs text-amber-950 mt-1 flex-1 flex flex-col justify-start min-h-0">
                                          <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60 shrink-0">
                                            <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
                                            {prob.correct_choice && (
