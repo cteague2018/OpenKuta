@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
-from backend.app.core.svg_utils import svg_coordinate_plane
+from backend.app.core.svg_utils import svg_coordinate_plane, svg_coordinate_plane_pair
 
 
 class ExponentialFunctionsGenerator(BaseGenerator):
@@ -149,10 +149,11 @@ class GraphingExponentialGenerator(BaseGenerator):
         d2 = f"Asymptote: x = {c}; y-int: ({y_int}, 0)"
         d3 = f"Asymptote: {asymptote}; y-int: (0, {y_int - 1})"
 
-        ans_svg = svg_coordinate_plane(
+        diagram_svg, ans_svg = svg_coordinate_plane_pair(
             functions=[{"fn": lambda xv, _a=a, _b=base, _c=c: _a * (_b ** xv) + _c, "color": "#dc2626"}],
             asymptotes=[{"y": float(c), "color": "#64748b"}],
             points=[{"x": 0, "y": y_int, "color": "#2563eb", "label": f"(0,{y_int})"}],
+            show_numbers=False,
         )
 
         return BaseProblem(
@@ -164,7 +165,7 @@ class GraphingExponentialGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],
             difficulty=difficulty,
             standards=self.standards,
-            diagram_svg=svg_coordinate_plane(),
+            diagram_svg=diagram_svg,
             answer_svg=ans_svg,
             metadata={"asymptote": asymptote, "y_intercept": y_int}
         )

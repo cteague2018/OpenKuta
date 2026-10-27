@@ -6,7 +6,7 @@ from typing import Any
 import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
-from backend.app.core.svg_utils import svg_coordinate_plane
+from backend.app.core.svg_utils import svg_coordinate_plane, svg_coordinate_plane_pair
 
 
 class LinearEquationsGenerator(BaseGenerator):
@@ -326,12 +326,13 @@ class GraphingLinesGenerator(BaseGenerator):
                 f"$ \"Line through \" (0, {b}) \" with \" m = {-m} $",
                 f"$ \"Line through \" ({b}, 0) \" with \" m = {m} $",
             ]
-            ans_svg = svg_coordinate_plane(
+            diagram_svg, ans_svg = svg_coordinate_plane_pair(
                 lines=[{"m": float(m), "b": float(b), "color": "#dc2626"}],
                 points=[
                     {"x": 0, "y": b, "color": "#2563eb", "label": f"(0,{b})"},
                     {"x": 1, "y": b + m, "color": "#2563eb", "label": f"(1,{b+m})"},
                 ],
+                show_numbers=False,
             )
             steps = [
                 f"Given linear equation: $ {eq} $",
@@ -355,14 +356,16 @@ class GraphingLinesGenerator(BaseGenerator):
                     f"$ \"Line through origin with slope \" {val} $",
                 ]
                 if var == "x":
-                    ans_svg = svg_coordinate_plane(
+                    diagram_svg, ans_svg = svg_coordinate_plane_pair(
                         lines=[{"x_vert": float(val), "color": "#dc2626"}],
                         points=[{"x": val, "y": 0, "color": "#2563eb", "label": f"({val},0)"}],
+                        show_numbers=False,
                     )
                 else:
-                    ans_svg = svg_coordinate_plane(
+                    diagram_svg, ans_svg = svg_coordinate_plane_pair(
                         lines=[{"m": 0.0, "b": float(val), "color": "#dc2626"}],
                         points=[{"x": 0, "y": val, "color": "#2563eb", "label": f"(0,{val})"}],
+                        show_numbers=False,
                     )
                 steps = [
                     f"Given equation: $ {eq} $",
@@ -383,12 +386,13 @@ class GraphingLinesGenerator(BaseGenerator):
                     f"$ \"Line through \" (0, {-b}) \" with \" m = {sign}{num_abs}/{den_abs} $",
                     f"$ \"Line through \" (0, {b}) \" with \" m = {sign}{den_abs}/{num_abs} $",
                 ]
-                ans_svg = svg_coordinate_plane(
+                diagram_svg, ans_svg = svg_coordinate_plane_pair(
                     lines=[{"m": num / den, "b": float(b), "color": "#dc2626"}],
                     points=[
                         {"x": 0, "y": b, "color": "#2563eb", "label": f"(0,{b})"},
                         {"x": den, "y": b + num, "color": "#2563eb", "label": f"({den},{b+num})"},
                     ],
+                    show_numbers=False,
                 )
                 steps = [
                     f"Given linear equation: $ {eq} $",
@@ -411,9 +415,10 @@ class GraphingLinesGenerator(BaseGenerator):
                 f"$ \"Line with slope \" m = {m_val} \" and y-int \" (0, {-b_val}) $",
                 f"$ \"Line with slope \" m = {A} \" and y-int \" (0, {C}) $",
             ]
-            ans_svg = svg_coordinate_plane(
+            diagram_svg, ans_svg = svg_coordinate_plane_pair(
                 lines=[{"m": float(m_val), "b": float(b_val), "color": "#dc2626"}],
                 points=[{"x": 0, "y": float(b_val), "color": "#2563eb", "label": f"(0,{b_val})"}],
+                show_numbers=False,
             )
             steps = [
                 f"Given equation in standard form: $ {eq} $",
@@ -430,7 +435,7 @@ class GraphingLinesGenerator(BaseGenerator):
             distractors=distractors,
             difficulty=difficulty,
             standards=self.standards,
-            diagram_svg=svg_coordinate_plane(),
+            diagram_svg=diagram_svg,
             answer_svg=ans_svg,
             metadata={"equation": eq}
         )
@@ -615,9 +620,10 @@ class GraphingLinearInequalitiesGenerator(BaseGenerator):
             f"$ \"{opp_style} boundary, shaded {shade_dir}\" $",
             f"$ \"{opp_style} boundary, shaded {opp_dir}\" $",
         ]
-        ans_svg = svg_coordinate_plane(
+        diagram_svg, ans_svg = svg_coordinate_plane_pair(
             lines=[{"m": m_fl, "b": b_fl, "dashed": not is_solid, "color": "#dc2626"}],
             shaded_half_planes=[{"m": m_fl, "b": b_fl, "op": eff_op, "color": "#3b82f6"}],
+            show_numbers=False,
         )
 
         return BaseProblem(
@@ -629,7 +635,7 @@ class GraphingLinearInequalitiesGenerator(BaseGenerator):
             distractors=distractors,
             difficulty=difficulty,
             standards=self.standards,
-            diagram_svg=svg_coordinate_plane(),
+            diagram_svg=diagram_svg,
             answer_svg=ans_svg,
             metadata={"inequality": eq}
         )

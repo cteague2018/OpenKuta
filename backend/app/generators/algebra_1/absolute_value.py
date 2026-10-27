@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
-from backend.app.core.svg_utils import svg_coordinate_plane
+from backend.app.core.svg_utils import svg_coordinate_plane, svg_coordinate_plane_pair
 
 
 class AbsoluteValueEquationsGenerator(BaseGenerator):
@@ -158,9 +158,10 @@ class GraphingAbsoluteValueGenerator(BaseGenerator):
         d2 = f"Vertex: ({k}, {h})"
         d3 = f"Vertex: ({h}, {-k})"
 
-        ans_svg = svg_coordinate_plane(
+        diagram_svg, ans_svg = svg_coordinate_plane_pair(
             functions=[{"fn": lambda xv, _a=a, _h=h, _k=k: _a * abs(xv - _h) + _k, "color": "#dc2626"}],
             points=[{"x": h, "y": k, "color": "#2563eb", "label": f"({h},{k})"}],
+            show_numbers=False,
         )
 
         return BaseProblem(
@@ -172,7 +173,7 @@ class GraphingAbsoluteValueGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],
             difficulty=difficulty,
             standards=self.standards,
-            diagram_svg=svg_coordinate_plane(),
+            diagram_svg=diagram_svg,
             answer_svg=ans_svg,
             metadata={"vertex": (h, k)}
         )

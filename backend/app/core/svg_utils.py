@@ -33,6 +33,9 @@ def svg_coordinate_plane(
     shaded_between: Optional[Dict[str, Any]] = None,
     riemann_boxes: Optional[Sequence[Any]] = None,
     axis_labels: Tuple[str, str] = ("x", "y"),
+    show_numbers: bool = False,
+    auto_expand: bool = True,
+    symmetric: bool = True,
 ) -> str:
     """Render a clean vector coordinate plane with auto-expanding bounds so no plotted elements clip."""
     if circles and not circles_ellipses:
@@ -141,12 +144,22 @@ def svg_coordinate_plane(
                 except Exception:
                     pass
 
-    if req_x:
-        x_min = min(x_min, int(math.floor(min(req_x))) - 2)
-        x_max = max(x_max, int(math.ceil(max(req_x))) + 2)
-    if req_y:
-        y_min = min(y_min, int(math.floor(min(req_y))) - 2)
-        y_max = max(y_max, int(math.ceil(max(req_y))) + 2)
+    if auto_expand and (req_x or req_y):
+        if symmetric:
+            b = max(abs(x_min), abs(x_max), abs(y_min), abs(y_max))
+            if req_x:
+                b = max(b, int(math.ceil(max(abs(v) for v in req_x))) + 2)
+            if req_y:
+                b = max(b, int(math.ceil(max(abs(v) for v in req_y))) + 2)
+            b = min(14, b)
+            x_min, x_max, y_min, y_max = -b, b, -b, b
+        else:
+            if req_x:
+                x_min = min(x_min, int(math.floor(min(req_x))) - 2)
+                x_max = max(x_max, int(math.ceil(max(req_x))) + 2)
+            if req_y:
+                y_min = min(y_min, int(math.floor(min(req_y))) - 2)
+                y_max = max(y_max, int(math.ceil(max(req_y))) + 2)
 
     pad = 22.0
     plot_w = width - 2 * pad
@@ -257,20 +270,22 @@ def svg_coordinate_plane(
     parts.append(f'<line x1="{pad}" y1="{oy_clamped}" x2="{width - pad}" y2="{oy_clamped}" stroke="#0f172a" stroke-width="2.0"/>')
     parts.append(f'<line x1="{ox_clamped}" y1="{pad}" x2="{ox_clamped}" y2="{height - pad}" stroke="#0f172a" stroke-width="2.0"/>')
 
-    # Tick labels (every 2 units or adaptive)
+    # Tick marks & optional numbers
     label_step_x = grid_step_x * 2 if dx >= 10 else grid_step_x
     label_step_y = grid_step_y * 2 if dy >= 10 else grid_step_y
     for gx in range(int(math.ceil(x_min)), int(math.floor(x_max)) + 1):
-        if gx == 0 or gx % label_step_x != 0:
+        if gx == 0:
             continue
         px, _ = to_px(gx, 0)
-        if pad + 8 <= px <= width - pad - 8:
+        parts.append(f'<line x1="{px}" y1="{oy_clamped - 2.5}" x2="{px}" y2="{oy_clamped + 2.5}" stroke="#0f172a" stroke-width="1.2"/>')
+        if show_numbers and gx % label_step_x == 0 and pad + 8 <= px <= width - pad - 8:
             parts.append(f'<text x="{px}" y="{min(oy_clamped + 11, height - 5)}" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#0f172a" text-anchor="middle">{gx}</text>')
     for gy in range(int(math.ceil(y_min)), int(math.floor(y_max)) + 1):
-        if gy == 0 or gy % label_step_y != 0:
+        if gy == 0:
             continue
         _, py = to_px(0, gy)
-        if pad + 6 <= py <= height - pad - 6:
+        parts.append(f'<line x1="{ox_clamped - 2.5}" y1="{py}" x2="{ox_clamped + 2.5}" y2="{py}" stroke="#0f172a" stroke-width="1.2"/>')
+        if show_numbers and gy % label_step_y == 0 and pad + 6 <= py <= height - pad - 6:
             parts.append(f'<text x="{max(ox_clamped - 4, pad + 10)}" y="{py + 3}" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#0f172a" text-anchor="end">{gy}</text>')
 
     # Axis names
@@ -443,26 +458,113 @@ def svg_coordinate_plane(
     if points:
         for pt in points:
             if isinstance(pt, (tuple, list)):
-                px, py = to_px(float(pt[0]), float(pt[1]))
+                pt_x, pt_y = float(pt[0]), float(pt[1])
                 lbl = str(pt[2]) if len(pt) > 2 else ""
                 is_closed = bool(pt[3]) if len(pt) > 3 else True
                 is_open = not is_closed
                 color = "#dc2626"
             else:
-                px, py = to_px(float(pt["x"]), float(pt["y"]))
+                pt_x, pt_y = float(pt["x"]), float(pt["y"])
                 color = pt.get("color", "#dc2626")
                 is_open = bool(pt.get("open", False))
                 lbl = str(pt.get("label", ""))
+
+            # Skip points far outside visible coordinate bounds
+            if pt_x < x_min - 0.5 or pt_x > x_max + 0.5 or pt_y < y_min - 0.5 or pt_y > y_max + 0.5:
+                continue
+
+            px, py = to_px(pt_x, pt_y)
+            r_pt = 3.6
+            px_c = round(max(r_pt + 0.5, min(width - r_pt - 0.5, px)), 2)
+            py_c = round(max(r_pt + 0.5, min(height - r_pt - 0.5, py)), 2)
             fill = "#ffffff" if is_open else color
-            parts.append(f'<circle cx="{px}" cy="{py}" r="4.2" fill="{fill}" stroke="{color}" stroke-width="2.0"/>')
+            parts.append(f'<circle cx="{px_c}" cy="{py_c}" r="{r_pt}" fill="{fill}" stroke="{color}" stroke-width="1.8"/>')
             if lbl:
-                anchor = "end" if px > width - pad - 36 else "start"
-                lx = round(px - 5, 2) if anchor == "end" else round(px + 5, 2)
-                ly = round(py + 11, 2) if py < pad + 14 else round(py - 5, 2)
-                parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="9" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(lbl)}</text>')
+                anchor = "end" if px_c > width - pad - 36 else "start"
+                lx = round(px_c - 5, 2) if anchor == "end" else round(px_c + 5, 2)
+                ly = round(py_c + 11, 2) if py_c < pad + 14 else round(py_c - 5, 2)
+                lx_c = round(max(10.0, min(width - 10.0, lx)), 2)
+                ly_c = round(max(10.0, min(height - 10.0, ly)), 2)
+                parts.append(f'<text x="{lx_c}" y="{ly_c}" font-family="sans-serif" font-size="9" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(lbl)}</text>')
 
     parts.append("</svg>")
     return "".join(parts)
+
+def svg_coordinate_plane_pair(
+    *,
+    x_min: int = -8,
+    x_max: int = 8,
+    y_min: int = -8,
+    y_max: int = 8,
+    width: int = 220,
+    height: int = 220,
+    axis_labels: Tuple[str, str] = ("x", "y"),
+    show_numbers: bool = False,
+    symmetric: bool = True,
+    **kwargs: Any,
+) -> Tuple[str, str]:
+    """Generate (diagram_svg, answer_svg) guaranteed to have 100% identical bounds, aspect ratio, and origin."""
+    req_x: List[float] = []
+    req_y: List[float] = []
+    if kwargs.get("points"):
+        for pt in kwargs["points"]:
+            if isinstance(pt, (tuple, list)):
+                req_x.append(float(pt[0]))
+                req_y.append(float(pt[1]))
+            else:
+                req_x.append(float(pt["x"]))
+                req_y.append(float(pt["y"]))
+    if kwargs.get("lines"):
+        for ln in kwargs["lines"]:
+            if ln.get("x_vert") is not None:
+                req_x.append(float(ln["x_vert"]))
+            else:
+                b_val = float(ln.get("b", 0.0))
+                if abs(b_val) <= 16:
+                    req_y.append(b_val)
+    if kwargs.get("asymptotes"):
+        for asym in kwargs["asymptotes"]:
+            if asym.get("x") is not None:
+                req_x.append(float(asym["x"]))
+            if asym.get("y") is not None:
+                req_y.append(float(asym["y"]))
+
+    b = max(abs(x_min), abs(x_max), abs(y_min), abs(y_max))
+    if req_x:
+        b = max(b, int(math.ceil(max(abs(v) for v in req_x))) + 2)
+    if req_y:
+        b = max(b, int(math.ceil(max(abs(v) for v in req_y))) + 2)
+    b = min(14, b)
+
+    final_min, final_max = (-b, b) if symmetric else (x_min, x_max)
+
+    diagram = svg_coordinate_plane(
+        x_min=final_min,
+        x_max=final_max,
+        y_min=final_min,
+        y_max=final_max,
+        width=width,
+        height=height,
+        axis_labels=axis_labels,
+        show_numbers=show_numbers,
+        auto_expand=False,
+        symmetric=symmetric,
+    )
+    answer = svg_coordinate_plane(
+        x_min=final_min,
+        x_max=final_max,
+        y_min=final_min,
+        y_max=final_max,
+        width=width,
+        height=height,
+        axis_labels=axis_labels,
+        show_numbers=show_numbers,
+        auto_expand=False,
+        symmetric=symmetric,
+        **kwargs,
+    )
+    return diagram, answer
+
 
 
 def _half_plane_polygon(

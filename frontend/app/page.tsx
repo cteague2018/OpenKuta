@@ -2127,7 +2127,7 @@ export default function OpenMathForgeApp() {
                                        {/* Primary Diagram Slot: 1:1 Teacher/Student Alignment. Shows blank diagram in student mode, or solved diagram with plotted lines in Answer Key mode */}
                                        {(prob.diagram_svg || (showAnswerKey && prob.answer_svg)) && (
                                          <div
-                                           className="my-1.5 flex justify-center items-center [&>svg]:max-h-52 [&>svg]:h-44 [&>svg]:w-auto [&>svg]:max-w-[250px]"
+                                           className="my-1 flex justify-center items-center [&>svg]:max-h-36 [&>svg]:h-32 [&>svg]:w-auto [&>svg]:max-w-[160px]"
                                            dangerouslySetInnerHTML={{
                                              __html: showAnswerKey && prob.answer_svg
                                                ? prob.answer_svg
@@ -2155,7 +2155,7 @@ export default function OpenMathForgeApp() {
 
                                      {/* Answer Key Overlay: Expands to Fill Real Estate with Highlighted Answer & Full Solution Steps (Zero Clipping) */}
                                      {showAnswerKey ? (
-                                       <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-1.5 flex-1 flex flex-col justify-start min-h-0 overflow-hidden">
+                                       <div className="bg-amber-50/90 border border-amber-200 rounded p-2 text-xs text-amber-950 mt-1.5 flex-1 flex flex-col justify-start min-h-0">
                                          <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60 shrink-0">
                                            <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
                                            {prob.correct_choice && (
@@ -2168,7 +2168,7 @@ export default function OpenMathForgeApp() {
 
                                          {/* Solution Steps: Flow clearly below Ans with zero clipping */}
                                          {prob.steps_typst && prob.steps_typst.length > 0 && (
-                                           <div className="mt-1.5 space-y-1 text-[10px] leading-snug text-amber-950 overflow-y-auto flex-1 min-h-0 pr-0.5">
+                                           <div className="mt-1 space-y-0.5 text-[9.5px] leading-tight text-amber-950">
                                              <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider mb-0.5">
                                                Solution Steps:
                                              </div>

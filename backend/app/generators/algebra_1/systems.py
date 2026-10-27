@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
-from backend.app.core.svg_utils import svg_coordinate_plane
+from backend.app.core.svg_utils import svg_coordinate_plane, svg_coordinate_plane_pair
 
 
 class SystemsGraphingGenerator(BaseGenerator):
@@ -132,12 +132,13 @@ class SystemsGraphingGenerator(BaseGenerator):
             m1_fl, b1_fl = -A1 / B1, C1 / B1
             m2_fl, b2_fl = -A2 / B2, C2 / B2
 
-        ans_svg = svg_coordinate_plane(
+        diagram_svg, ans_svg = svg_coordinate_plane_pair(
             lines=[
                 {"m": m1_fl, "b": b1_fl, "color": "#2563eb"},
                 {"m": m2_fl, "b": b2_fl, "color": "#16a34a"},
             ],
             points=[{"x": x_sol, "y": y_sol, "color": "#dc2626", "label": f"({x_sol},{y_sol})"}],
+            show_numbers=False,
         )
 
         return BaseProblem(
@@ -149,7 +150,7 @@ class SystemsGraphingGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],
             difficulty=difficulty,
             standards=self.standards,
-            diagram_svg=svg_coordinate_plane(),
+            diagram_svg=diagram_svg,
             answer_svg=ans_svg,
             metadata={"solution": (x_sol, y_sol)}
         )

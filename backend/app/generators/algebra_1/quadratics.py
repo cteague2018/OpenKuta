@@ -6,7 +6,7 @@ import random
 import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
-from backend.app.core.svg_utils import svg_coordinate_plane
+from backend.app.core.svg_utils import svg_coordinate_plane, svg_coordinate_plane_pair
 from backend.app.core.typst_utils import format_polynomial_typst
 
 
@@ -689,10 +689,11 @@ class GraphingQuadraticsGenerator(BaseGenerator):
         d2 = f"Vertex: ({k}, {h}); Axis: x = {k}"
         d3 = f"Vertex: ({h}, {-k}); Axis: x = {h}"
 
-        ans_svg = svg_coordinate_plane(
+        diagram_svg, ans_svg = svg_coordinate_plane_pair(
             functions=[{"fn": lambda xv, _a=a, _h=h, _k=k: _a * ((xv - _h) ** 2) + _k, "color": "#dc2626"}],
             asymptotes=[{"x": float(h), "color": "#64748b"}],
             points=[{"x": h, "y": k, "color": "#2563eb", "label": f"({h},{k})"}],
+            show_numbers=False,
         )
 
         return BaseProblem(
@@ -704,7 +705,7 @@ class GraphingQuadraticsGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],
             difficulty=difficulty,
             standards=self.standards,
-            diagram_svg=svg_coordinate_plane(),
+            diagram_svg=diagram_svg,
             answer_svg=ans_svg,
             metadata={"vertex": (h, k)}
         )
