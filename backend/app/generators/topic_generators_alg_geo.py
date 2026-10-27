@@ -700,7 +700,7 @@ def gen_alg_geo_problem(
         c_mix = total_solute // (v1 + v2)
         return {
             "prompt_text": "Set up an algebraic equation and solve the mixture word problem.",
-            "equation_typst": f"\"How many liters of a \" {c2}% \" acid solution must be mixed with \" {v1} \" L of a \" {c1}% \" solution to obtain a \" {c_mix}% \" solution?\"",
+            "equation_typst": f"How many liters of a {c2}% acid solution must be mixed with {v1} L of a {c1}% solution to obtain a {c_mix}% solution?",
             "answer_typst": f"$ {v2} \" liters\" $",
             "steps_typst": [
                 f"Let $x$ be the liters of ${c2}%$ solution: $0.{c1:02d}({v1}) + 0.{c2:02d}x = 0.{c_mix:02d}({v1} + x)$.",
@@ -717,7 +717,7 @@ def gen_alg_geo_problem(
         dist = (r1 + r2) * t
         return {
             "prompt_text": "Use the distance-rate-time relationship d = rt to solve the word problem.",
-            "equation_typst": f"\"Two trains leave a station traveling in opposite directions at \" {r1} \" mph and \" {r2} \" mph. After how many hours are they \" {dist} \" miles apart?\"",
+            "equation_typst": f"Two trains leave a station traveling in opposite directions at {r1} mph and {r2} mph. After how many hours are they {dist} miles apart?",
             "answer_typst": f"$ t = {t} \" hours\" $",
             "steps_typst": [
                 f"Since the trains travel in opposite directions, their combined rate of separation is ${r1} + {r2} = {r1 + r2}$ mph.",
@@ -746,7 +746,7 @@ def gen_alg_geo_problem(
         both_s = f"{both_f.numerator}/{both_f.denominator}" if both_f.denominator != 1 else str(both_f.numerator)
         return {
             "prompt_text": "Set up a rational work-rate equation and solve for the combined time.",
-            "equation_typst": f"\"{s_name1} can {s_task} in \" {t1} \" hours and {s_name2} can {s_task} in \" {t2} \" hours. How long will it take both working together?\"",
+            "equation_typst": f"{s_name1} can {s_task} in {t1} hours and {s_name2} can {s_task} in {t2} hours. How long will it take both working together?",
             "answer_typst": f"$ t = {both_s} \" hours\" $",
             "steps_typst": [
                 f"Combine hourly work rates: $1/({t1}) + 1/({t2}) = 1/t$.",
@@ -764,7 +764,7 @@ def gen_alg_geo_problem(
         tot_rev = adults * pa + kids * pk
         return {
             "prompt_text": "Write and solve a system of two linear equations to answer the word problem.",
-            "equation_typst": f"\"A theater sold \" {tot_tickets} \" tickets for a total of $\"{tot_rev}\". Adult tickets cost $\"{pa}\" and child tickets cost $\"{pk}\". How many of each were sold?\"",
+            "equation_typst": f"A theater sold {tot_tickets} tickets for a total of ${tot_rev}. Adult tickets cost ${pa} and child tickets cost ${pk}. How many of each were sold?",
             "answer_typst": f"$ \"Adults\" = {adults}, \" Children\" = {kids} $",
             "steps_typst": [
                 f"Let $a$ be adult tickets and $c$ be child tickets: $a + c = {tot_tickets}$ and ${pa}a + {pk}c = {tot_rev}$.",

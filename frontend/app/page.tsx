@@ -181,17 +181,16 @@ function isProseProblem(raw: string): boolean {
     return words.length >= 3;
   }
 
-  // If it has internal $ ... $ delimiters (e.g. "Given $ f(x) = 2x $, find $ f(1) $")
-  if (t.includes("$")) {
-    return true;
-  }
-
-  // Check if unquoted string has prose markers or multiple words
-  const clean = t.replace(/"[^"]*"/g, "");
+  // Check word count in string (ignoring quotes and latex math)
+  const clean = t.replace(/"[^"]*"/g, " ").replace(/\$[^$]*\$/g, " ");
   const words = (clean.match(/[a-zA-Z]{3,}/g) || []).filter(
     (w) => !MATH_KEYWORDS.has(w.toLowerCase())
   );
-  return words.length >= 2 || PROSE_REGEX.test(clean);
+  if (words.length >= 3 || PROSE_REGEX.test(t)) {
+    return true;
+  }
+
+  return false;
 }
 
 function KaTeXInline({ math, className = "" }: { math: string; className?: string }) {
@@ -222,27 +221,36 @@ function ProblemEquation({
 
   // If classified as Prose or Word Problem
   if (isProseProblem(trimmed)) {
-    if (trimmed.includes("$")) {
-      const parts = trimmed.split("$");
+    // 1. Clean legacy typst quote artifacts and normalize whitespace
+    let clean = trimmed.replace(/"/g, "").replace(/\\\$/g, "$").replace(/\s+/g, " ").trim();
+
+    // 2. Protect currency amounts: e.g. $205, $8, $5, $12.50
+    const CURRENCY_TOKEN = "___CURR___";
+    const protectedText = clean.replace(/\$\s*(\d+(?:,\d{3})*(?:\.\d+)?)/g, `${CURRENCY_TOKEN}$1`);
+
+    // 3. Check if there are actual LaTeX math pairs: $ ... $
+    if (protectedText.includes("$")) {
+      const parts = protectedText.split("$");
       const Tag = inline ? "span" : "div";
       return (
-        <Tag className={`${inline ? "inline" : "text-center px-1"} text-slate-800 text-sm leading-relaxed ${className}`}>
+        <Tag className={`${inline ? "inline" : "text-left px-1"} text-slate-800 text-sm leading-relaxed ${className}`}>
           {parts.map((p, idx) => {
             if (idx % 2 === 1) {
-              return <KaTeXInline key={idx} math={p} className="font-semibold mx-0.5 inline-block" />;
+              const restoredMath = p.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
+              return <KaTeXInline key={idx} math={restoredMath} className="font-semibold mx-0.5 inline-block" />;
             }
-            const cleanText = p.replace(/"/g, "");
-            return <span key={idx}>{cleanText}</span>;
+            const restoredText = p.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
+            return <span key={idx}>{restoredText}</span>;
           })}
         </Tag>
       );
     }
 
-    const cleanText = trimmed.replace(/"/g, "");
+    const restoredText = protectedText.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
     const Tag = inline ? "span" : "div";
     return (
-      <Tag className={`${inline ? "inline" : "text-center px-2 py-1"} text-slate-800 text-sm font-normal leading-relaxed ${className}`}>
-        {cleanText}
+      <Tag className={`${inline ? "inline" : "text-left px-1"} text-slate-800 text-sm font-normal leading-relaxed ${className}`}>
+        {restoredText}
       </Tag>
     );
   }
@@ -1999,6 +2007,7 @@ export default function OpenMathForgeApp() {
                             const globalIdx = worksheetProblems.findIndex((p) => p.id === prob.id);
                             const displayIdx = globalIdx !== -1 ? globalIdx : pageIdx * activePerPage + pIdx;
                             const isOneColVisual = activeColumns === 1 && Boolean(prob.diagram_svg || prob.answer_svg);
+                            const isWordProblem = isProseProblem(prob.equation_typst);
 
                             const getDiagramSizeClasses = () => {
                               if (activeColumns === 3) {
@@ -2046,8 +2055,8 @@ export default function OpenMathForgeApp() {
                                 {isOneColVisual ? (
                                   /* 1-Column Horizontal Split Layout: Maximizes 736px width for large graphs & scratchwork */
                                   <div className="flex flex-col justify-between h-full">
-                                    <div className="flex items-center justify-between mb-1 pb-1 border-b border-slate-100 shrink-0">
-                                      <div className="flex items-center space-x-1.5 shrink-0">
+                                    <div className={`flex ${isWordProblem ? "items-start" : "items-center"} justify-between mb-1 pb-1 border-b border-slate-100 shrink-0`}>
+                                      <div className={`flex items-center space-x-1.5 shrink-0 ${isWordProblem ? "mt-0.5" : ""}`}>
                                         <span className="font-bold text-slate-900">{displayIdx + 1})</span>
                                         <button
                                           onClick={() => handleRegenerateSingleProblem(displayIdx)}
@@ -2146,9 +2155,9 @@ export default function OpenMathForgeApp() {
                                   /* Multi-Column Layout: Fills Vertical Real Estate with Prominent, Crisp Graphs */
                                   <div className="flex flex-col justify-between h-full">
                                     <div className="shrink-0">
-                                      {/* Problem Header: Number + Equation shifted up into a single line */}
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <div className="flex items-center space-x-1 shrink-0">
+                                      {/* Problem Header: Number + Equation */}
+                                      <div className={`flex ${isWordProblem ? "items-start" : "items-center"} gap-2 mb-1`}>
+                                        <div className={`flex items-center space-x-1 shrink-0 ${isWordProblem ? "mt-0.5" : ""}`}>
                                           <span className="font-bold text-slate-900 text-sm">{displayIdx + 1})</span>
                                           <button
                                             onClick={() => handleRegenerateSingleProblem(displayIdx)}
@@ -2160,7 +2169,7 @@ export default function OpenMathForgeApp() {
                                             <RefreshCw className="w-3 h-3" />
                                           </button>
                                         </div>
-                                        <div className="flex-1 text-center text-sm font-medium text-slate-900 min-w-0">
+                                        <div className={`flex-1 ${isWordProblem ? "text-left font-normal text-slate-800" : "text-center font-medium text-slate-900"} text-sm min-w-0`}>
                                           <ProblemEquation raw={prob.equation_typst} inline />
                                         </div>
                                       </div>

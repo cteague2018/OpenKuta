@@ -3642,7 +3642,7 @@ def _gen_decoupled_subtopic(
             }
         return {
             "prompt_text": "Write and solve an equation for the relationship between the quantities.",
-            "equation_typst": f"\"A service charges a ${fixed} base fee plus ${rate} per hour (x). For a total bill of y = ${tot}, find the hours x.\"",
+            "equation_typst": f"A service charges a ${fixed} base fee plus ${rate} per hour (x). For a total bill of y = ${tot}, find the hours x.",
             "answer_typst": f"$ y = {rate}x + {fixed}; quad x = {x_val} $",
             "steps_typst": [
                 f"Write the two-variable relationship: $y = {rate}x + {fixed}$.",
