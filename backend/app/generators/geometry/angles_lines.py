@@ -62,11 +62,11 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
             distractors.append(f"m angle 2 = {missing + 5}^circle")
 
         if is_supp:
-            diag_mild = svg_angle_diagram(angle_degrees=float(given), mode="linear_pair", angle_label=f"{given}&#176;", interior_angle_label="?")
-            ans_mild = svg_angle_diagram(angle_degrees=float(given), mode="linear_pair", angle_label=f"{given}&#176;", interior_angle_label=f"{missing}&#176;", shade=True, bottom_label=f"m∠2 = {missing}&#176;")
+            diag_mild = svg_angle_diagram(angle_degrees=float(given), mode="linear_pair", angle_label=f"{given}°", interior_angle_label="?")
+            ans_mild = svg_angle_diagram(angle_degrees=float(given), mode="linear_pair", angle_label=f"{given}°", interior_angle_label=f"{missing}°", shade=True, bottom_label=f"m∠2 = {missing}°")
         else:
-            diag_mild = svg_angle_diagram(angle_degrees=float(missing), interior_angle=float(given), mode="interior_ray", angle_label="?", interior_angle_label=f"{given}&#176;")
-            ans_mild = svg_angle_diagram(angle_degrees=float(missing), interior_angle=float(given), mode="interior_ray", angle_label=f"{missing}&#176;", interior_angle_label=f"{given}&#176;", shade=True, bottom_label=f"m∠2 = {missing}&#176;")
+            diag_mild = svg_angle_diagram(angle_degrees=float(missing), interior_angle=float(given), mode="interior_ray", angle_label="?", interior_angle_label=f"{given}°")
+            ans_mild = svg_angle_diagram(angle_degrees=float(missing), interior_angle=float(given), mode="interior_ray", angle_label=f"{missing}°", interior_angle_label=f"{given}°", shade=True, bottom_label=f"m∠2 = {missing}°")
 
         return BaseProblem(
             id=f"geom_ang_mild_{problem_idx}",

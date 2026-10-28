@@ -80,6 +80,10 @@ def _audit_text_field(text: str, field_name: str) -> List[str]:
         if m_ds:
             errors.append(f"Field '{field_name}' contains unsimplified double sign: '{m_ds.group(0)}'")
 
+    # 7. Raw HTML entities in text fields (e.g. &#176; or &amp;)
+    if "&#" in text or "&amp;#" in text or "&deg;" in text:
+        errors.append(f"Field '{field_name}' contains raw HTML entity: use UTF-8 characters like '°' instead")
+
     return errors
 
 
@@ -192,5 +196,6 @@ def validate_generated_problem(problem: Union[BaseProblem, Dict[str, Any]]) -> L
         svg_content = p_dict.get(svg_field)
         if svg_content:
             errors.extend(_audit_svg(svg_content, svg_field))
+
 
     return errors

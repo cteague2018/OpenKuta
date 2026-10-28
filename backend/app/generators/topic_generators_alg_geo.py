@@ -1402,7 +1402,7 @@ def gen_alg_geo_problem(
                 "$ \"Reflex angle\" $",
             ],
             "diagram_svg": svg_angle_diagram(angle_degrees=deg),
-            "answer_svg": svg_angle_diagram(angle_degrees=deg, shade=True, bottom_label=f"{kind} angle ({deg}&#176;)"),
+            "answer_svg": svg_angle_diagram(angle_degrees=deg, shade=True, bottom_label=f"{kind} angle ({deg}°)"),
         }
 
     if "parallel lines and transversals" in t_low:
@@ -1890,7 +1890,7 @@ def gen_alg_geo_problem(
                 ],
                 "distractors": [f"$ \"Intercepted arc\" = {ins // 2}^circle $", f"$ \"Intercepted arc\" = {ins}^circle $", f"$ \"Intercepted arc\" = {180 - ins}^circle $"],
                 "diagram_svg": svg_circle_diagram(mode="inscribed", inscribed_angle=ins, intercepted_arc=arc),
-                "answer_svg": svg_circle_diagram(mode="inscribed", inscribed_angle=ins, intercepted_arc=arc, shade_sector=True, bottom_label=f"Intercepted arc = {arc}&#176;"),
+                "answer_svg": svg_circle_diagram(mode="inscribed", inscribed_angle=ins, intercepted_arc=arc, shade_sector=True, bottom_label=f"Intercepted arc = {arc}°"),
             }
         if "tangent" in t_low or "secant" in t_low:
             arc_big = rng.randint(110, 170)
@@ -1909,7 +1909,7 @@ def gen_alg_geo_problem(
                 ],
                 "distractors": [f"$ m angle = {(arc_big + arc_small) // 2}^circle $", f"$ m angle = {arc_big - arc_small}^circle $", f"$ m angle = {ext_ang + 10}^circle $"],
                 "diagram_svg": svg_circle_diagram(mode="secants", far_arc=arc_big, near_arc=arc_small),
-                "answer_svg": svg_circle_diagram(mode="secants", far_arc=arc_big, near_arc=arc_small, bottom_label=f"Angle = {ext_ang}&#176;"),
+                "answer_svg": svg_circle_diagram(mode="secants", far_arc=arc_big, near_arc=arc_small, bottom_label=f"Angle = {ext_ang}°"),
             }
         if "segment measures" in t_low or "chords" in t_low:
             a, b = rng.choice([(4, 9), (6, 8), (3, 12), (6, 10), (8, 9)])

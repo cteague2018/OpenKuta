@@ -1183,7 +1183,7 @@ def svg_angle_diagram(
         a1_y = round(by - r_arc1 * math.sin(rad), 2)
         parts.append(f'<path d="M {bx + r_arc1} {by} A {r_arc1} {r_arc1} 0 0 0 {a1_x} {a1_y}" fill="none" stroke="#2563eb" stroke-width="1.6"/>')
 
-        lbl1 = angle_label if angle_label else f"{int(theta)}&#176;"
+        lbl1 = angle_label if angle_label else f"{int(theta)}°"
         mid_rad1 = math.radians(theta / 2.0)
         lx1 = round(bx + 32.0 * math.cos(mid_rad1), 2)
         ly1 = round(by - 32.0 * math.sin(mid_rad1) + 3, 2)
@@ -1253,7 +1253,7 @@ def svg_angle_diagram(
         a1_x = round(bx + r_arc1 * math.cos(rad1), 2)
         a1_y = round(by - r_arc1 * math.sin(rad1), 2)
         parts.append(f'<path d="M {bx + r_arc1} {by} A {r_arc1} {r_arc1} 0 0 0 {a1_x} {a1_y}" fill="none" stroke="#2563eb" stroke-width="1.5"/>')
-        lbl1 = angle_label if angle_label else f"{int(a1)}&#176;"
+        lbl1 = angle_label if angle_label else f"{int(a1)}°"
         mid1 = rad1 / 2.0
         parts.append(f'<text x="{round(bx + 30 * math.cos(mid1), 2)}" y="{round(by - 30 * math.sin(mid1) + 3, 2)}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e40af" text-anchor="middle">{lbl1}</text>')
 
@@ -1263,7 +1263,7 @@ def svg_angle_diagram(
         a2_end_x = round(bx + r_arc2 * math.cos(rad_tot), 2)
         a2_end_y = round(by - r_arc2 * math.sin(rad_tot), 2)
         parts.append(f'<path d="M {a2_start_x} {a2_start_y} A {r_arc2} {r_arc2} 0 0 0 {a2_end_x} {a2_end_y}" fill="none" stroke="#16a34a" stroke-width="1.5"/>')
-        lbl2 = interior_angle_label if interior_angle_label else f"{int(a2)}&#176;"
+        lbl2 = interior_angle_label if interior_angle_label else f"{int(a2)}°"
         mid2 = math.radians(a1 + a2 / 2.0)
         parts.append(f'<text x="{round(bx + 38 * math.cos(mid2), 2)}" y="{round(by - 38 * math.sin(mid2) + 3, 2)}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#16a34a" text-anchor="middle">{lbl2}</text>')
 
@@ -1326,7 +1326,7 @@ def svg_angle_diagram(
             aby = round(by - r_arc * math.sin(rad), 2)
             parts.append(f'<path d="M {bx + r_arc} {by} A {r_arc} {r_arc} 0 {large_arc} 0 {abx} {aby}" fill="none" stroke="#2563eb" stroke-width="1.6"/>')
 
-        lbl_text = angle_label if angle_label else f"{int(theta) if theta.is_integer() else theta}&#176;"
+        lbl_text = angle_label if angle_label else f"{int(theta) if theta.is_integer() else theta}°"
         mid_rad = math.radians(theta / 2.0)
         r_lbl = 34.0 if theta >= 50 else 44.0
         lx = round(bx + r_lbl * math.cos(mid_rad), 2)
@@ -1421,9 +1421,9 @@ def svg_circle_diagram(
         parts.append(f'<circle cx="{cx}" cy="{cy}" r="2" fill="#94a3b8"/>')
         parts.append(f'<text x="{cx}" y="{cy + 10}" font-family="sans-serif" font-size="7" font-weight="bold" fill="#94a3b8" text-anchor="middle">O</text>')
 
-        parts.append(f'<text x="{vx + 26}" y="{vy + 3}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af">{int(ins_deg)}&#176;</text>')
+        parts.append(f'<text x="{vx + 26}" y="{vy + 3}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af">{int(ins_deg)}°</text>')
 
-        arc_text = f"Arc = {int(arc_deg)}&#176;" if shade_sector else f"Arc: {int(arc_deg)}&#176;"
+        arc_text = f"Arc = {int(arc_deg)}°" if shade_sector else f"Arc: {int(arc_deg)}°"
         parts.append(f'<text x="{cx + r + 12}" y="{cy + 3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#2563eb">{arc_text}</text>')
 
     elif mode == "chords":
@@ -1483,9 +1483,9 @@ def svg_circle_diagram(
         parts.append(f'<circle cx="{px}" cy="{py}" r="2.5" fill="#1e293b"/>')
         parts.append(f'<text x="{px - 6}" y="{py + 3}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b">P</text>')
 
-        parts.append(f'<text x="{px + 14}" y="{py + 3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e40af">{int(ext_ang)}&#176;</text>')
-        parts.append(f'<text x="{cx - 24}" y="{cy + 3}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#16a34a" text-anchor="middle">{int(n_arc)}&#176;</text>')
-        parts.append(f'<text x="{cx + r + 8}" y="{cy + 3}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#2563eb">{int(f_arc)}&#176;</text>')
+        parts.append(f'<text x="{px + 14}" y="{py + 3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e40af">{int(ext_ang)}°</text>')
+        parts.append(f'<text x="{cx - 24}" y="{cy + 3}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#16a34a" text-anchor="middle">{int(n_arc)}°</text>')
+        parts.append(f'<text x="{cx + r + 8}" y="{cy + 3}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#2563eb">{int(f_arc)}°</text>')
 
     elif mode == "central":
         if angle_degrees is None and angle_label:
@@ -1541,7 +1541,7 @@ def svg_circle_diagram(
         r_lbl = 24.0 if theta >= 60 else 28.0
         lx = round(cx + r_lbl * math.cos(mid_rad), 2)
         ly = round(cy - r_lbl * math.sin(mid_rad) + 3, 2)
-        deg_str = f"{int(theta) if theta.is_integer() else theta}&#176;"
+        deg_str = f"{int(theta) if theta.is_integer() else theta}°"
         parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{deg_str}</text>')
 
     else:

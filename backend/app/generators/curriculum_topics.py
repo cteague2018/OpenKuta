@@ -1510,15 +1510,15 @@ def _gen_decoupled_subtopic(
         ext = a + b
         if scale > 1:
             ext_expr = f"{scale}x + {ext - scale * 15}"
-            eq_text = f"Remote interior angles: {a}&#176; and {b}&#176;. Exterior angle: ${ext_expr}&#176;$."
+            eq_text = f"Remote interior angles: {a}° and {b}°. Exterior angle: ${ext_expr}^\\circ$."
             ans_typst = f"$ x = 15, quad \"Exterior angle\" = {ext}^circle $"
-            diag = svg_general_triangle(angle_a=f"{a}&#176;", angle_b=f"{b}&#176;", ext_c=f"{ext_expr}&#176;")
-            ans_diag = svg_general_triangle(angle_a=f"{a}&#176;", angle_b=f"{b}&#176;", ext_c=f"{ext}&#176;")
+            diag = svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", ext_c=f"{ext_expr}°")
+            ans_diag = svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", ext_c=f"{ext}°")
         else:
-            eq_text = f"Remote interior angles: {a}&#176; and {b}&#176;. Find the exterior angle."
+            eq_text = f"Remote interior angles: {a}° and {b}°. Find the exterior angle."
             ans_typst = f"$ \"Exterior angle\" = {ext}^circle $"
-            diag = svg_general_triangle(angle_a=f"{a}&#176;", angle_b=f"{b}&#176;", ext_c="?")
-            ans_diag = svg_general_triangle(angle_a=f"{a}&#176;", angle_b=f"{b}&#176;", ext_c=f"{ext}&#176;")
+            diag = svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", ext_c="?")
+            ans_diag = svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", ext_c=f"{ext}°")
         return {
             "prompt_text": "Use the Exterior Angle Theorem to find the exterior angle measure (or solve for x).",
             "equation_typst": eq_text,
@@ -1551,8 +1551,8 @@ def _gen_decoupled_subtopic(
                 f"Answer: $m angle A B C = {tot}^circle$.",
             ],
             "distractors": [f"$ m angle A B C = {abs(a1 - a2)}^circle $", f"$ m angle A B C = {180 - tot}^circle $", f"$ m angle A B C = {tot + 10}^circle $"],
-            "diagram_svg": svg_angle_diagram(angle_degrees=a2, interior_angle=a1, mode="interior_ray", angle_label=f"{a2}&#176;", interior_angle_label=f"{a1}&#176;"),
-            "answer_svg": svg_angle_diagram(angle_degrees=a2, interior_angle=a1, mode="interior_ray", angle_label=f"{a2}&#176;", interior_angle_label=f"{a1}&#176;", shade=True, bottom_label=f"m∠ABC = {tot}&#176;"),
+            "diagram_svg": svg_angle_diagram(angle_degrees=a2, interior_angle=a1, mode="interior_ray", angle_label=f"{a2}°", interior_angle_label=f"{a1}°"),
+            "answer_svg": svg_angle_diagram(angle_degrees=a2, interior_angle=a1, mode="interior_ray", angle_label=f"{a2}°", interior_angle_label=f"{a1}°", shade=True, bottom_label=f"m∠ABC = {tot}°"),
         }
 
     if "naming arcs" in t_low or "measures of arcs" in t_low:
@@ -1572,10 +1572,10 @@ def _gen_decoupled_subtopic(
                 f"$ m \"arc\"(A B) = {major}^circle, quad m \"arc\"(A C B) = {central}^circle $",
                 f"$ m \"arc\"(A B) = {2 * central}^circle, quad m \"arc\"(A C B) = {360 - 2 * central}^circle $",
             ],
-            "diagram_svg": svg_circle_diagram(angle_degrees=central, angle_label=f"{central}&#176;", show_points=True),
+            "diagram_svg": svg_circle_diagram(angle_degrees=central, angle_label=f"{central}°", show_points=True),
             "answer_svg": svg_circle_diagram(
                 angle_degrees=central,
-                angle_label=f"Minor: {central}&#176;, Major: {major}&#176;",
+                angle_label=f"Minor: {central}°, Major: {major}°",
                 shade_sector=True,
                 show_points=True,
             ),
@@ -2636,8 +2636,8 @@ def _gen_decoupled_subtopic(
                     f"Result: $m angle A B D = {half}^circle$.",
                 ],
                 "distractors": [f"$ {deg}^circle $", f"$ {2 * deg}^circle $", f"$ {180 - deg}^circle $"],
-                "diagram_svg": svg_angle_diagram(angle_degrees=half, interior_angle=half, mode="interior_ray", angle_label="?", interior_angle_label=f"{half}&#176;"),
-                "answer_svg": svg_angle_diagram(angle_degrees=half, interior_angle=half, mode="interior_ray", angle_label=f"{half}&#176;", interior_angle_label=f"{half}&#176;", shade=True, bottom_label=f"m∠ABD = {half}&#176;"),
+                "diagram_svg": svg_angle_diagram(angle_degrees=half, interior_angle=half, mode="interior_ray", angle_label="?", interior_angle_label=f"{half}°"),
+                "answer_svg": svg_angle_diagram(angle_degrees=half, interior_angle=half, mode="interior_ray", angle_label=f"{half}°", interior_angle_label=f"{half}°", shade=True, bottom_label=f"m∠ABD = {half}°"),
             }
         else:
             s1 = rng.randint(4, 20)
@@ -3496,8 +3496,8 @@ def _gen_decoupled_subtopic(
                 f"Subtract ${deg}^circle$: $m angle D B C = {sup}^circle$.",
             ],
             "distractors": [f"$ {90 - deg if deg < 90 else deg - 45}^circle $", f"$ {deg}^circle $", f"$ {sup + 10}^circle $"],
-            "diagram_svg": svg_angle_diagram(angle_degrees=deg, mode="linear_pair", angle_label=f"{deg}&#176;", interior_angle_label="?"),
-            "answer_svg": svg_angle_diagram(angle_degrees=deg, mode="linear_pair", angle_label=f"{deg}&#176;", interior_angle_label=f"{sup}&#176;", shade=True, bottom_label=f"m∠DBC = {sup}&#176;"),
+            "diagram_svg": svg_angle_diagram(angle_degrees=deg, mode="linear_pair", angle_label=f"{deg}°", interior_angle_label="?"),
+            "answer_svg": svg_angle_diagram(angle_degrees=deg, mode="linear_pair", angle_label=f"{deg}°", interior_angle_label=f"{sup}°", shade=True, bottom_label=f"m∠DBC = {sup}°"),
         }
 
     if c_low in ("general functions", "functions"):
