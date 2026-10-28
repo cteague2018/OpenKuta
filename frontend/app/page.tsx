@@ -127,7 +127,13 @@ function typstToLatex(raw: string): string {
   // Vectors & angles
   s = s.replace(/\bangle\.l\b/g, "\\langle ");
   s = s.replace(/\bangle\.r\b/g, "\\rangle ");
+  s = s.replace(/\bangle\.arc\b/g, "\\measuredangle ");
+  s = s.replace(/\bmangle\b/gi, "m\\angle ");
+  s = s.replace(/\bmangle([A-Z])/g, "m\\angle $1");
+  s = s.replace(/\bm\s+angle\b/g, "m\\angle ");
+  s = s.replace(/(?:\\angle|\bangle)\b/g, "\\angle ");
   s = s.replace(/\bbold\(([^)]+)\)/g, "\\mathbf{$1}");
+  s = s.replace(/\barc\(([^)]+)\)/g, "\\text{arc}($1)");
 
   // Limits, Integrals, and Symbols
   s = s.replace(/\blim_\(([^)]+)\s*->\s*([^)]+)\)/g, "\\lim_{$1 \\to $2}");

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import math
+import re
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 _SVG_STYLE = 'style="max-width:100%;height:auto;display:block;margin:0 auto;"'
@@ -1115,35 +1116,348 @@ def svg_parallel_transversal(
     return "".join(parts)
 
 
+def svg_angle_diagram(
+    angle_degrees: float = 45.0,
+    angle_label: str = "",
+    vertex_label: str = "B",
+    ray1_label: str = "C",
+    ray2_label: str = "A",
+    interior_angle: Optional[float] = None,
+    interior_label: str = "D",
+    interior_angle_label: str = "",
+    mode: str = "single",
+    shade: bool = False,
+    bottom_label: str = "",
+) -> str:
+    """Render a geometrically accurate angle diagram:
+    - single: One angle ∠ABC of measure angle_degrees
+    - interior_ray: Angle ∠ABC with interior ray BD (Angle Addition Postulate or Bisector)
+    - linear_pair: Straight line AC with vertex B and ray BD forming a linear pair
+    """
+    width, height = 210, 124
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
+        '<defs>',
+        '  <marker id="ang-arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">',
+        '    <path d="M 1 2 L 8 5 L 1 8 z" fill="#1e40af"/>',
+        '  </marker>',
+        '</defs>',
+    ]
+
+    if mode == "linear_pair":
+        theta = float(angle_degrees)
+        theta = max(15.0, min(165.0, theta))
+        bx, by = 105.0, 85.0
+        line_len = 80.0
+
+        ax = bx - line_len
+        cx = bx + line_len
+        rad = math.radians(theta)
+        dx = round(bx + line_len * 0.85 * math.cos(rad), 2)
+        dy = round(by - line_len * 0.85 * math.sin(rad), 2)
+
+        parts.append(f'<line x1="{ax}" y1="{by}" x2="{cx}" y2="{by}" stroke="#1e40af" stroke-width="2" marker-start="url(#ang-arrow)" marker-end="url(#ang-arrow)"/>')
+        parts.append(f'<line x1="{bx}" y1="{by}" x2="{dx}" y2="{dy}" stroke="#1e40af" stroke-width="2" marker-end="url(#ang-arrow)"/>')
+
+        if shade:
+            parts.append(f'<path d="M {bx} {by} L {cx - 20} {by} A 60 60 0 0 0 {dx} {dy} Z" fill="#bfdbfe" fill-opacity="0.25" stroke="none"/>')
+
+        parts.append(f'<circle cx="{bx}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        parts.append(f'<text x="{bx}" y="{by + 14}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">B</text>')
+
+        parts.append(f'<circle cx="{cx - 25}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        parts.append(f'<text x="{cx - 25}" y="{by + 14}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">C</text>')
+
+        parts.append(f'<circle cx="{ax + 25}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        parts.append(f'<text x="{ax + 25}" y="{by + 14}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">A</text>')
+
+        parts.append(f'<circle cx="{round(bx + line_len * 0.6 * math.cos(rad), 2)}" cy="{round(by - line_len * 0.6 * math.sin(rad), 2)}" r="2.5" fill="#1e293b"/>')
+        off_d_x = round(bx + (line_len * 0.6 + 9) * math.cos(rad), 2)
+        off_d_y = round(by - (line_len * 0.6 + 9) * math.sin(rad) + 3, 2)
+        parts.append(f'<text x="{off_d_x}" y="{off_d_y}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">D</text>')
+
+        r_arc1 = 20.0
+        a1_x = round(bx + r_arc1 * math.cos(rad), 2)
+        a1_y = round(by - r_arc1 * math.sin(rad), 2)
+        parts.append(f'<path d="M {bx + r_arc1} {by} A {r_arc1} {r_arc1} 0 0 0 {a1_x} {a1_y}" fill="none" stroke="#2563eb" stroke-width="1.6"/>')
+
+        lbl1 = angle_label if angle_label else f"{int(theta)}&#176;"
+        mid_rad1 = math.radians(theta / 2.0)
+        lx1 = round(bx + 32.0 * math.cos(mid_rad1), 2)
+        ly1 = round(by - 32.0 * math.sin(mid_rad1) + 3, 2)
+        parts.append(f'<text x="{lx1}" y="{ly1}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{lbl1}</text>')
+
+        if interior_angle_label:
+            r_arc2 = 24.0
+            a2_x = round(bx + r_arc2 * math.cos(rad), 2)
+            a2_y = round(by - r_arc2 * math.sin(rad), 2)
+            parts.append(f'<path d="M {a2_x} {a2_y} A {r_arc2} {r_arc2} 0 0 0 {bx - r_arc2} {by}" fill="none" stroke="#16a34a" stroke-width="1.6"/>')
+
+            mid_rad2 = math.radians(180 - (180 - theta) / 2.0)
+            lx2 = round(bx + 36.0 * math.cos(mid_rad2), 2)
+            ly2 = round(by - 36.0 * math.sin(mid_rad2) + 3, 2)
+            parts.append(f'<text x="{lx2}" y="{ly2}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#16a34a" text-anchor="middle">{_esc(interior_angle_label)}</text>')
+
+    elif mode == "interior_ray":
+        a1 = float(angle_degrees)
+        a2 = float(interior_angle if interior_angle is not None else 30.0)
+        tot = a1 + a2
+
+        if tot <= 85:
+            bx, by = 55.0, 92.0
+            ray_len = 80.0
+        elif tot <= 115:
+            bx, by = 80.0, 92.0
+            ray_len = 75.0
+        else:
+            bx, by = 115.0, 92.0
+            ray_len = 75.0
+
+        rad1 = math.radians(a1)
+        rad_tot = math.radians(tot)
+
+        cx = round(bx + ray_len, 2)
+        cy = by
+        dx = round(bx + ray_len * math.cos(rad1), 2)
+        dy = round(by - ray_len * math.sin(rad1), 2)
+        ax = round(bx + ray_len * math.cos(rad_tot), 2)
+        ay = round(by - ray_len * math.sin(rad_tot), 2)
+
+        parts.append(f'<line x1="{bx}" y1="{by}" x2="{cx}" y2="{cy}" stroke="#1e40af" stroke-width="2" marker-end="url(#ray-arrow)"/>')
+        parts.append(f'<line x1="{bx}" y1="{by}" x2="{dx}" y2="{dy}" stroke="#1e40af" stroke-width="2" marker-end="url(#ray-arrow)"/>')
+        parts.append(f'<line x1="{bx}" y1="{by}" x2="{ax}" y2="{ay}" stroke="#1e40af" stroke-width="2" marker-end="url(#ray-arrow)"/>')
+
+        if shade:
+            parts.append(f'<path d="M {bx} {by} L {cx} {cy} A {ray_len} {ray_len} 0 0 0 {ax} {ay} Z" fill="#bfdbfe" fill-opacity="0.25" stroke="none"/>')
+
+        parts.append(f'<circle cx="{bx}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        parts.append(f'<text x="{bx - 7}" y="{by + 13}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b">B</text>')
+
+        p_c_x = round(bx + ray_len * 0.65, 2)
+        parts.append(f'<circle cx="{p_c_x}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        parts.append(f'<text x="{p_c_x}" y="{by + 13}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">C</text>')
+
+        p_d_x = round(bx + ray_len * 0.65 * math.cos(rad1), 2)
+        p_d_y = round(by - ray_len * 0.65 * math.sin(rad1), 2)
+        parts.append(f'<circle cx="{p_d_x}" cy="{p_d_y}" r="2.5" fill="#1e293b"/>')
+        parts.append(f'<text x="{p_d_x + 9}" y="{p_d_y + 4}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">D</text>')
+
+        p_a_x = round(bx + ray_len * 0.65 * math.cos(rad_tot), 2)
+        p_a_y = round(by - ray_len * 0.65 * math.sin(rad_tot), 2)
+        parts.append(f'<circle cx="{p_a_x}" cy="{p_a_y}" r="2.5" fill="#1e293b"/>')
+        parts.append(f'<text x="{p_a_x - 7}" y="{p_a_y - 4}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">A</text>')
+
+        r_arc1 = 18.0
+        a1_x = round(bx + r_arc1 * math.cos(rad1), 2)
+        a1_y = round(by - r_arc1 * math.sin(rad1), 2)
+        parts.append(f'<path d="M {bx + r_arc1} {by} A {r_arc1} {r_arc1} 0 0 0 {a1_x} {a1_y}" fill="none" stroke="#2563eb" stroke-width="1.5"/>')
+        lbl1 = angle_label if angle_label else f"{int(a1)}&#176;"
+        mid1 = rad1 / 2.0
+        parts.append(f'<text x="{round(bx + 30 * math.cos(mid1), 2)}" y="{round(by - 30 * math.sin(mid1) + 3, 2)}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e40af" text-anchor="middle">{lbl1}</text>')
+
+        r_arc2 = 24.0
+        a2_start_x = round(bx + r_arc2 * math.cos(rad1), 2)
+        a2_start_y = round(by - r_arc2 * math.sin(rad1), 2)
+        a2_end_x = round(bx + r_arc2 * math.cos(rad_tot), 2)
+        a2_end_y = round(by - r_arc2 * math.sin(rad_tot), 2)
+        parts.append(f'<path d="M {a2_start_x} {a2_start_y} A {r_arc2} {r_arc2} 0 0 0 {a2_end_x} {a2_end_y}" fill="none" stroke="#16a34a" stroke-width="1.5"/>')
+        lbl2 = interior_angle_label if interior_angle_label else f"{int(a2)}&#176;"
+        mid2 = math.radians(a1 + a2 / 2.0)
+        parts.append(f'<text x="{round(bx + 38 * math.cos(mid2), 2)}" y="{round(by - 38 * math.sin(mid2) + 3, 2)}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#16a34a" text-anchor="middle">{lbl2}</text>')
+
+    else:
+        theta = float(angle_degrees)
+        theta = max(5.0, min(180.0, theta))
+
+        if theta <= 80:
+            bx, by = 55.0, 92.0
+            ray_len = 80.0
+        elif theta <= 105:
+            bx, by = 80.0, 92.0
+            ray_len = 75.0
+        else:
+            bx, by = 118.0, 92.0
+            ray_len = 75.0
+
+        rad = math.radians(theta)
+        ax = round(bx + ray_len * math.cos(rad), 2)
+        ay = round(by - ray_len * math.sin(rad), 2)
+        cx = round(bx + ray_len, 2)
+        cy = by
+        large_arc = 1 if theta > 180 else 0
+
+        if shade:
+            if abs(theta - 180.0) < 1e-2:
+                parts.append(f'<path d="M {ax} {by} A {ray_len} {ray_len} 0 0 0 {cx} {by} Z" fill="#bfdbfe" fill-opacity="0.3" stroke="none"/>')
+            else:
+                parts.append(f'<path d="M {bx} {by} L {cx} {cy} A {ray_len} {ray_len} 0 {large_arc} 0 {ax} {ay} Z" fill="#bfdbfe" fill-opacity="0.28" stroke="none"/>')
+
+        parts.append(f'<line x1="{bx}" y1="{by}" x2="{cx}" y2="{cy}" stroke="#1e40af" stroke-width="2" marker-end="url(#ray-arrow)"/>')
+        parts.append(f'<line x1="{bx}" y1="{by}" x2="{ax}" y2="{ay}" stroke="#1e40af" stroke-width="2" marker-end="url(#ray-arrow)"/>')
+
+        p_c_x = round(bx + ray_len * 0.65, 2)
+        p_c_y = cy
+        p_a_x = round(bx + ray_len * 0.65 * math.cos(rad), 2)
+        p_a_y = round(by - ray_len * 0.65 * math.sin(rad), 2)
+
+        parts.append(f'<circle cx="{bx}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        parts.append(f'<circle cx="{p_c_x}" cy="{p_c_y}" r="2.5" fill="#1e293b"/>')
+        parts.append(f'<circle cx="{p_a_x}" cy="{p_a_y}" r="2.5" fill="#1e293b"/>')
+
+        parts.append(f'<text x="{bx - 7}" y="{by + 13}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b">{_esc(vertex_label)}</text>')
+        parts.append(f'<text x="{p_c_x}" y="{p_c_y + 13}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(ray1_label)}</text>')
+
+        perp_rad = rad + math.pi / 2.0
+        off_a_x = round(p_a_x + 9 * math.cos(perp_rad), 2)
+        off_a_y = round(p_a_y - 9 * math.sin(perp_rad) + 3, 2)
+        parts.append(f'<text x="{off_a_x}" y="{off_a_y}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(ray2_label)}</text>')
+
+        if abs(theta - 90.0) < 1e-2:
+            sz = 12.0
+            parts.append(f'<path d="M {bx + sz} {by} L {bx + sz} {by - sz} L {bx} {by - sz}" fill="none" stroke="#2563eb" stroke-width="1.6"/>')
+        elif abs(theta - 180.0) < 1e-2:
+            r_arc = 18.0
+            parts.append(f'<path d="M {bx + r_arc} {by} A {r_arc} {r_arc} 0 0 0 {bx - r_arc} {by}" fill="none" stroke="#2563eb" stroke-width="1.6"/>')
+        else:
+            r_arc = 20.0
+            abx = round(bx + r_arc * math.cos(rad), 2)
+            aby = round(by - r_arc * math.sin(rad), 2)
+            parts.append(f'<path d="M {bx + r_arc} {by} A {r_arc} {r_arc} 0 {large_arc} 0 {abx} {aby}" fill="none" stroke="#2563eb" stroke-width="1.6"/>')
+
+        lbl_text = angle_label if angle_label else f"{int(theta) if theta.is_integer() else theta}&#176;"
+        mid_rad = math.radians(theta / 2.0)
+        r_lbl = 34.0 if theta >= 50 else 44.0
+        lx = round(bx + r_lbl * math.cos(mid_rad), 2)
+        ly = round(by - r_lbl * math.sin(mid_rad) + 3, 2)
+        parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{lbl_text}</text>')
+
+    if bottom_label:
+        parts.append(f'<text x="105" y="115" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{_esc(bottom_label)}</text>')
+
+    parts.append("</svg>")
+    return "".join(parts)
+
+
 def svg_circle_diagram(
     radius_label: str = "",
     angle_label: str = "",
     chord_label: str = "",
+    angle_degrees: Optional[float] = None,
     show_sector: bool = False,
     shade_sector: bool = False,
+    show_points: bool = True,
 ) -> str:
-    """Render a circle with radius, optional central angle sector, or chord."""
-    show_sector = show_sector or shade_sector
-    width, height = 210, 124
-    cx, cy, r = 105.0, 62.0, 44.0
+    """Render a clean vector circle diagram with dynamic central angles, arcs, sectors, chords, or radius."""
+    width, height = 210, 130
+    cx, cy, r = 105.0, 60.0, 42.0
+
+    # Extract numeric angle if not explicitly provided
+    if angle_degrees is None and angle_label:
+        m = re.search(r"(\d+(?:\.\d+)?)", angle_label)
+        if m:
+            val = float(m.group(1))
+            if 0 < val <= 360:
+                angle_degrees = val
+
+    has_angle = angle_degrees is not None and angle_degrees > 0
+    show_sector = show_sector or shade_sector or has_angle
+
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="#f8fafc" stroke="#1e40af" stroke-width="1.8"/>',
     ]
-    if show_sector:
-        x2 = round(cx + r * math.cos(math.radians(-55)), 2)
-        y2 = round(cy + r * math.sin(math.radians(-55)), 2)
-        parts.append(f'<path d="M {cx} {cy} L {cx + r} {cy} A {r} {r} 0 0 0 {x2} {y2} Z" fill="#93c5fd" fill-opacity="0.45" stroke="#1d4ed8" stroke-width="1.5"/>')
+
+    if angle_degrees is not None and angle_degrees > 0:
+        theta = float(angle_degrees)
+        rad = math.radians(theta)
+        bx = round(cx + r * math.cos(rad), 2)
+        by = round(cy - r * math.sin(rad), 2)
+        large_arc = 1 if theta > 180 else 0
+
+        # Optional shaded sector (useful for answer key or area of sector)
+        if shade_sector:
+            parts.append(
+                f'<path d="M {cx} {cy} L {cx + r} {cy} A {r} {r} 0 {large_arc} 0 {bx} {by} Z" '
+                f'fill="#93c5fd" fill-opacity="0.38" stroke="none"/>'
+            )
+
+        # Highlight minor arc on circumference with a thicker distinct stroke
+        parts.append(
+            f'<path d="M {cx + r} {cy} A {r} {r} 0 {large_arc} 0 {bx} {by}" '
+            f'fill="none" stroke="#2563eb" stroke-width="2.6"/>'
+        )
+
+        # Rays OA (fixed at 0 deg) and OB (dynamic at theta)
+        parts.append(f'<line x1="{cx}" y1="{cy}" x2="{cx + r}" y2="{cy}" stroke="#1e40af" stroke-width="1.8"/>')
+        parts.append(f'<line x1="{cx}" y1="{cy}" x2="{bx}" y2="{by}" stroke="#1e40af" stroke-width="1.8"/>')
+
+        # Angle indicator at center (perpendicular square for 90 deg, circular arc otherwise)
+        if abs(theta - 90.0) < 1e-2:
+            sz = 10.0
+            parts.append(
+                f'<path d="M {cx + sz} {cy} L {cx + sz} {cy - sz} L {cx} {cy - sz}" '
+                f'fill="none" stroke="#2563eb" stroke-width="1.4"/>'
+            )
+        else:
+            r_arc = 14.0
+            abx = round(cx + r_arc * math.cos(rad), 2)
+            aby = round(cy - r_arc * math.sin(rad), 2)
+            parts.append(
+                f'<path d="M {cx + r_arc} {cy} A {r_arc} {r_arc} 0 {large_arc} 0 {abx} {aby}" '
+                f'fill="none" stroke="#2563eb" stroke-width="1.4"/>'
+            )
+
+        # Points and Labels: O, A, B, and point C on major arc
+        if show_points:
+            # Center O
+            parts.append(f'<circle cx="{cx}" cy="{cy}" r="2.5" fill="#1e293b"/>')
+            parts.append(f'<text x="{cx - 7}" y="{cy + 10}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b">O</text>')
+
+            # Point A (0 deg)
+            parts.append(f'<circle cx="{cx + r}" cy="{cy}" r="2.5" fill="#1e293b"/>')
+            parts.append(f'<text x="{cx + r + 5}" y="{cy + 4}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b">A</text>')
+
+            # Point B (theta deg)
+            parts.append(f'<circle cx="{bx}" cy="{by}" r="2.5" fill="#1e293b"/>')
+            off_bx = round(bx + 8 * math.cos(rad), 2)
+            off_by = round(by - 8 * math.sin(rad) + 3, 2)
+            parts.append(f'<text x="{off_bx}" y="{off_by}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">B</text>')
+
+            # Point C on major arc (bisector of major arc)
+            major_mid_rad = math.radians(theta + (360.0 - theta) / 2.0)
+            cx_c = round(cx + r * math.cos(major_mid_rad), 2)
+            cy_c = round(cy - r * math.sin(major_mid_rad), 2)
+            off_cx = round(cx + (r + 8) * math.cos(major_mid_rad), 2)
+            off_cy = round(cy - (r + 8) * math.sin(major_mid_rad) + 3, 2)
+            parts.append(f'<circle cx="{cx_c}" cy="{cy_c}" r="2.5" fill="#64748b"/>')
+            parts.append(f'<text x="{off_cx}" y="{off_cy}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#475569" text-anchor="middle">C</text>')
+
+        # Angle degree label inside sector
+        mid_rad = math.radians(theta / 2.0)
+        r_lbl = 24.0 if theta >= 60 else 28.0
+        lx = round(cx + r_lbl * math.cos(mid_rad), 2)
+        ly = round(cy - r_lbl * math.sin(mid_rad) + 3, 2)
+        deg_str = f"{int(theta) if theta.is_integer() else theta}&#176;"
+        parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{deg_str}</text>')
+
     else:
+        # Standard circle with radius line
+        parts.append(f'<circle cx="{cx}" cy="{cy}" r="2.5" fill="#1e293b"/>')
         parts.append(f'<line x1="{cx}" y1="{cy}" x2="{cx + r}" y2="{cy}" stroke="#dc2626" stroke-width="1.8"/>')
-    parts.append(f'<circle cx="{cx}" cy="{cy}" r="2.5" fill="#1e293b"/>')
-    if radius_label:
-        parts.append(f'<text x="{cx + r / 2}" y="{cy + 12}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(radius_label)}</text>')
-    if angle_label:
-        parts.append(f'<text x="{cx}" y="{cy - 8}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(angle_label)}</text>')
+        if radius_label:
+            parts.append(f'<text x="{cx + r / 2}" y="{cy + 12}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(radius_label)}</text>')
+
     if chord_label:
-        parts.append(f'<line x1="{cx - 32}" y1="{cy - 30}" x2="{cx + 32}" y2="{cy - 30}" stroke="#15803d" stroke-width="1.8"/>')
-        parts.append(f'<text x="{cx}" y="{cy - 34}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#15803d" text-anchor="middle">{_esc(chord_label)}</text>')
+        parts.append(f'<line x1="{cx - 30}" y1="{cy - 28}" x2="{cx + 30}" y2="{cy - 28}" stroke="#15803d" stroke-width="1.8"/>')
+        parts.append(f'<text x="{cx}" y="{cy - 32}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#15803d" text-anchor="middle">{_esc(chord_label)}</text>')
+
+    # Bottom summary label (e.g. Minor arc = 131 deg, Major arc = 229 deg in answer key)
+    if "minor" in angle_label.lower() or "major" in angle_label.lower():
+        parts.append(
+            f'<text x="{cx}" y="{height - 3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e40af" text-anchor="middle">{_esc(angle_label)}</text>'
+        )
+
     parts.append("</svg>")
     return "".join(parts)
 

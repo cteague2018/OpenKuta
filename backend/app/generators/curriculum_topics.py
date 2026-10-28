@@ -12,11 +12,11 @@ from backend.app.core.base import (
     ProblemDifficulty,
 )
 from backend.app.core.svg_utils import (
+    svg_angle_diagram,
     svg_circle_diagram,
     svg_coordinate_plane,
     svg_general_triangle,
     svg_number_line,
-    svg_parallel_transversal,
     svg_polygon_diagram,
     svg_right_triangle,
     svg_solid_3d,
@@ -1540,8 +1540,8 @@ def _gen_decoupled_subtopic(
                 f"Answer: $m angle A B C = {tot}^circle$.",
             ],
             "distractors": [f"$ m angle A B C = {abs(a1 - a2)}^circle $", f"$ m angle A B C = {180 - tot}^circle $", f"$ m angle A B C = {tot + 10}^circle $"],
-            "diagram_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{a1} deg", angle2_label=f"{a2} deg"),
-            "answer_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{a1} deg", angle2_label=f"Total = {tot} deg"),
+            "diagram_svg": svg_angle_diagram(angle_degrees=a2, interior_angle=a1, mode="interior_ray", angle_label=f"{a2}&#176;", interior_angle_label=f"{a1}&#176;"),
+            "answer_svg": svg_angle_diagram(angle_degrees=a2, interior_angle=a1, mode="interior_ray", angle_label=f"{a2}&#176;", interior_angle_label=f"{a1}&#176;", shade=True, bottom_label=f"m∠ABC = {tot}&#176;"),
         }
 
     if "naming arcs" in t_low or "measures of arcs" in t_low:
@@ -1561,8 +1561,13 @@ def _gen_decoupled_subtopic(
                 f"$ m \"arc\"(A B) = {major}^circle, quad m \"arc\"(A C B) = {central}^circle $",
                 f"$ m \"arc\"(A B) = {2 * central}^circle, quad m \"arc\"(A C B) = {360 - 2 * central}^circle $",
             ],
-            "diagram_svg": svg_circle_diagram(angle_label=f"{central} deg"),
-            "answer_svg": svg_circle_diagram(angle_label=f"Minor={central}, Major={major}"),
+            "diagram_svg": svg_circle_diagram(angle_degrees=central, angle_label=f"{central}&#176;", show_points=True),
+            "answer_svg": svg_circle_diagram(
+                angle_degrees=central,
+                angle_label=f"Minor: {central}&#176;, Major: {major}&#176;",
+                shade_sector=True,
+                show_points=True,
+            ),
         }
 
     if "arc length and sector area" in t_low:
@@ -2620,8 +2625,8 @@ def _gen_decoupled_subtopic(
                     f"Result: $m angle A B D = {half}^circle$.",
                 ],
                 "distractors": [f"$ {deg}^circle $", f"$ {2 * deg}^circle $", f"$ {180 - deg}^circle $"],
-                "diagram_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{deg} deg", angle2_label="Bisect"),
-                "answer_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{half} deg", angle2_label=f"{half} deg"),
+                "diagram_svg": svg_angle_diagram(angle_degrees=half, interior_angle=half, mode="interior_ray", angle_label="?", interior_angle_label=f"{half}&#176;"),
+                "answer_svg": svg_angle_diagram(angle_degrees=half, interior_angle=half, mode="interior_ray", angle_label=f"{half}&#176;", interior_angle_label=f"{half}&#176;", shade=True, bottom_label=f"m∠ABD = {half}&#176;"),
             }
         else:
             s1 = rng.randint(4, 20)
@@ -3480,8 +3485,8 @@ def _gen_decoupled_subtopic(
                 f"Subtract ${deg}^circle$: $m angle D B C = {sup}^circle$.",
             ],
             "distractors": [f"$ {90 - deg if deg < 90 else deg - 45}^circle $", f"$ {deg}^circle $", f"$ {sup + 10}^circle $"],
-            "diagram_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{deg} deg", angle2_label="?"),
-            "answer_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{deg} deg", angle2_label=f"{sup} deg"),
+            "diagram_svg": svg_angle_diagram(angle_degrees=deg, mode="linear_pair", angle_label=f"{deg}&#176;", interior_angle_label="?"),
+            "answer_svg": svg_angle_diagram(angle_degrees=deg, mode="linear_pair", angle_label=f"{deg}&#176;", interior_angle_label=f"{sup}&#176;", shade=True, bottom_label=f"m∠DBC = {sup}&#176;"),
         }
 
     if c_low in ("general functions", "functions"):

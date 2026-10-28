@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 from backend.app.core.base import ProblemDifficulty
 from backend.app.core.svg_utils import (
+    svg_angle_diagram,
     svg_area_model,
     svg_box_plot,
     svg_circle_diagram,
@@ -1384,7 +1385,7 @@ def gen_alg_geo_problem(
         }
 
     if "classifying angles" in t_low or "basic angle terminology" in t_low:
-        deg = rng.randint(12, 178)
+        deg = rng.randint(15, 175)
         kind = "Acute" if deg < 90 else ("Right" if deg == 90 else ("Obtuse" if deg < 180 else "Straight"))
         return {
             "prompt_text": "Classify the angle as acute, right, obtuse, or straight.",
@@ -1400,8 +1401,8 @@ def gen_alg_geo_problem(
                 f"$ \"{'Right' if kind != 'Right' else 'Straight'} angle\" $",
                 "$ \"Reflex angle\" $",
             ],
-            "diagram_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{deg} deg", angle2_label=""),
-            "answer_svg": svg_parallel_transversal(mode="linear_pair", angle1_label=f"{deg} deg ({kind})", angle2_label=""),
+            "diagram_svg": svg_angle_diagram(angle_degrees=deg),
+            "answer_svg": svg_angle_diagram(angle_degrees=deg, shade=True, bottom_label=f"{kind} angle ({deg}&#176;)"),
         }
 
     if "parallel lines and transversals" in t_low:
