@@ -3,7 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
-from backend.app.core.svg_utils import svg_parallel_transversal
+from backend.app.core.svg_utils import svg_angle_diagram, svg_parallel_transversal
 
 
 class GeometryAnglesLinesGenerator(BaseGenerator):
@@ -61,6 +61,13 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
         while len(distractors) < 2:
             distractors.append(f"m angle 2 = {missing + 5}^circle")
 
+        if is_supp:
+            diag_mild = svg_angle_diagram(angle_degrees=float(given), mode="linear_pair", angle_label=f"{given}&#176;", interior_angle_label="?")
+            ans_mild = svg_angle_diagram(angle_degrees=float(given), mode="linear_pair", angle_label=f"{given}&#176;", interior_angle_label=f"{missing}&#176;", shade=True, bottom_label=f"m∠2 = {missing}&#176;")
+        else:
+            diag_mild = svg_angle_diagram(angle_degrees=float(missing), interior_angle=float(given), mode="interior_ray", angle_label="?", interior_angle_label=f"{given}&#176;")
+            ans_mild = svg_angle_diagram(angle_degrees=float(missing), interior_angle=float(given), mode="interior_ray", angle_label=f"{missing}&#176;", interior_angle_label=f"{given}&#176;", shade=True, bottom_label=f"m∠2 = {missing}&#176;")
+
         return BaseProblem(
             id=f"geom_ang_mild_{problem_idx}",
             prompt_text=f"Find the measure of angle 2 given that angle 1 and angle 2 are {type_name}.",
@@ -70,6 +77,8 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
             distractors=[f"$ {d} $" for d in distractors[:3]],
             difficulty=ProblemDifficulty.MILD,
             standards=self.standards,
+            diagram_svg=diag_mild,
+            answer_svg=ans_mild,
             metadata={"type": type_name, "angle1": given, "angle2": missing}
         )
 

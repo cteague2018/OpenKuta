@@ -826,10 +826,10 @@ def gen_alg_geo_problem(
 
     if "systems" in c_low and "word problems" in t_low:
         systems_scenarios = [
-            ("A theater sold {tot} tickets for a total of ${rev}. Adult tickets cost ${pa} and child tickets cost ${pk}. How many of each were sold?", "Adults", "Children", (8, 5)),
-            ("A school carnival sold {tot} admission wristbands for ${rev}. General admission wristbands cost ${pa} and student wristbands cost ${pk}. How many of each were sold?", "General", "Student", (10, 6)),
-            ("A farm stand sold {tot} baskets of fruit for ${rev}. Baskets of cherries cost ${pa} and baskets of peaches cost ${pk}. How many of each were sold?", "Cherries", "Peaches", (12, 7)),
-            ("A bakery packaged {tot} gift boxes totaling ${rev}. Deluxe boxes cost ${pa} and standard boxes cost ${pk}. How many of each were sold?", "Deluxe", "Standard", (15, 9)),
+            (r"A theater sold {tot} tickets for a total of \${rev}. Adult tickets cost \${pa} and child tickets cost \${pk}. How many of each were sold?", "Adults", "Children", (8, 5)),
+            (r"A school carnival sold {tot} admission wristbands for \${rev}. General admission wristbands cost \${pa} and student wristbands cost \${pk}. How many of each were sold?", "General", "Student", (10, 6)),
+            (r"A farm stand sold {tot} baskets of fruit for \${rev}. Baskets of cherries cost \${pa} and baskets of peaches cost \${pk}. How many of each were sold?", "Cherries", "Peaches", (12, 7)),
+            (r"A bakery packaged {tot} gift boxes totaling \${rev}. Deluxe boxes cost \${pa} and standard boxes cost \${pk}. How many of each were sold?", "Deluxe", "Standard", (15, 9)),
         ]
         s_tpl, item_a, item_b, (pa, pk) = rng.choice(systems_scenarios)
         c_a = rng.randint(6, 16)
@@ -842,8 +842,8 @@ def gen_alg_geo_problem(
             "equation_typst": eq_text,
             "answer_typst": f"$ \"{item_a}\" = {c_a}, \" {item_b}\" = {c_b} $",
             "steps_typst": [
-                f"Let $x$ be {item_a.lower()} and $y$ be {item_b.lower()}: $x + y = {tot}$ and ${pa}x + ${pk}y = ${rev}$.",
-                f"Substitute $y = {tot} - x$: ${pa}x + ${pk}({tot} - x) = ${rev}$.",
+                f"Let $x$ be {item_a.lower()} and $y$ be {item_b.lower()}: $x + y = {tot}$ and ${pa}x + {pk}y = {rev}$.",
+                f"Substitute $y = {tot} - x$: ${pa}x + {pk}({tot} - x) = {rev}$.",
                 f"Solve for $x$: $({pa - pk})x = {rev - pk * tot} arrow.r.double x = {c_a}$ and $y = {c_b}$.",
             ],
             "distractors": [
@@ -1889,8 +1889,8 @@ def gen_alg_geo_problem(
                     f"Intercepted arc = ${arc}^circle$.",
                 ],
                 "distractors": [f"$ \"Intercepted arc\" = {ins // 2}^circle $", f"$ \"Intercepted arc\" = {ins}^circle $", f"$ \"Intercepted arc\" = {180 - ins}^circle $"],
-                "diagram_svg": svg_circle_diagram(angle_label=f"Inscribed = {ins} deg"),
-                "answer_svg": svg_circle_diagram(angle_label=f"Arc = {arc} deg"),
+                "diagram_svg": svg_circle_diagram(mode="inscribed", inscribed_angle=ins, intercepted_arc=arc),
+                "answer_svg": svg_circle_diagram(mode="inscribed", inscribed_angle=ins, intercepted_arc=arc, shade_sector=True, bottom_label=f"Intercepted arc = {arc}&#176;"),
             }
         if "tangent" in t_low or "secant" in t_low:
             arc_big = rng.randint(110, 170)
@@ -1908,8 +1908,8 @@ def gen_alg_geo_problem(
                     f"Simplify: $m angle = {ext_ang}^circle$.",
                 ],
                 "distractors": [f"$ m angle = {(arc_big + arc_small) // 2}^circle $", f"$ m angle = {arc_big - arc_small}^circle $", f"$ m angle = {ext_ang + 10}^circle $"],
-                "diagram_svg": svg_circle_diagram(angle_label=f"Arcs: {arc_big}, {arc_small}"),
-                "answer_svg": svg_circle_diagram(angle_label=f"Angle = {ext_ang} deg"),
+                "diagram_svg": svg_circle_diagram(mode="secants", far_arc=arc_big, near_arc=arc_small),
+                "answer_svg": svg_circle_diagram(mode="secants", far_arc=arc_big, near_arc=arc_small, bottom_label=f"Angle = {ext_ang}&#176;"),
             }
         if "segment measures" in t_low or "chords" in t_low:
             a, b = rng.choice([(4, 9), (6, 8), (3, 12), (6, 10), (8, 9)])
@@ -1926,8 +1926,8 @@ def gen_alg_geo_problem(
                     f"Divide by ${c}$: $x = {d}$.",
                 ],
                 "distractors": [f"$ x = {a + b - c} $", f"$ x = {prod} $", f"$ x = {d + 2} $"],
-                "diagram_svg": svg_circle_diagram(chord_label=f"{a} * {b} = {c} * x"),
-                "answer_svg": svg_circle_diagram(chord_label=f"x = {d}"),
+                "diagram_svg": svg_circle_diagram(mode="chords", chord_segments=(str(a), str(b), str(c), "x")),
+                "answer_svg": svg_circle_diagram(mode="chords", chord_segments=(str(a), str(b), str(c), f"x={d}"), bottom_label=f"x = {d}"),
             }
         if "equations of circles" in t_low:
             h, k = rng.randint(-4, 4), rng.randint(-4, 4)

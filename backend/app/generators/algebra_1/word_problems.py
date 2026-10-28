@@ -74,8 +74,8 @@ class Algebra1WordProblemsGenerator(BaseGenerator):
                 tot_count = c_count + a_count
                 tot_rev = c_price * c_count + a_price * a_count
                 q_text = (
-                    f"{event_name} cost ${c_price} for {group_a} and ${a_price} for {group_b}. "
-                    f"A total of {tot_count} tickets were sold for ${tot_rev}. How many {group_a} tickets were sold?"
+                    f"{event_name} cost \\${c_price} for {group_a} and \\${a_price} for {group_b}. "
+                    f"A total of {tot_count} tickets were sold for \\${tot_rev}. How many {group_a} tickets were sold?"
                 )
                 ans_str = f"{c_count} tickets"
                 distractors = [f"{a_count} tickets", f"{c_count + 3} tickets", f"{max(1, c_count - 2)} tickets"]

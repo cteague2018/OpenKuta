@@ -24,8 +24,8 @@ class Grade6RatiosRatesGenerator(BaseGenerator):
             rate = rng.choice([2, 3, 4, 5, 7, 8])
             total = n * rate
 
-            eq_typst = f"Cost: ${total} for {n} items"
-            ans_typst = f"${rate} per item"
+            eq_typst = f"Cost: \\${total} for {n} items"
+            ans_typst = f"\\${rate} per item"
 
             steps = [
                 "Recall unit rate formula: $ \"Unit Rate\" = (\"Total Cost\") / (\"Total Items\") $",
@@ -40,7 +40,7 @@ class Grade6RatiosRatesGenerator(BaseGenerator):
                 equation_typst=eq_typst,
                 answer_typst=ans_typst,
                 steps_typst=steps,
-                distractors=[f"${rate + 1} per item", f"${int(total / 2)} per item"],
+                distractors=[f"\\${rate + 1} per item", f"\\${int(total / 2)} per item"],
                 difficulty=ProblemDifficulty.MILD,
                 standards=self.standards
             )

@@ -132,6 +132,11 @@ function typstToLatex(raw: string): string {
   s = s.replace(/\bmangle([A-Z])/g, "m\\angle $1");
   s = s.replace(/\bm\s+angle\b/g, "m\\angle ");
   s = s.replace(/(?:\\angle|\bangle)\b/g, "\\angle ");
+  s = s.replace(/\btriangle\b/g, "\\triangle ");
+  s = s.replace(/\bcong\b/g, "\\cong ");
+  s = s.replace(/\btilde\.op\b/g, "\\sim ");
+  s = s.replace(/\bparallel\b/g, "\\parallel ");
+  s = s.replace(/\bperp\b/g, "\\perp ");
   s = s.replace(/\bbold\(([^)]+)\)/g, "\\mathbf{$1}");
   s = s.replace(/\barc\(([^)]+)\)/g, "\\text{arc}($1)");
 
