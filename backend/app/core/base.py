@@ -73,6 +73,13 @@ class BaseProblem(BaseModel):
             for key in ["equation_typst", "answer_typst", "prompt_text", "diagram_svg", "answer_svg"]:
                 if key in data and isinstance(data[key], str):
                     data[key] = clean_str(data[key])
+            if "prompt_text" in data and isinstance(data["prompt_text"], str):
+                p = data["prompt_text"]
+                p = re.sub(r'\bm\s+angle\s+([A-Za-z0-9_]+)\b', r'm∠\1', p, flags=re.IGNORECASE)
+                p = re.sub(r'\bangle\s+([A-Z]{1,3})\b', r'∠\1', p)
+                p = re.sub(r'\bm\s+angle\b', 'm∠', p, flags=re.IGNORECASE)
+                p = re.sub(r'\btriangle\s+([A-Z]{3})\b', r'△\1', p)
+                data["prompt_text"] = p
             if "steps_typst" in data and isinstance(data["steps_typst"], list):
                 data["steps_typst"] = [clean_str(item) for item in data["steps_typst"]]
             if "distractors" in data and isinstance(data["distractors"], list):
@@ -127,10 +134,40 @@ class BaseProblem(BaseModel):
 
     @model_validator(mode="after")
     def populate_latex_fields(self) -> BaseProblem:
+        def typst_to_clean_latex(s: str) -> str:
+            res = s.replace("$", "").replace("°", "^{\\circ}").strip()
+            res = re.sub(r'\^\\?circle\b', r'^{\\circ}', res)
+
+            # Protect strings in quotes so words like 'angle' inside text labels aren't transformed into math symbols
+            quoted_strings: list[str] = []
+            def _extract_quoted(match: re.Match) -> str:
+                quoted_strings.append(match.group(1))
+                return f"___LATEX_TEXT_{len(quoted_strings) - 1}___"
+
+            res = re.sub(r'"([^"]*)"', _extract_quoted, res)
+
+            # Normalize unicode angle symbols
+            res = re.sub(r'm∠([A-Za-z0-9_]+)', r'm\\angle \1', res)
+            res = re.sub(r'∠([A-Za-z0-9_]+)', r'\\angle \1', res)
+            res = res.replace('m∠', r'm\angle ').replace('∠', r'\angle ')
+
+            # Normalize typst 'm angle' and 'angle'
+            res = re.sub(r'\bm\s+angle\s+([A-Za-z0-9_]+)\b', r'm\\angle \1', res, flags=re.IGNORECASE)
+            res = re.sub(r'(?<!\\)\bangle\s+([A-Z]{1,3})\b', r'\\angle \1', res)
+            res = re.sub(r'\bm\s+angle\b', r'm\\angle ', res, flags=re.IGNORECASE)
+            res = re.sub(r'\btriangle\s+([A-Za-z0-9_]+)\b', r'\\triangle \1', res)
+            res = re.sub(r'\bquad\b', r'\\quad ', res)
+
+            # Restore quoted strings wrapped in LaTeX \text{...}
+            for idx, text in enumerate(quoted_strings):
+                res = res.replace(f"___LATEX_TEXT_{idx}___", f"\\text{{{text}}}")
+
+            return res.strip()
+
         if not self.equation_latex:
-            self.equation_latex = self.equation_typst.replace("$", "").replace("°", "^{\\circ}").strip()
+            self.equation_latex = typst_to_clean_latex(self.equation_typst)
         if not self.answer_latex:
-            self.answer_latex = self.answer_typst.replace("$", "").replace("°", "^{\\circ}").strip()
+            self.answer_latex = typst_to_clean_latex(self.answer_typst)
         return self
 
 

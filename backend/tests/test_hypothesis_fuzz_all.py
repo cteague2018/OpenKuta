@@ -32,10 +32,11 @@ def assert_svg_zero_defects(svg_str: str) -> None:
             x = float(elem.attrib.get("x", "0"))
             y = float(elem.attrib.get("y", "0"))
             font_size = float(elem.attrib.get("font-size", "13").replace("px", ""))
+            anchor = elem.attrib.get("text-anchor", "start")
             content = "".join(elem.itertext()).strip()
             if not content:
                 continue
-            box = SVGCollisionSolver.estimate_text_bbox(x, y, content, font_size)
+            box = SVGCollisionSolver.estimate_text_bbox(x, y, content, font_size, anchor=anchor)
             for existing in text_boxes:
                 assert not box.intersects(existing, padding=-1.5), (
                     f"SVG text label collision detected for '{content}' at ({x}, {y})"

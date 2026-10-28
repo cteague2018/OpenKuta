@@ -132,15 +132,22 @@ function typstToLatex(raw: string): string {
   s = s.replace(/\bangle\.l\b/g, "\\langle ");
   s = s.replace(/\bangle\.r\b/g, "\\rangle ");
   s = s.replace(/\bangle\.arc\b/g, "\\measuredangle ");
+  s = s.replace(/m∠([A-Za-z0-9_]+)/g, "m\\angle $1 ");
+  s = s.replace(/∠([A-Za-z0-9_]+)/g, "\\angle $1 ");
+  s = s.replace(/m∠/g, "m\\angle ");
+  s = s.replace(/∠/g, "\\angle ");
   s = s.replace(/\bmangle\b/gi, "m\\angle ");
   s = s.replace(/\bmangle([A-Z])/g, "m\\angle $1");
-  s = s.replace(/\bm\s+angle\b/g, "m\\angle ");
-  s = s.replace(/(?:\\angle|\bangle)\b/g, "\\angle ");
+  s = s.replace(/\bm\s+angle\s+([A-Za-z0-9_]+)\b/gi, "m\\angle $1 ");
+  s = s.replace(/(?<!\\)\bangle\s+([A-Za-z0-9_]+)\b/gi, "\\angle $1 ");
+  s = s.replace(/\bm\s+angle\b/gi, "m\\angle ");
+  s = s.replace(/(?<!\\)(?:\\angle|\bangle)\b/g, "\\angle ");
   s = s.replace(/\btriangle\b/g, "\\triangle ");
   s = s.replace(/\bcong\b/g, "\\cong ");
   s = s.replace(/\btilde\.op\b/g, "\\sim ");
   s = s.replace(/\bparallel\b/g, "\\parallel ");
   s = s.replace(/\bperp\b/g, "\\perp ");
+  s = s.replace(/\bquad\b/g, " \\quad ");
   s = s.replace(/\bbold\(([^)]+)\)/g, "\\mathbf{$1}");
   s = s.replace(/\barc\(([^)]+)\)/g, "\\text{arc}($1)");
 
@@ -178,11 +185,11 @@ function typstToLatex(raw: string): string {
   return s.trim();
 }
 
-const PROSE_REGEX = /\b(the|a|an|is|of|and|in|to|for|with|from|than|more|less|twice|sum|product|quotient|difference|square|find|what|given|determine|write|name|solve|represents|initial|travels|car|train|miles|hours|speed|cost|items|menu|race|bag|probab|select|choose|each|triangle|angle|shorter|leg|hypotenuse)\b/i;
+const PROSE_REGEX = /\b(the|is|of|and|in|to|for|with|from|than|more|less|twice|sum|product|quotient|difference|square|find|what|given|determine|write|name|solve|represents|initial|travels|car|train|miles|hours|speed|cost|items|menu|race|bag|probab|select|choose|each|shorter|leg|hypotenuse)\b/i;
 const MATH_KEYWORDS = new Set([
   'sin', 'cos', 'tan', 'sec', 'csc', 'cot', 'log', 'ln', 'lim', 'quad', 
-  'cases', 'sqrt', 'integral', 'mat', 'bold', 'angle', 'plus', 'minus', 
-  'dif', 'det', 'times', 'dot'
+  'cases', 'sqrt', 'integral', 'mat', 'bold', 'angle', 'mangle', 'plus', 'minus', 
+  'dif', 'det', 'times', 'dot', 'triangle', 'cong', 'approx', 'frac', 'root'
 ]);
 
 function isProseProblem(raw: string): boolean {
@@ -195,7 +202,7 @@ function isProseProblem(raw: string): boolean {
     const words = (inner.match(/[a-zA-Z]{3,}/g) || []).filter(
       (w) => !MATH_KEYWORDS.has(w.toLowerCase())
     );
-    if (words.length >= 3 || PROSE_REGEX.test(inner)) {
+    if (words.length >= 3) {
       return true;
     }
     return false;
@@ -257,6 +264,9 @@ function ProblemEquation({
     // 1. Clean legacy typst quote artifacts and normalize whitespace
     let clean = trimmed.replace(/"/g, "").replace(/\s+/g, " ").trim();
     clean = clean.replace(/(?:\^\s*\\?circle\b)/g, "°");
+    clean = clean.replace(/\bm\s+angle\s+([A-Za-z0-9_]+)\b/gi, "m∠$1");
+    clean = clean.replace(/(?<!\\)\bangle\s+([A-Z]{1,3})\b/g, "∠$1");
+    clean = clean.replace(/\bm\s+angle\b/gi, "m∠");
     // Strip outer $ ... $ if present on prose problem
     if (clean.startsWith("$") && clean.endsWith("$") && (clean.match(/\$/g) || []).length === 2) {
       clean = clean.slice(1, -1).trim();
@@ -281,14 +291,24 @@ function ProblemEquation({
               const restoredMath = p.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
               return <KaTeXInline key={idx} math={restoredMath} className="font-semibold mx-0.5 inline-block" />;
             }
-            const restoredText = p.replace(new RegExp(CURRENCY_TOKEN, "g"), "$").replace(/(?:\^\s*\\?circle\b)/g, "°");
+            const restoredText = p
+              .replace(new RegExp(CURRENCY_TOKEN, "g"), "$")
+              .replace(/(?:\^\s*\\?circle\b)/g, "°")
+              .replace(/\bm\s+angle\s+([A-Za-z0-9_]+)\b/gi, "m∠$1")
+              .replace(/(?<!\\)\bangle\s+([A-Z]{1,3})\b/g, "∠$1")
+              .replace(/\bm\s+angle\b/gi, "m∠");
             return <span key={idx}>{restoredText}</span>;
           })}
         </Tag>
       );
     }
 
-    const restoredText = clean.replace(new RegExp(CURRENCY_TOKEN, "g"), "$").replace(/(?:\^\s*\\?circle\b)/g, "°");
+    const restoredText = clean
+      .replace(new RegExp(CURRENCY_TOKEN, "g"), "$")
+      .replace(/(?:\^\s*\\?circle\b)/g, "°")
+      .replace(/\bm\s+angle\s+([A-Za-z0-9_]+)\b/gi, "m∠$1")
+      .replace(/(?<!\\)\bangle\s+([A-Z]{1,3})\b/g, "∠$1")
+      .replace(/\bm\s+angle\b/gi, "m∠");
     const Tag = inline ? "span" : "div";
     return (
       <Tag className={`${inline ? "inline pr-1" : "text-left px-1"} text-slate-800 text-sm font-normal leading-relaxed break-words ${className}`}>
@@ -311,7 +331,10 @@ function ProblemEquation({
 function StepTextWithMath({ text }: { text: string }) {
   if (!text) return null;
   const trimmed = text.trim();
-  const cleaned = trimmed.replace(/"/g, "").replace(/(?:\^\s*\\?circle\b)/g, "°");
+  let cleaned = trimmed.replace(/"/g, "").replace(/(?:\^\s*\\?circle\b)/g, "°");
+  cleaned = cleaned.replace(/\bm\s+angle\s+([A-Za-z0-9_]+)\b/gi, "m∠$1");
+  cleaned = cleaned.replace(/(?<!\\)\bangle\s+([A-Z]{1,3})\b/g, "∠$1");
+  cleaned = cleaned.replace(/\bm\s+angle\b/gi, "m∠");
 
   // If the whole string is an equation like "$ 2x + 4 = 10 $"
   if (cleaned.startsWith("$") && cleaned.endsWith("$") && (cleaned.match(/\$/g) || []).length === 2) {
@@ -330,7 +353,12 @@ function StepTextWithMath({ text }: { text: string }) {
         if (idx % 2 === 1) {
           return <KaTeXInline key={idx} math={p} className="font-semibold mx-1 text-amber-950" />;
         }
-        return <span key={idx}>{p.replace(/(?:\^\s*\\?circle\b)/g, "°")}</span>;
+        const spanText = p
+          .replace(/(?:\^\s*\\?circle\b)/g, "°")
+          .replace(/\bm\s+angle\s+([A-Za-z0-9_]+)\b/gi, "m∠$1")
+          .replace(/(?<!\\)\bangle\s+([A-Z]{1,3})\b/g, "∠$1")
+          .replace(/\bm\s+angle\b/gi, "m∠");
+        return <span key={idx}>{spanText}</span>;
       })}
     </span>
   );
@@ -2035,7 +2063,7 @@ export default function OpenMathForgeApp() {
                       <div className="flex-1 my-1.5 flex flex-col min-h-0">
                         {pageDirections && (
                           <div className="text-sm font-bold text-slate-900 pb-1 mb-1.5 tracking-tight shrink-0">
-                            {pageDirections}
+                            <StepTextWithMath text={pageDirections} />
                           </div>
                         )}
                         <div

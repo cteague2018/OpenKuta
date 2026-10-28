@@ -1080,7 +1080,7 @@ def svg_right_triangle(
         f'<polygon points="{x1},{y1} {x2},{y2} {x3},{y3}" fill="#eff6ff" stroke="#1e40af" stroke-width="1.8"/>',
         f'<rect x="{x1}" y="{y1 - 10}" width="10" height="10" fill="transparent" stroke="#1e40af" stroke-width="1.2"/>',
         f'<text x="{x1 - 10}" y="{y1 + 11}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">C</text>',
-        f'<text x="{x2 + 6}" y="{y2 + 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">B</text>',
+        f'<text x="{x2 + 8}" y="{y2 + 5}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">B</text>',
         f'<text x="{x3 - 10}" y="{y3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">A</text>',
     ]
     if side_a:
@@ -1090,7 +1090,7 @@ def svg_right_triangle(
     if side_c:
         parts.append(f'<text x="{(x2 + x3) / 2 + 6}" y="{(y2 + y3) / 2 - 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" {rt_halo}>{_esc(side_c)}</text>')
     if angle_b:
-        parts.append(f'<text x="{x2 - 14}" y="{y2 - 6}" font-family="sans-serif" font-size="7.5" fill="#0f172a" text-anchor="end" {rt_halo}>{_esc(angle_b)}</text>')
+        parts.append(f'<text x="{x2 - 18}" y="{y2 - 6}" font-family="sans-serif" font-size="7.5" fill="#0f172a" text-anchor="end" {rt_halo}>{_esc(angle_b)}</text>')
     if angle_a:
         parts.append(f'<text x="{x3 + 8}" y="{y3 + 22}" font-family="sans-serif" font-size="7.5" fill="#0f172a" {rt_halo}>{_esc(angle_a)}</text>')
     parts.append("</svg>")

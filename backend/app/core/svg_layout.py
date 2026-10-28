@@ -44,10 +44,18 @@ class SVGCollisionSolver:
         self.placed_boxes: List[BBox] = []
 
     @staticmethod
-    def estimate_text_bbox(cx: float, cy: float, text: str, font_size: float = 13.0) -> BBox:
-        w = max(1, len(text.replace("$", ""))) * (font_size * 0.58) + 6.0
-        h = font_size * 1.15 + 4.0
-        return BBox(cx - w / 2.0, cy - h / 2.0, cx + w / 2.0, cy + h / 2.0)
+    def estimate_text_bbox(
+        cx: float, cy: float, text: str, font_size: float = 13.0, anchor: str = "middle"
+    ) -> BBox:
+        w = max(1, len(text.replace("$", ""))) * (font_size * 0.58) + 4.0
+        h = font_size * 1.15 + 3.0
+        if anchor == "start":
+            center_x = cx + w / 2.0
+        elif anchor == "end":
+            center_x = cx - w / 2.0
+        else:
+            center_x = cx
+        return BBox(center_x - w / 2.0, cy - h / 2.0, center_x + w / 2.0, cy + h / 2.0)
 
     def place_label(
         self,
