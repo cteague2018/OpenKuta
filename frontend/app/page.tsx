@@ -1488,7 +1488,7 @@ export default function OpenMathForgeApp() {
                     });
                   }
                 }}
-                className="bg-slate-800/80 text-white font-semibold text-xs rounded px-2.5 py-1 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                className="bg-slate-800/80 text-white font-semibold text-sm rounded-md px-3 py-1.5 border border-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
               >
                 <option value="algebra_1">Algebra 1 Mastery</option>
                 <option value="geometry">Geometry Foundations</option>
@@ -1507,7 +1507,7 @@ export default function OpenMathForgeApp() {
             <div className="flex items-center space-x-1 bg-slate-800/60 p-1 rounded-md border border-slate-700">
               <button
                 onClick={() => setActiveTab("studio")}
-                className={`px-3 py-1 rounded text-xs font-bold transition ${
+                className={`px-3.5 py-1.5 rounded text-sm font-bold transition ${
                   activeTab === "studio"
                     ? "bg-indigo-600 text-white shadow"
                     : "text-slate-300 hover:text-white"
@@ -1517,32 +1517,32 @@ export default function OpenMathForgeApp() {
               </button>
               <button
                 onClick={() => setActiveTab("classroom")}
-                className={`px-3 py-1 rounded text-xs font-bold transition flex items-center space-x-1.5 ${
+                className={`px-3.5 py-1.5 rounded text-sm font-bold transition flex items-center space-x-1.5 ${
                   activeTab === "classroom"
                     ? "bg-indigo-600 text-white shadow"
                     : "text-slate-300 hover:text-white"
                 }`}
               >
-                <Users className="w-3.5 h-3.5" />
+                <Users className="w-4 h-4" />
                 <span>Classroom & Rosters</span>
                 {!session?.user && (
-                  <span className="text-[9px] bg-slate-700 text-slate-300 px-1 py-0.2 rounded font-mono font-normal">
+                  <span className="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded font-mono font-semibold">
                     PRO
                   </span>
                 )}
               </button>
               <button
                 onClick={() => setActiveTab("grader")}
-                className={`px-3 py-1 rounded text-xs font-bold transition flex items-center space-x-1.5 ${
+                className={`px-3.5 py-1.5 rounded text-sm font-bold transition flex items-center space-x-1.5 ${
                   activeTab === "grader"
                     ? "bg-indigo-600 text-white shadow"
                     : "text-slate-300 hover:text-white"
                 }`}
               >
-                <FileCheck className="w-3.5 h-3.5" />
+                <FileCheck className="w-4 h-4" />
                 <span>Vision & CAS Grader</span>
                 {!isUserPro && (
-                  <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.2 rounded font-mono font-bold tracking-tight">
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-mono font-bold tracking-tight">
                     COMING SOON
                   </span>
                 )}
@@ -1552,14 +1552,14 @@ export default function OpenMathForgeApp() {
             {/* Teacher Authentication / User Profile */}
             <div className="flex items-center">
               {session?.user ? (
-                <div className="flex items-center space-x-2 bg-slate-800/80 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white">
-                  <div className="w-6 h-6 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-[11px] shadow-sm">
+                <div className="flex items-center space-x-2.5 bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white">
+                  <div className="w-7 h-7 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-xs shadow-sm">
                     {session.user.name ? session.user.name.charAt(0).toUpperCase() : "T"}
                   </div>
                   <div className="hidden md:block text-left">
-                    <div className="font-semibold text-slate-100 flex items-center space-x-1">
-                      <span className="truncate max-w-[120px]">{session.user.name || "Teacher"}</span>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
+                    <div className="font-semibold text-slate-100 flex items-center space-x-1.5">
+                      <span className="truncate max-w-[130px]">{session.user.name || "Teacher"}</span>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
                         isUserPro
                           ? "bg-emerald-500/20 text-emerald-300 border-emerald-400/30"
                           : "bg-amber-500/20 text-amber-300 border-amber-400/30"
@@ -1573,15 +1573,15 @@ export default function OpenMathForgeApp() {
                     title="Sign Out"
                     className="text-slate-400 hover:text-rose-400 p-1 transition rounded hover:bg-slate-700/50"
                   >
-                    <LogOut className="w-3.5 h-3.5" />
+                    <LogOut className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={() => setIsAuthModalOpen(true)}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-lg px-3 py-1.5 flex items-center space-x-1.5 transition shadow-sm"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-lg px-4 py-2 flex items-center space-x-1.5 transition shadow-sm"
                 >
-                  <LogIn className="w-3.5 h-3.5" />
+                  <LogIn className="w-4 h-4" />
                   <span>Teacher Sign In</span>
                 </button>
               )}
@@ -1594,17 +1594,17 @@ export default function OpenMathForgeApp() {
       {activeTab === "studio" ? (
         <div className="flex-1 flex overflow-hidden">
           {/* Left Sidebar: Topic Browser & Question Bank */}
-          <aside className="w-80 bg-white border-r border-slate-200 flex flex-col h-[calc(100vh-3.5rem)] shadow-sm">
+          <aside className="w-84 md:w-[330px] bg-white border-r border-slate-200 flex flex-col h-[calc(100vh-3.5rem)] shadow-sm">
             {/* Filter Search */}
             <div className="p-3 border-b border-slate-200 bg-slate-50">
               <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="text"
                   placeholder="Filter topics..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full text-xs pl-8 pr-3 py-2 bg-white rounded border border-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="w-full text-sm pl-9 pr-3 py-2 bg-white rounded-md border border-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
             </div>
@@ -1622,15 +1622,15 @@ export default function OpenMathForgeApp() {
                           [cat.name]: !isExpanded,
                         }))
                       }
-                      className="w-full px-2.5 py-1.5 bg-slate-100/70 hover:bg-slate-200/60 flex items-center justify-between text-left transition"
+                      className="w-full px-3 py-2 bg-slate-100/80 hover:bg-slate-200/70 flex items-center justify-between text-left transition"
                     >
-                      <span className="text-xs font-bold text-slate-700 tracking-tight">
+                      <span className="text-sm font-bold text-slate-800 tracking-tight">
                         {cat.name}
                       </span>
                       {isExpanded ? (
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                        <ChevronDown className="w-4 h-4 text-slate-500" />
                       ) : (
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                        <ChevronRight className="w-4 h-4 text-slate-500" />
                       )}
                     </button>
 
@@ -1640,7 +1640,7 @@ export default function OpenMathForgeApp() {
                           <button
                             key={topic.id}
                             onClick={() => openQuestionConfigurator(topic)}
-                            className="w-full text-left px-2 py-1.5 rounded text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between group transition"
+                            className="w-full text-left px-2.5 py-2 rounded-md text-[13px] md:text-sm font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between group transition"
                           >
                             <span className="truncate pr-1">{topic.name}</span>
                             <Plus className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 text-indigo-600 transition" />
@@ -1656,10 +1656,10 @@ export default function OpenMathForgeApp() {
             {/* Active Assignment / Questions Tray */}
             <div className="p-3 border-t border-slate-200 bg-slate-50">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">
                   Current Assignment ({assignmentItems.length})
                 </span>
-                <span className="text-[11px] font-mono text-slate-500">
+                <span className="text-xs font-mono font-semibold text-slate-500">
                   {totalProblemCount} Qs • {estimatedPages} pgs
                 </span>
               </div>
@@ -1669,13 +1669,13 @@ export default function OpenMathForgeApp() {
                   <div
                     key={item.id}
                     onClick={() => handleEditAssignmentItem(item)}
-                    className="group flex items-center justify-between bg-white hover:bg-indigo-50/60 hover:border-indigo-300 px-2 py-1.5 rounded border border-slate-200 text-xs shadow-2xs cursor-pointer transition-colors"
+                    className="group flex items-center justify-between bg-white hover:bg-indigo-50/60 hover:border-indigo-300 px-2.5 py-2 rounded-md border border-slate-200 text-sm shadow-2xs cursor-pointer transition-colors"
                     title="Click to edit problem count, difficulty, and question type"
                   >
                     <div className="truncate pr-2 flex items-center space-x-1.5">
-                      <span className="font-bold text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded border border-indigo-100">{item.count}×</span>
-                      <span className="font-medium text-slate-800 truncate">{item.topicName}</span>
-                      <span className={`text-[9px] px-1 py-0.2 rounded font-semibold uppercase ${
+                      <span className="font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 text-xs">{item.count}×</span>
+                      <span className="font-medium text-slate-800 truncate text-[13px]">{item.topicName}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
                         item.difficulty === "spicy"
                           ? "bg-rose-100 text-rose-700"
                           : item.difficulty === "medium"
@@ -1718,17 +1718,17 @@ export default function OpenMathForgeApp() {
           {/* Center Area: Toolbar & WYSIWYG Document Canvas */}
           <section className="flex-1 flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-slate-200">
             {/* Document Ribbon Toolbar */}
-            <div className="bg-white px-4 py-2 border-b border-slate-300 flex items-center justify-between shadow-2xs z-10">
+            <div className="bg-white px-4 py-2.5 border-b border-slate-300 flex items-center justify-between shadow-2xs z-10">
               {/* Title & Sheet Settings */}
               <div className="flex items-center space-x-3">
                 <input
                   type="text"
                   value={worksheetTitle}
                   onChange={(e) => setWorksheetTitle(e.target.value)}
-                  className="font-bold text-sm text-slate-900 border-b border-transparent hover:border-slate-300 focus:border-indigo-500 px-1 py-0.5 outline-none"
+                  className="font-bold text-base text-slate-900 border-b border-transparent hover:border-slate-300 focus:border-indigo-500 px-1 py-0.5 outline-none"
                   title="Click to rename worksheet"
                 />
-                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-mono border border-slate-200">
+                <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-mono font-semibold border border-slate-200">
                   ID: {worksheetId}
                 </span>
               </div>
@@ -1736,12 +1736,12 @@ export default function OpenMathForgeApp() {
               {/* View & Layout Controls */}
               <div className="flex items-center space-x-3">
                 {/* Columns Switcher */}
-                <div className="flex items-center space-x-1 bg-slate-100 p-0.5 rounded border border-slate-300 text-xs font-semibold">
-                  <span className="px-1 text-slate-500">Cols:</span>
+                <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-md border border-slate-300 text-xs md:text-sm font-semibold">
+                  <span className="px-1 text-slate-600">Cols:</span>
                   <button
                     onClick={() => setColumns("auto")}
-                    className={`px-2 py-0.5 rounded ${
-                      columns === "auto" ? "bg-indigo-600 text-white shadow-2xs" : "text-slate-700 hover:bg-slate-200"
+                    className={`px-2.5 py-1 rounded ${
+                      columns === "auto" ? "bg-indigo-600 text-white shadow-2xs font-bold" : "text-slate-700 hover:bg-slate-200"
                     }`}
                     title="Auto-detect optimal column layout for current problem set"
                   >
@@ -1756,8 +1756,8 @@ export default function OpenMathForgeApp() {
                           setMaxProblemsPerPage(2);
                         }
                       }}
-                      className={`px-2 py-0.5 rounded ${
-                        columns === num ? "bg-indigo-600 text-white shadow-2xs" : "text-slate-700 hover:bg-slate-200"
+                      className={`px-2.5 py-1 rounded ${
+                        columns === num ? "bg-indigo-600 text-white shadow-2xs font-bold" : "text-slate-700 hover:bg-slate-200"
                       }`}
                     >
                       {num}
@@ -1766,12 +1766,12 @@ export default function OpenMathForgeApp() {
                 </div>
 
                 {/* Per Page Limit (Handwriting workspace control) */}
-                <div className="flex items-center space-x-1 bg-slate-100 p-0.5 rounded border border-slate-300 text-xs font-semibold" title="Maximum questions per page to guarantee student handwriting space and standard 8.5x11 geometry">
-                  <span className="px-1 text-slate-500">Per Page:</span>
+                <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-md border border-slate-300 text-xs md:text-sm font-semibold" title="Maximum questions per page to guarantee student handwriting space and standard 8.5x11 geometry">
+                  <span className="px-1 text-slate-600">Per Page:</span>
                   <button
                     onClick={() => setMaxProblemsPerPage("auto")}
-                    className={`px-2 py-0.5 rounded ${
-                      maxProblemsPerPage === "auto" ? "bg-indigo-600 text-white shadow-2xs" : "text-slate-700 hover:bg-slate-200"
+                    className={`px-2.5 py-1 rounded ${
+                      maxProblemsPerPage === "auto" ? "bg-indigo-600 text-white shadow-2xs font-bold" : "text-slate-700 hover:bg-slate-200"
                     }`}
                     title="Auto-budget questions per page based on content height"
                   >
@@ -1781,8 +1781,8 @@ export default function OpenMathForgeApp() {
                     <button
                       key={num}
                       onClick={() => setMaxProblemsPerPage(num)}
-                      className={`px-2 py-0.5 rounded ${
-                        maxProblemsPerPage === num ? "bg-indigo-600 text-white shadow-2xs" : "text-slate-700 hover:bg-slate-200"
+                      className={`px-2.5 py-1 rounded ${
+                        maxProblemsPerPage === num ? "bg-indigo-600 text-white shadow-2xs font-bold" : "text-slate-700 hover:bg-slate-200"
                       }`}
                     >
                       {num}
@@ -1790,40 +1790,40 @@ export default function OpenMathForgeApp() {
                   ))}
                 </div>
                 {/* Zoom Controls */}
-                <div className="flex items-center space-x-1 bg-slate-100 p-0.5 rounded border border-slate-300 text-xs">
+                <div className="flex items-center space-x-1 bg-slate-100 p-1 rounded-md border border-slate-300 text-xs md:text-sm">
                   <button
                     onClick={() => setZoomLevel((z) => Math.max(60, z - 10))}
-                    className="p-1 text-slate-600 hover:text-slate-900"
+                    className="p-1 text-slate-600 hover:text-slate-900 rounded"
                     title="Zoom Out"
                   >
-                    <ZoomOut className="w-3.5 h-3.5" />
+                    <ZoomOut className="w-4 h-4" />
                   </button>
-                  <span className="font-mono text-[11px] px-1">{zoomLevel}%</span>
+                  <span className="font-mono text-xs font-bold px-1.5 text-slate-700">{zoomLevel}%</span>
                   <button
                     onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
-                    className="p-1 text-slate-600 hover:text-slate-900"
+                    className="p-1 text-slate-600 hover:text-slate-900 rounded"
                     title="Zoom In"
                   >
-                    <ZoomIn className="w-3.5 h-3.5" />
+                    <ZoomIn className="w-4 h-4" />
                   </button>
                 </div>
 
                 {/* Answer Key Toggle */}
                 <button
                   onClick={() => setShowAnswerKey(!showAnswerKey)}
-                  className={`text-xs px-2.5 py-1 rounded font-semibold border flex items-center space-x-1.5 transition ${
+                  className={`text-xs md:text-sm px-3 py-1.5 rounded-md font-bold border flex items-center space-x-1.5 transition ${
                     showAnswerKey
-                      ? "bg-amber-100 border-amber-300 text-amber-900"
+                      ? "bg-amber-100 border-amber-300 text-amber-900 shadow-xs"
                       : "bg-white border-slate-300 text-slate-700 hover:bg-slate-50"
                   }`}
                 >
-                  <Eye className="w-3.5 h-3.5 text-amber-600" />
+                  <Eye className="w-4 h-4 text-amber-600" />
                   <span>{showAnswerKey ? "Answer Key" : "Student View"}</span>
                 </button>
 
                 {/* Anti-Cheating & Determinism Badges */}
-                <div className="hidden xl:flex items-center space-x-1.5 text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <div className="hidden xl:flex items-center space-x-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-md border border-emerald-200">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   <span>ArUco & QR Active</span>
                 </div>
 
@@ -1835,58 +1835,58 @@ export default function OpenMathForgeApp() {
                   <button
                     onClick={handleScrambleForm}
                     data-testid="scramble-form"
-                    className="px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center space-x-1"
+                    className="px-3 py-1.5 bg-white border border-slate-300 rounded-md hover:bg-slate-50 text-slate-700 text-xs md:text-sm font-semibold flex items-center space-x-1.5 shadow-2xs"
                     title="Scramble Form"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
+                    <RefreshCw className="w-4 h-4" />
                     <span>Scramble Form</span>
                   </button>
 
                   <button
                     onClick={handleDownloadPDF}
                     data-testid="generate-pdf"
-                    className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold flex items-center space-x-1.5 shadow-sm"
+                    className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-xs md:text-sm font-bold flex items-center space-x-1.5 shadow-sm"
                     title="Generate student printable PDF worksheet"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-4 h-4" />
                     <span>Generate PDF</span>
                   </button>
 
                   <button
                     onClick={handleDownloadAnswerKey}
                     data-testid="export-answer-key"
-                    className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold flex items-center space-x-1.5 shadow-sm"
+                    className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-xs md:text-sm font-bold flex items-center space-x-1.5 shadow-sm"
                     title="Export printable answer key PDF"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-4 h-4" />
                     <span>Export Answer Key</span>
                   </button>
 
                   <button
                     onClick={() => window.print()}
                     data-testid="print-worksheet"
-                    className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded text-xs font-semibold flex items-center space-x-1 shadow-xs"
+                    className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-md text-xs md:text-sm font-semibold flex items-center space-x-1.5 shadow-xs"
                     title="Print worksheet or answer key to printer / PDF"
                   >
-                    <Printer className="w-3.5 h-3.5 text-slate-600" />
+                    <Printer className="w-4 h-4 text-slate-600" />
                     <span>Print</span>
                   </button>
 
                   <button
                     onClick={handleScrambleMultiForm}
-                    className="px-3 py-1 bg-slate-900 hover:bg-black text-white rounded text-xs font-bold flex items-center space-x-1.5 shadow-sm"
+                    className="px-3.5 py-1.5 bg-slate-900 hover:bg-black text-white rounded-md text-xs md:text-sm font-bold flex items-center space-x-1.5 shadow-sm"
                     title="Generate Forms A, B, C, D with companion Master Matrix"
                   >
-                    <Layers className="w-3.5 h-3.5 text-amber-400" />
+                    <Layers className="w-4 h-4 text-amber-400" />
                     <span>4-Form Bundle (A–D)</span>
                   </button>
 
                   <button
                     onClick={handleExportQTI}
-                    className="px-3 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded text-xs font-bold flex items-center space-x-1.5 shadow-sm"
+                    className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-md text-xs md:text-sm font-bold flex items-center space-x-1.5 shadow-sm"
                     title="Export Canvas Quiz package"
                   >
-                    <Award className="w-3.5 h-3.5 text-emerald-600" />
+                    <Award className="w-4 h-4 text-emerald-600" />
                     <span>Canvas QTI</span>
                   </button>
                 </div>
@@ -1925,16 +1925,16 @@ export default function OpenMathForgeApp() {
                   {/* Empty Worksheet Header */}
                   <div className="flex justify-between items-start pb-2 border-b border-slate-300">
                     <div>
-                      <h1 className="text-xl font-bold tracking-tight text-slate-800">
+                      <h1 className="text-2xl font-bold tracking-tight text-slate-900">
                         {worksheetTitle}
                       </h1>
-                      <div className="text-xs text-slate-400 mt-2 space-x-4">
+                      <div className="text-sm font-medium text-slate-600 mt-2.5 space-x-5">
                         <span>Name: ______________________</span>
                         <span>Date: _________</span>
                         <span>Period: _____</span>
                       </div>
                     </div>
-                    <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded border border-slate-200">
+                    <span className="text-sm font-bold bg-slate-100 text-slate-600 px-3 py-1 rounded-md border border-slate-200">
                       Empty Worksheet
                     </span>
                   </div>
@@ -1944,14 +1944,14 @@ export default function OpenMathForgeApp() {
                     <div className="w-14 h-14 bg-indigo-50 border border-indigo-200 rounded-2xl flex items-center justify-center mx-auto text-indigo-600 shadow-xs">
                       <BookOpen className="w-7 h-7" />
                     </div>
-                    <h3 className="text-base font-bold text-slate-800">No Topics in Current Assignment</h3>
-                    <p className="text-xs text-slate-500 leading-relaxed">
+                    <h3 className="text-lg font-bold text-slate-800">No Topics in Current Assignment</h3>
+                    <p className="text-sm text-slate-500 leading-relaxed">
                       Select any topic from the curriculum bank on the left sidebar to configure problem count, difficulty, and multiple-choice options.
                     </p>
                   </div>
 
                   {/* Footer */}
-                  <div className="text-center text-[10px] text-slate-400 border-t border-slate-200 pt-2 shrink-0">
+                  <div className="text-center text-xs text-slate-500 font-medium border-t border-slate-200 pt-2 shrink-0">
                     OpenMathForge Studio • 0 problems • Page 1 of 1
                   </div>
                 </div>
@@ -1995,10 +1995,10 @@ export default function OpenMathForgeApp() {
                         <div>
                           <div className="flex justify-between items-start pb-2 border-b border-slate-900">
                             <div>
-                              <h1 className="text-xl font-bold tracking-tight text-slate-900">
+                              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
                                 {worksheetTitle}
                               </h1>
-                              <div className="text-xs text-slate-600 mt-2 space-x-4">
+                              <div className="text-sm font-medium text-slate-700 mt-2.5 space-x-5">
                                 <span>Name: ______________________</span>
                                 <span>Date: _________</span>
                                 <span>Period: _____</span>
@@ -2007,10 +2007,10 @@ export default function OpenMathForgeApp() {
 
                             <div className="flex items-center space-x-3 text-right">
                               <div>
-                                <div className="text-xs font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-2.5 py-0.5 rounded inline-block">
+                                <div className="text-sm font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-3 py-1 rounded inline-block">
                                   Form A
                                 </div>
-                                <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                                <div className="text-xs text-slate-500 font-mono mt-0.5">
                                   ID: {worksheetId}
                                 </div>
                               </div>
@@ -2039,19 +2039,19 @@ export default function OpenMathForgeApp() {
                         <div>
                           <div className="flex justify-between items-center pb-2 border-b border-slate-900">
                             <div>
-                              <h2 className="text-base font-bold tracking-tight text-slate-900">
-                                {worksheetTitle} <span className="text-xs font-normal text-slate-500">(Continued)</span>
+                              <h2 className="text-lg font-bold tracking-tight text-slate-900">
+                                {worksheetTitle} <span className="text-sm font-normal text-slate-500">(Continued)</span>
                               </h2>
-                              <div className="text-xs text-slate-600 mt-1 space-x-4">
+                              <div className="text-sm font-medium text-slate-700 mt-1 space-x-5">
                                 <span>Name: ______________________</span>
                                 <span>Period: _____</span>
                               </div>
                             </div>
                             <div className="flex items-center space-x-3 text-right">
-                              <span className="text-xs font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-2.5 py-0.5 rounded">
+                              <span className="text-sm font-bold bg-indigo-50 border border-indigo-300 text-indigo-800 px-3 py-1 rounded">
                                 Form A
                               </span>
-                              <span className="text-xs text-slate-500 font-mono">
+                              <span className="text-sm text-slate-600 font-mono">
                                 Page {pageIdx + 1} of {paginatedPages.length}
                               </span>
                             </div>
@@ -2062,7 +2062,7 @@ export default function OpenMathForgeApp() {
                       {/* Auto-Fitting Problem Grid: Fills 100% available vertical height within strict 8.5" x 11" bounds */}
                       <div className="flex-1 my-1.5 flex flex-col min-h-0">
                         {pageDirections && (
-                          <div className="text-sm font-bold text-slate-900 pb-1 mb-1.5 tracking-tight shrink-0">
+                          <div className="text-[15px] md:text-base font-bold text-slate-900 pb-1.5 mb-2 tracking-tight shrink-0">
                             <StepTextWithMath text={pageDirections} />
                           </div>
                         )}
@@ -2127,7 +2127,7 @@ export default function OpenMathForgeApp() {
                                   <div className="flex-1 flex flex-col justify-between min-h-0 h-full">
                                     <div className={`flex ${isWordProblem ? "items-start" : "items-center"} justify-between mb-1 pb-1 border-b border-slate-100 shrink-0`}>
                                       <div className={`flex items-center space-x-1.5 shrink-0 ${isWordProblem ? "mt-0.5" : ""}`}>
-                                        <span className="font-bold text-slate-900">{displayIdx + 1})</span>
+                                        <span className="font-bold text-slate-900 text-base">{displayIdx + 1})</span>
                                         <button
                                           onClick={() => handleRegenerateSingleProblem(displayIdx)}
                                           data-testid="regenerate-single-problem"
@@ -2135,7 +2135,7 @@ export default function OpenMathForgeApp() {
                                           aria-label="Regenerate Single Problem"
                                           className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
                                         >
-                                          <RefreshCw className="w-3 h-3" />
+                                          <RefreshCw className="w-3.5 h-3.5" />
                                         </button>
                                       </div>
                                     </div>
@@ -2144,18 +2144,18 @@ export default function OpenMathForgeApp() {
                                       {/* Left Column: Equation, Choices, and Solution/Work Area */}
                                       <div className="flex-1 flex flex-col justify-between min-w-0 pr-2">
                                         <div>
-                                          <div className="py-1 text-center text-sm font-semibold text-slate-900">
+                                          <div className="py-1.5 text-center text-base font-semibold text-slate-900">
                                             <ProblemEquation raw={prob.equation_typst} latex={prob.equation_latex} />
                                           </div>
 
                                           {prob.choices && prob.choices.length >= 4 && (
-                                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5 pt-1 border-t border-slate-100 text-xs">
+                                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5 pt-1 border-t border-slate-100 text-sm">
                                               {prob.choices.map((ch) => (
                                                 <div key={ch.letter} className="flex items-center space-x-1.5">
-                                                  <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[10px] border border-slate-200">
+                                                  <span className="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-xs border border-slate-200">
                                                     {ch.letter})
                                                   </span>
-                                                  <span className="text-slate-800">
+                                                  <span className="text-slate-800 text-sm">
                                                     <ProblemEquation raw={ch.text} inline />
                                                   </span>
                                                 </div>
@@ -2167,26 +2167,26 @@ export default function OpenMathForgeApp() {
                                         {showAnswerKey ? (
                                           <div className="bg-amber-50/90 border border-amber-200 rounded p-2.5 text-xs text-amber-950 mt-2 flex-1 flex flex-col justify-between">
                                             <div>
-                                              <div className="font-bold flex items-center gap-1.5 text-xs pb-1 border-b border-amber-200/60">
-                                                <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
+                                              <div className="font-bold flex items-center gap-1.5 text-sm pb-1.5 border-b border-amber-200/60">
+                                                <span className="text-amber-800 text-xs md:text-sm font-bold">Ans:</span>
                                                 {prob.correct_choice && (
-                                                  <span className="font-bold text-indigo-800 mr-1">
+                                                  <span className="font-bold text-indigo-800 mr-1.5 text-sm">
                                                     {prob.correct_choice})
                                                   </span>
                                                 )}
                                                 <ProblemEquation raw={prob.answer_typst} latex={prob.answer_latex} inline />
                                               </div>
                                               {prob.steps_typst && prob.steps_typst.length > 0 && (
-                                                <div className="mt-2 space-y-1 text-[10.5px] leading-relaxed text-amber-900">
-                                                  <div className="text-[9px] font-bold text-amber-800 uppercase tracking-wider">
+                                                <div className="mt-2 space-y-1.5 text-xs leading-relaxed text-amber-900">
+                                                  <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">
                                                     Solution Steps:
                                                   </div>
                                                   {prob.steps_typst.map((st, sIdx) => (
                                                     <div key={sIdx} className="flex items-start gap-1.5">
-                                                      <span className="text-amber-600 font-mono text-[9.5px] font-semibold shrink-0 mt-0.5">
+                                                      <span className="text-amber-600 font-mono text-xs font-bold shrink-0 mt-0.5">
                                                         {sIdx + 1}.
                                                       </span>
-                                                      <div className="min-w-0 break-words">
+                                                      <div className="min-w-0 break-words font-medium">
                                                         <StepTextWithMath text={st} />
                                                       </div>
                                                     </div>
@@ -2197,8 +2197,8 @@ export default function OpenMathForgeApp() {
                                           </div>
                                         ) : (
                                           <div className="mt-auto pt-2 flex justify-between items-end">
-                                            <span className="text-[10px] text-slate-400 italic">Workspace / Scratchwork</span>
-                                            <div className="text-right text-[10px] text-slate-400 border border-slate-200 px-3 py-1 rounded">
+                                            <span className="text-xs text-slate-400 font-medium italic">Workspace / Scratchwork</span>
+                                            <div className="text-right text-xs text-slate-500 font-semibold border border-slate-200 px-3 py-1 rounded">
                                               Ans:
                                             </div>
                                           </div>
@@ -2228,7 +2228,7 @@ export default function OpenMathForgeApp() {
                                       {/* Problem Header: Number + Equation */}
                                       <div className={`flex ${isWordProblem ? "items-start" : "items-center"} gap-2 mb-1`}>
                                         <div className={`flex items-center space-x-1 shrink-0 ${isWordProblem ? "mt-0.5" : ""}`}>
-                                          <span className="font-bold text-slate-900 text-sm">{displayIdx + 1})</span>
+                                          <span className="font-bold text-slate-900 text-base">{displayIdx + 1})</span>
                                           <button
                                             onClick={() => handleRegenerateSingleProblem(displayIdx)}
                                             data-testid="regenerate-single-problem"
@@ -2236,10 +2236,10 @@ export default function OpenMathForgeApp() {
                                             aria-label="Regenerate Single Problem"
                                             className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition"
                                           >
-                                            <RefreshCw className="w-3 h-3" />
+                                            <RefreshCw className="w-3.5 h-3.5" />
                                           </button>
                                         </div>
-                                        <div className={`flex-1 ${isWordProblem ? "text-left font-normal text-slate-800 pr-2 break-words" : "text-center font-medium text-slate-900"} text-sm min-w-0`}>
+                                        <div className={`flex-1 ${isWordProblem ? "text-left font-normal text-slate-800 pr-2 break-words" : "text-center font-medium text-slate-900"} text-base min-w-0`}>
                                           <ProblemEquation raw={prob.equation_typst} latex={prob.equation_latex} inline />
                                         </div>
                                       </div>
@@ -2258,13 +2258,13 @@ export default function OpenMathForgeApp() {
 
                                        {/* Multiple Choice Options Grid */}
                                        {prob.choices && prob.choices.length >= 4 && (
-                                         <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-slate-100 text-xs">
+                                         <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-1.5 pt-1.5 border-t border-slate-100 text-sm">
                                            {prob.choices.map((ch) => (
                                              <div key={ch.letter} className="flex items-center space-x-1.5">
-                                               <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-[10px] border border-slate-200">
+                                               <span className="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-xs border border-slate-200">
                                                  {ch.letter})
                                                </span>
-                                               <span className="text-slate-800">
+                                               <span className="text-slate-800 text-sm">
                                                  <ProblemEquation raw={ch.text} inline />
                                                </span>
                                              </div>
@@ -2278,14 +2278,14 @@ export default function OpenMathForgeApp() {
                                        <div
                                          className={`bg-amber-50/90 border border-amber-200 rounded mt-1.5 flex-1 flex flex-col min-h-0 ${
                                            prob.diagram_svg || prob.answer_svg
-                                             ? "p-1.5 px-2 justify-start"
-                                             : "p-3 justify-between"
+                                             ? "p-2 px-2.5 justify-start"
+                                             : "p-3.5 justify-between"
                                          }`}
                                        >
-                                         <div className="font-bold flex items-center gap-1.5 text-xs pb-1.5 border-b border-amber-200/80 shrink-0">
-                                           <span className="text-amber-800 text-[11px] font-semibold">Ans:</span>
+                                         <div className="font-bold flex items-center gap-1.5 text-sm pb-1.5 border-b border-amber-200/80 shrink-0">
+                                           <span className="text-amber-800 text-xs md:text-sm font-bold">Ans:</span>
                                            {prob.correct_choice && (
-                                             <span className="font-bold text-indigo-800 mr-1">
+                                             <span className="font-bold text-indigo-800 mr-1.5 text-sm">
                                                {prob.correct_choice})
                                              </span>
                                            )}
@@ -2297,23 +2297,23 @@ export default function OpenMathForgeApp() {
                                            <div
                                              className={`${
                                                prob.diagram_svg || prob.answer_svg
-                                                 ? "mt-1 space-y-0.5 text-[9.5px] leading-tight"
-                                                 : "mt-2.5 space-y-2 text-xs leading-relaxed"
-                                             } text-amber-950 flex-1 flex flex-col justify-evenly`}
+                                                 ? "mt-1.5 space-y-1 text-xs md:text-[12.5px] leading-normal"
+                                                 : "mt-2.5 space-y-2 text-xs md:text-sm leading-relaxed"
+                                             } text-amber-950 flex-1 flex flex-col justify-evenly font-medium`}
                                            >
-                                             <div className="text-[8.5px] font-bold text-amber-800 uppercase tracking-wider mb-0.5 shrink-0">
+                                             <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-0.5 shrink-0">
                                                Solution Steps:
                                              </div>
                                              {prob.steps_typst.map((st, sIdx) => (
                                                <div key={sIdx} className="flex items-start gap-1.5">
                                                  <span
-                                                   className={`text-amber-600 font-mono font-semibold shrink-0 mt-0.5 ${
-                                                     prob.diagram_svg || prob.answer_svg ? "text-[9.5px]" : "text-xs"
+                                                   className={`text-amber-600 font-mono font-bold shrink-0 mt-0.5 ${
+                                                     prob.diagram_svg || prob.answer_svg ? "text-xs" : "text-sm"
                                                    }`}
                                                  >
                                                    {sIdx + 1}.
                                                  </span>
-                                                 <div className="min-w-0 break-words">
+                                                 <div className="min-w-0 break-words font-medium">
                                                    <StepTextWithMath text={st} />
                                                  </div>
                                                </div>
@@ -2322,7 +2322,7 @@ export default function OpenMathForgeApp() {
                                          )}
                                        </div>
                                      ) : (
-                                       <div className="text-right text-[10px] text-slate-400 border border-slate-200 self-end px-3 py-1 rounded mt-2">
+                                       <div className="text-right text-xs text-slate-500 font-semibold border border-slate-200 self-end px-3 py-1 rounded mt-2">
                                          Ans:
                                        </div>
                                      )}
@@ -2336,7 +2336,7 @@ export default function OpenMathForgeApp() {
                       </div>
 
                       {/* Page Footer */}
-                      <div className="text-center text-[10px] text-slate-400 border-t border-slate-200 pt-2 shrink-0">
+                      <div className="text-center text-xs text-slate-500 font-medium border-t border-slate-200 pt-2 shrink-0">
                         Generated procedurally by OpenMathForge CAS • Seed: {baseSeed} • Page {pageIdx + 1} of {paginatedPages.length}
                       </div>
                     </div>
@@ -2421,23 +2421,23 @@ export default function OpenMathForgeApp() {
               <div>
                 <div className="flex items-center space-x-2">
                   <Users className="w-5 h-5 text-indigo-600" />
-                  <h2 className="text-lg font-bold text-slate-900">Classroom Management & Rosters</h2>
-                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300 flex items-center space-x-1">
-                    <HardDrive className="w-3 h-3 mr-0.5" />
+                  <h2 className="text-xl font-bold text-slate-900">Classroom Management & Rosters</h2>
+                  <span className="text-xs bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded border border-emerald-300 flex items-center space-x-1">
+                    <HardDrive className="w-3.5 h-3.5 mr-1" />
                     <span>Local PC Storage</span>
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 mt-1 font-medium">
                   Saved on your PC • Student PII is never transmitted to the cloud.
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2.5">
                 {/* Class Selector Dropdown */}
                 <select
                   value={selectedClassId}
                   onChange={(e) => setSelectedClassId(e.target.value)}
-                  className="text-xs font-semibold rounded-lg border border-slate-300 px-3 py-2 bg-white text-slate-700 shadow-2xs focus:ring-1 focus:ring-indigo-500"
+                  className="text-sm font-semibold rounded-lg border border-slate-300 px-3.5 py-2 bg-white text-slate-700 shadow-2xs focus:ring-1 focus:ring-indigo-500"
                 >
                   {localVault.classes.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -2455,40 +2455,40 @@ export default function OpenMathForgeApp() {
                     if (target) setClassToDelete(target);
                   }}
                   disabled={localVault.classes.length === 0}
-                  className="px-2.5 py-2 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 disabled:opacity-40 rounded-lg text-xs font-semibold flex items-center space-x-1 transition shadow-2xs"
+                  className="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 disabled:opacity-40 rounded-lg text-sm font-semibold flex items-center space-x-1.5 transition shadow-2xs"
                   title="Delete current class (can be recovered from Recycle Bin)"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                   <span className="hidden sm:inline">Delete Class</span>
                 </button>
 
                 {/* New Class Button */}
                 <button
                   onClick={() => setIsNewClassModalOpen(true)}
-                  className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1 transition shadow-2xs"
+                  className="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-semibold flex items-center space-x-1.5 transition shadow-2xs"
                   title="Create new class stored locally"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4" />
                   <span>New Class</span>
                 </button>
 
                 {/* Save Vault to PC */}
                 <button
                   onClick={handleSaveVaultToDisk}
-                  className="px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition shadow-2xs"
+                  className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 rounded-lg text-sm font-bold flex items-center space-x-1.5 transition shadow-2xs"
                   title="Save current roster and grades as .omf file directly to your PC drive"
                 >
-                  <Save className="w-3.5 h-3.5" />
+                  <Save className="w-4 h-4" />
                   <span>Save to PC (.omf)</span>
                 </button>
 
                 {/* Open Vault from PC */}
                 <button
                   onClick={() => vaultFileInputRef.current?.click()}
-                  className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold flex items-center space-x-1 transition shadow-2xs"
+                  className="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-semibold flex items-center space-x-1.5 transition shadow-2xs"
                   title="Load saved .omf file from your PC"
                 >
-                  <FolderOpen className="w-3.5 h-3.5" />
+                  <FolderOpen className="w-4 h-4" />
                   <span>Open from PC</span>
                 </button>
 
@@ -2498,10 +2498,10 @@ export default function OpenMathForgeApp() {
                     setVaultSnapshots(getVaultSnapshots());
                     setIsRecoveryModalOpen(true);
                   }}
-                  className="px-3 py-2 bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition shadow-2xs relative"
+                  className="px-3.5 py-2 bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100 rounded-lg text-sm font-bold flex items-center space-x-1.5 transition shadow-2xs relative"
                   title="Recover deleted classes or students and restore snapshots"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
+                  <RotateCcw className="w-4 h-4" />
                   <span>Recovery & History</span>
                   {((localVault.recycleBin?.classes?.length || 0) +
                     (localVault.recycleBin?.students?.length || 0)) >
@@ -3207,9 +3207,9 @@ export default function OpenMathForgeApp() {
       {configTopic && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl border border-slate-300 w-full max-w-2xl overflow-hidden flex flex-col">
-            <div className="px-5 py-3 bg-slate-900 text-white flex justify-between items-center">
-              <h3 className="font-bold text-sm flex items-center">
-                <Settings2 className="w-4 h-4 mr-2 text-indigo-400" />
+            <div className="px-5 py-3.5 bg-slate-900 text-white flex justify-between items-center">
+              <h3 className="font-bold text-base flex items-center">
+                <Settings2 className="w-5 h-5 mr-2 text-indigo-400" />
                 {editingItemId ? `Edit Topic: ${configTopic.name}` : configTopic.name}
               </h3>
               <button
@@ -3217,7 +3217,7 @@ export default function OpenMathForgeApp() {
                   setConfigTopic(null);
                   setEditingItemId(null);
                 }}
-                className="text-slate-400 hover:text-white text-sm font-bold"
+                className="text-slate-400 hover:text-white text-base font-bold"
               >
                 ✕
               </button>
@@ -3226,7 +3226,7 @@ export default function OpenMathForgeApp() {
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">
+                  <label className="text-sm font-semibold text-slate-700 block mb-1">
                     Number of questions:
                   </label>
                   <input
@@ -3239,12 +3239,12 @@ export default function OpenMathForgeApp() {
                       setModalCount(count);
                       fetchModalSample(configTopic.generator_id, count, modalDifficulty, modalQuestionType);
                     }}
-                    className="w-full text-sm font-bold border rounded p-1.5 border-slate-300"
+                    className="w-full text-base font-bold border rounded-md p-2 border-slate-300"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-600 block mb-1">
+                  <label className="text-sm font-semibold text-slate-700 block mb-1">
                     Preset Difficulty:
                   </label>
                   <div className="flex space-x-1">
@@ -3258,7 +3258,7 @@ export default function OpenMathForgeApp() {
                           setModalDifficulty(diff);
                           fetchModalSample(configTopic.generator_id, modalCount, diff, modalQuestionType);
                         }}
-                        className={`flex-1 py-1.5 text-xs font-bold rounded uppercase ${
+                        className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-md uppercase ${
                           modalDifficulty === diff
                             ? diff === "mild"
                               ? "bg-cyan-600 text-white"
@@ -3276,11 +3276,11 @@ export default function OpenMathForgeApp() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-600 block mb-1">
+                <label className="text-sm font-semibold text-slate-700 block mb-1.5">
                   Question Type:
                 </label>
-                <div className="flex space-x-4 text-xs font-medium">
-                  <label className="flex items-center space-x-1.5 cursor-pointer">
+                <div className="flex space-x-5 text-sm font-medium">
+                  <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="radio"
                       name="qtype"
@@ -3289,11 +3289,11 @@ export default function OpenMathForgeApp() {
                         setModalQuestionType("free_response");
                         fetchModalSample(configTopic.generator_id, modalCount, modalDifficulty, "free_response");
                       }}
-                      className="accent-indigo-600"
+                      className="accent-indigo-600 w-4 h-4"
                     />
                     <span>Free response</span>
                   </label>
-                  <label className="flex items-center space-x-1.5 cursor-pointer">
+                  <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="radio"
                       name="qtype"
@@ -3302,7 +3302,7 @@ export default function OpenMathForgeApp() {
                         setModalQuestionType("multiple_choice");
                         fetchModalSample(configTopic.generator_id, modalCount, modalDifficulty, "multiple_choice");
                       }}
-                      className="accent-indigo-600"
+                      className="accent-indigo-600 w-4 h-4"
                     />
                     <span>Multiple choice (with misconception distractors)</span>
                   </label>
@@ -3311,32 +3311,32 @@ export default function OpenMathForgeApp() {
 
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-xs font-semibold text-slate-600">
+                  <label className="text-sm font-semibold text-slate-700">
                     Sample Question Preview:
                   </label>
                   <button
                     onClick={() =>
                       fetchModalSample(configTopic.generator_id, modalCount, modalDifficulty, modalQuestionType)
                     }
-                    className="text-xs text-indigo-600 hover:underline flex items-center space-x-1"
+                    className="text-xs md:text-sm font-semibold text-indigo-600 hover:underline flex items-center space-x-1"
                   >
-                    <RefreshCw className="w-3 h-3" />
+                    <RefreshCw className="w-3.5 h-3.5" />
                     <span>Re-scramble</span>
                   </button>
                 </div>
 
-                <div className="bg-slate-50 border border-slate-200 rounded p-3 max-h-48 overflow-y-auto space-y-2 text-xs">
+                <div className="bg-slate-50 border border-slate-200 rounded-md p-3 max-h-52 overflow-y-auto space-y-2 text-sm">
                   {isModalLoading ? (
                     <div className="py-6 text-center text-slate-400">Loading samples...</div>
                   ) : (
                     modalSampleProblems.map((p, i) => (
-                      <div key={p.id} className="bg-white p-2.5 rounded border border-slate-200 space-y-1.5">
+                      <div key={p.id} className="bg-white p-3 rounded border border-slate-200 space-y-2">
                         <div className="flex justify-between items-start">
                           <div>
-                            <span className="font-bold mr-2 text-slate-800">{i + 1})</span>
+                            <span className="font-bold mr-2 text-slate-800 text-base">{i + 1})</span>
                             <ProblemEquation raw={p.equation_typst} latex={p.equation_latex} inline />
                           </div>
-                          <div className="text-slate-500 font-mono text-xs shrink-0 ml-2">
+                          <div className="text-slate-500 font-mono text-xs md:text-sm shrink-0 ml-2">
                             Ans: {modalQuestionType === "multiple_choice" && p.correct_choice ? `${p.correct_choice}) ` : ""}
                             <ProblemEquation raw={p.answer_typst} latex={p.answer_latex} inline />
                           </div>
@@ -3346,7 +3346,7 @@ export default function OpenMathForgeApp() {
                           <div className="flex flex-wrap gap-3 justify-center items-center pt-1">
                             {p.diagram_svg && (
                               <div className="flex flex-col items-center">
-                                <span className="text-[9px] uppercase text-slate-400 font-semibold">Problem Visual</span>
+                                <span className="text-[10px] uppercase text-slate-400 font-bold">Problem Visual</span>
                                 <div
                                   className="flex justify-center items-center [&>svg]:max-h-32 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
                                   dangerouslySetInnerHTML={{ __html: p.diagram_svg }}
@@ -3355,7 +3355,7 @@ export default function OpenMathForgeApp() {
                             )}
                             {p.answer_svg && (
                               <div className="flex flex-col items-center">
-                                <span className="text-[9px] uppercase text-amber-600 font-semibold">Answer Visual</span>
+                                <span className="text-[10px] uppercase text-amber-600 font-bold">Answer Visual</span>
                                 <div
                                   className="flex justify-center items-center [&>svg]:max-h-32 [&>svg]:w-auto [&>svg]:h-auto [&>svg]:max-w-full"
                                   dangerouslySetInnerHTML={{ __html: p.answer_svg }}
@@ -3366,10 +3366,10 @@ export default function OpenMathForgeApp() {
                         )}
 
                         {modalQuestionType === "multiple_choice" && p.choices && p.choices.length >= 4 && (
-                          <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-1.5 border-t border-slate-100 text-[11px]">
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-1 pt-1.5 border-t border-slate-100 text-xs md:text-sm">
                             {p.choices.map((ch) => (
-                              <div key={ch.letter} className="flex items-center space-x-1">
-                                <span className="font-bold text-slate-700 bg-slate-100 px-1 rounded text-[10px] border border-slate-200">
+                              <div key={ch.letter} className="flex items-center space-x-1.5">
+                                <span className="font-bold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded text-xs border border-slate-200">
                                   {ch.letter})
                                 </span>
                                 <span className="text-slate-800">
@@ -3386,19 +3386,19 @@ export default function OpenMathForgeApp() {
               </div>
             </div>
 
-            <div className="px-5 py-3 bg-slate-100 border-t border-slate-200 flex justify-end space-x-2">
+            <div className="px-5 py-3.5 bg-slate-100 border-t border-slate-200 flex justify-end space-x-2.5">
               <button
                 onClick={() => {
                   setConfigTopic(null);
                   setEditingItemId(null);
                 }}
-                className="px-4 py-1.5 text-xs font-semibold rounded text-slate-600 hover:bg-slate-200"
+                className="px-4 py-2 text-sm font-semibold rounded-md text-slate-600 hover:bg-slate-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddConfiguredTopic}
-                className="px-4 py-1.5 text-xs font-bold rounded bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                className="px-5 py-2 text-sm font-bold rounded-md bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
               >
                 {editingItemId ? "Save Topic Changes" : "OK (Add to Worksheet)"}
               </button>
