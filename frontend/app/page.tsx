@@ -93,8 +93,12 @@ function typstToLatex(raw: string): string {
   // Clean up prefix labels like "Result:" or "Solve for x:"
   s = s.replace(/^(Result|Solve for [^:]+):\s*/i, "").trim();
 
-  // Typst string quotes -> \text{ ... }
-  s = s.replace(/"([^"]*)"/g, "\\text{ $1 }");
+  // Temporarily protect strings in quotes so English words (like "angle", "triangle") are never converted to math symbols
+  const textTokens: string[] = [];
+  s = s.replace(/"([^"]*)"/g, (_, txt) => {
+    textTokens.push(txt);
+    return `___TYPST_TEXT_${textTokens.length - 1}___`;
+  });
 
   // Strip any remaining internal $ delimiters
   s = s.replace(/\$/g, "");
@@ -166,6 +170,11 @@ function typstToLatex(raw: string): string {
     if (s === prev) break;
   }
 
+  // Restore protected text tokens as LaTeX \text{ ... }
+  s = s.replace(/___TYPST_TEXT_(\d+)___/g, (_, idx) => {
+    return `\\text{ ${textTokens[Number(idx)]} }`;
+  });
+
   return s.trim();
 }
 
@@ -183,13 +192,13 @@ function isProseProblem(raw: string): boolean {
   // If fully enclosed in single $...$ pair
   if (t.startsWith("$") && t.endsWith("$") && (t.match(/\$/g) || []).length === 2) {
     const inner = t.slice(1, -1).trim();
-    if (inner.includes('"')) {
-      return false; // Typst math with quotes like $ (-10, -2) " and " (-8, 3) $
-    }
     const words = (inner.match(/[a-zA-Z]{3,}/g) || []).filter(
       (w) => !MATH_KEYWORDS.has(w.toLowerCase())
     );
-    return words.length >= 3;
+    if (words.length >= 3 || PROSE_REGEX.test(inner)) {
+      return true;
+    }
+    return false;
   }
 
   // Check word count in string (ignoring quotes and latex math)
@@ -234,6 +243,11 @@ function ProblemEquation({
   if (isProseProblem(trimmed)) {
     // 1. Clean legacy typst quote artifacts and normalize whitespace
     let clean = trimmed.replace(/"/g, "").replace(/\\\$/g, "$").replace(/\s+/g, " ").trim();
+    // Strip outer $ ... $ if present on prose problem
+    if (clean.startsWith("$") && clean.endsWith("$") && (clean.match(/\$/g) || []).length === 2) {
+      clean = clean.slice(1, -1).trim();
+    }
+    clean = clean.replace(/\^\s*circle\b/g, "°").replace(/\bquad\b/g, " ");
 
     // 2. Protect currency amounts: e.g. $205, $8, $5, $12.50
     const CURRENCY_TOKEN = "___CURR___";

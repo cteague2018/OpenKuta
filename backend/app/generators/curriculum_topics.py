@@ -1508,10 +1508,21 @@ def _gen_decoupled_subtopic(
         a = rng.randint(35, 70)
         b = rng.randint(40, 75)
         ext = a + b
+        if scale > 1:
+            ext_expr = f"{scale}x + {ext - scale * 15}"
+            eq_text = f"Remote interior angles: {a}&#176; and {b}&#176;. Exterior angle: ${ext_expr}&#176;$."
+            ans_typst = f"$ x = 15, quad \"Exterior angle\" = {ext}^circle $"
+            diag = svg_general_triangle(angle_a=f"{a}&#176;", angle_b=f"{b}&#176;", ext_c=f"{ext_expr}&#176;")
+            ans_diag = svg_general_triangle(angle_a=f"{a}&#176;", angle_b=f"{b}&#176;", ext_c=f"{ext}&#176;")
+        else:
+            eq_text = f"Remote interior angles: {a}&#176; and {b}&#176;. Find the exterior angle."
+            ans_typst = f"$ \"Exterior angle\" = {ext}^circle $"
+            diag = svg_general_triangle(angle_a=f"{a}&#176;", angle_b=f"{b}&#176;", ext_c="?")
+            ans_diag = svg_general_triangle(angle_a=f"{a}&#176;", angle_b=f"{b}&#176;", ext_c=f"{ext}&#176;")
         return {
             "prompt_text": "Use the Exterior Angle Theorem to find the exterior angle measure (or solve for x).",
-            "equation_typst": f"$ \"Remote interior angles: \" {a}^circle \" and \" {b}^circle; quad \"Exterior angle\" = {scale}x + {ext - scale * 15} $" if scale > 1 else f"$ \"Remote interior angles: \" {a}^circle \" and \" {b}^circle $",
-            "answer_typst": f"$ x = 15, quad \"Exterior angle\" = {ext}^circle $" if scale > 1 else f"$ \"Exterior angle\" = {ext}^circle $",
+            "equation_typst": eq_text,
+            "answer_typst": ans_typst,
             "steps_typst": [
                 "By the Exterior Angle Theorem, an exterior angle of a triangle equals the sum of its two remote interior angles.",
                 f"Sum the remote interior angles: ${a}^circle + {b}^circle = {ext}^circle$.",
@@ -1522,8 +1533,8 @@ def _gen_decoupled_subtopic(
                 f"$ \"Exterior angle\" = {abs(a - b)}^circle $",
                 f"$ \"Exterior angle\" = {ext + 10}^circle $",
             ],
-            "diagram_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", side_c="Ext = ?"),
-            "answer_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", side_c=f"Ext = {ext} deg"),
+            "diagram_svg": diag,
+            "answer_svg": ans_diag,
         }
 
     if "angle addition postulate" in t_low:
