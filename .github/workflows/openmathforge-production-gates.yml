@@ -104,6 +104,10 @@ jobs:
         run: |
           python -m pytest tests/functional/test_math_truth.py -v
 
+      - name: "Gate 6.1: Universal Generator Sweep & Visual Typographic Linter"
+        run: |
+          python -m pytest backend/tests/test_all_generators_visual_sweep.py backend/tests/test_svg_geometry_rendering.py -v
+
       - name: "Gate 7: Typst Document Rendering & Multi-Page Layout Integrity"
         run: |
           python -m pytest tests/functional/test_document_render.py -v

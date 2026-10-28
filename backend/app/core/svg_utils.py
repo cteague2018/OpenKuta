@@ -133,14 +133,15 @@ def svg_coordinate_plane(
     if functions:
         for fn_spec in functions:
             fn_c = fn_spec["fn"]
-            for xv in (-3.0, -1.5, 0.0, 1.5, 3.0):
+            xs = [float(x_min) + i * float(x_max - x_min) / 16.0 for i in range(17)]
+            for xv in xs:
                 if fn_spec.get("x_start") is not None and xv < float(fn_spec["x_start"]):
                     continue
                 if fn_spec.get("x_end") is not None and xv > float(fn_spec["x_end"]):
                     continue
                 try:
                     yv = float(fn_c(xv))
-                    if math.isfinite(yv) and abs(yv) <= 18:
+                    if math.isfinite(yv) and abs(yv) <= 50:
                         req_y.append(yv)
                 except Exception:
                     pass
@@ -152,7 +153,7 @@ def svg_coordinate_plane(
                 b = max(b, int(math.ceil(max(abs(v) for v in req_x))) + 2)
             if req_y:
                 b = max(b, int(math.ceil(max(abs(v) for v in req_y))) + 2)
-            b = min(14, b)
+            b = min(50, b)
             x_min, x_max, y_min, y_max = -b, b, -b, b
         else:
             if req_x:

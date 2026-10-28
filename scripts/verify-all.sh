@@ -39,6 +39,11 @@ echo "--> [5/8] Running Mathematical Truth Engine & Invariant Properties..."
 python -m pytest tests/functional/test_math_truth.py -v
 echo "✓ Math truth and SymPy invariants passed."
 
+# Stage 5.1: Universal Generator Sweep & SVG Visual Rendering
+echo "--> [5.1/8] Running Exhaustive Generator Visual & Typographic Sweep..."
+python -m pytest backend/tests/test_all_generators_visual_sweep.py backend/tests/test_svg_geometry_rendering.py -v
+echo "✓ Universal generator sweep and SVG geometry rendering verified."
+
 # Stage 6: Document Compilation & CV Stress Suite
 echo "--> [6/8] Running Document Compilation & CV Alignment Engine Stress Suite..."
 python -m pytest tests/functional/test_document_render.py tests/vision/test_cv_engine.py -v

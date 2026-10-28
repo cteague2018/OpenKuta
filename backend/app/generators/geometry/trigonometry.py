@@ -107,7 +107,7 @@ class GeometryTrigonometryGenerator(BaseGenerator):
                 eq_typst = f"theta = 30^circle, quad \"hypotenuse = \" {hyp}, quad \"opposite (x) = ?\""
                 ans_typst = f"x = {ans_val}"
                 steps = [
-                    "Identify sides relative to angle $ theta $: opposite is $ x $, hypotenuse is $ {hyp} $.",
+                    f"Identify sides relative to angle $ theta $: opposite is $ x $, hypotenuse is $ {hyp} $.",
                     "Use the sine ratio: $ sin(theta) = text(\"opposite\") / text(\"hypotenuse\") $",
                     f"Substitute known values: $ sin(30^circle) = x / {hyp} $",
                     "Recall that $ sin(30^circle) = 1/2 = 0.5 $.",
@@ -124,7 +124,7 @@ class GeometryTrigonometryGenerator(BaseGenerator):
                 eq_typst = f"theta = 60^circle, quad \"hypotenuse = \" {hyp}, quad \"adjacent (x) = ?\""
                 ans_typst = f"x = {ans_val}"
                 steps = [
-                    "Identify sides relative to angle $ theta $: adjacent is $ x $, hypotenuse is $ {hyp} $.",
+                    f"Identify sides relative to angle $ theta $: adjacent is $ x $, hypotenuse is $ {hyp} $.",
                     "Use the cosine ratio: $ cos(theta) = text(\"adjacent\") / text(\"hypotenuse\") $",
                     f"Substitute known values: $ cos(60^circle) = x / {hyp} $",
                     "Recall that $ cos(60^circle) = 1/2 = 0.5 $.",
@@ -141,7 +141,7 @@ class GeometryTrigonometryGenerator(BaseGenerator):
                 eq_typst = f"theta = 45^circle, quad \"adjacent = \" {adj}, quad \"opposite (x) = ?\""
                 ans_typst = f"x = {ans_val}"
                 steps = [
-                    "Identify sides relative to angle $ theta $: opposite is $ x $, adjacent is $ {adj} $.",
+                    f"Identify sides relative to angle $ theta $: opposite is $ x $, adjacent is $ {adj} $.",
                     "Use the tangent ratio: $ tan(theta) = text(\"opposite\") / text(\"adjacent\") $",
                     f"Substitute known values: $ tan(45^circle) = x / {adj} $",
                     "Recall that $ tan(45^circle) = 1 $.",
@@ -161,7 +161,7 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             ans_typst = f"x approx {ans_num:.1f}"
 
             steps = [
-                "Identify sides relative to angle $ theta $: opposite side is $ x $, hypotenuse is $ {hyp} $.",
+                f"Identify sides relative to angle $ theta $: opposite side is $ x $, hypotenuse is $ {hyp} $.",
                 "Select sine ratio: $ sin(theta) = text(\"opposite\") / text(\"hypotenuse\") $",
                 f"Substitute given values: $ sin({theta}^circle) = x / {hyp} $",
                 f"Solve for $ x $: $ x = {hyp} dot sin({theta}^circle) $",
@@ -208,8 +208,8 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             ans_typst = f"theta approx {angle_deg:.1f}^circle"
 
             steps = [
-                "Identify given sides relative to angle $ theta $: opposite is $ {opp} $, adjacent is $ {adj} $.",
-                "Select tangent ratio: $ tan(theta) = text(\"opposite\") / text(\"adjacent\") = {opp} / {adj} $",
+                f"Identify given sides relative to angle $ theta $: opposite is $ {opp} $, adjacent is $ {adj} $.",
+                f"Select tangent ratio: $ tan(theta) = text(\"opposite\") / text(\"adjacent\") = {opp} / {adj} $",
                 f"Calculate ratio: $ tan(theta) = {ratio:.4f} $",
                 f"Apply inverse tangent: $ theta = arctan({ratio:.4f}) $",
                 f"Compute angle measure: $ theta approx {angle_deg:.1f}^circle $",
@@ -234,8 +234,8 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             ans_typst = f"theta approx {angle_deg:.1f}^circle"
 
             steps = [
-                "Identify given sides relative to angle $ theta $: opposite is $ {opp} $, hypotenuse is $ {hyp} $.",
-                "Select sine ratio: $ sin(theta) = text(\"opposite\") / text(\"hypotenuse\") = {opp} / {hyp} $",
+                f"Identify given sides relative to angle $ theta $: opposite is $ {opp} $, hypotenuse is $ {hyp} $.",
+                f"Select sine ratio: $ sin(theta) = text(\"opposite\") / text(\"hypotenuse\") = {opp} / {hyp} $",
                 f"Calculate ratio: $ sin(theta) = {ratio:.4f} $",
                 f"Apply inverse sine: $ theta = arcsin({ratio:.4f}) $",
                 f"Compute angle measure: $ theta approx {angle_deg:.1f}^circle $",
@@ -259,8 +259,8 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             ans_typst = f"theta approx {angle_deg:.1f}^circle"
 
             steps = [
-                "Identify given sides relative to angle $ theta $: adjacent is $ {adj} $, hypotenuse is $ {hyp} $.",
-                "Select cosine ratio: $ cos(theta) = text(\"adjacent\") / text(\"hypotenuse\") = {adj} / {hyp} $",
+                f"Identify given sides relative to angle $ theta $: adjacent is $ {adj} $, hypotenuse is $ {hyp} $.",
+                f"Select cosine ratio: $ cos(theta) = text(\"adjacent\") / text(\"hypotenuse\") = {adj} / {hyp} $",
                 f"Calculate ratio: $ cos(theta) = {ratio:.4f} $",
                 f"Apply inverse cosine: $ theta = arccos({ratio:.4f}) $",
                 f"Compute angle measure: $ theta approx {angle_deg:.1f}^circle $",

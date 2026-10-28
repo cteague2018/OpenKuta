@@ -171,7 +171,7 @@ def gen_alg_geo_problem(
         steps = [
             f"Write both rational numbers as fractions: ${_fmt_frac(f1)} {op_sym} {_fmt_frac(f2)}$.",
             step2,
-            f"Reduce to lowest terms: ${ans.strip('$ ')}.",
+            f"Reduce to lowest terms: ${ans.strip('$ ')}$.",
         ]
         return {
             "prompt_text": f"Find each {'quotient' if is_div else 'product'}. Write your answer in simplest form.",
@@ -1969,7 +1969,7 @@ def gen_alg_geo_problem(
                 "equation_typst": f"\"Dot plot over values \" {base} \" to \" {base + num_vals - 1} (n = {total_n})",
                 "answer_typst": f"$ n = {total_n}, quad \"Mode\" = {mode_v} $",
                 "steps_typst": [
-                    f"Count all dots above the number line: {' + '.join(str(c) for c in counts.values())} = {total_n}$ observations.",
+                    f"Count all dots above the number line: ${' + '.join(str(c) for c in counts.values())} = {total_n}$ observations.",
                     f"Find the value with the tallest stack of dots ({counts[mode_v]} dots at ${mode_v}$).",
                     f"Total $n = {total_n}$, Mode = ${mode_v}$.",
                 ],

@@ -50,6 +50,11 @@ class BaseProblem(BaseModel):
                 # Strip redundant '+ 0' and '- 0' terms
                 s = re.sub(r'(?<=[a-zA-Z0-9_\)])(\s*[+-]\s*0\b(?!\.))+', '', val)
                 s = re.sub(r'(\b[+-]\s*0\b(?!\.)\s*)+', '', s)
+                # Normalize unsimplified double signs in math expressions
+                s = re.sub(r'\+\s*-\s*', '- ', s)
+                s = re.sub(r'-\s*-\s*', '+ ', s)
+                s = re.sub(r'\+\s*\+\s*', '+ ', s)
+                s = re.sub(r'--(?=[0-9a-zA-Z])', '', s)
                 # Normalize Typst arrows to standard double arrows/implications
                 s = re.sub(r'\barrow\.r\.double\b', '==>', s)
                 s = re.sub(r'\barrow\.r\b', '->', s)

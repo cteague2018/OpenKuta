@@ -3647,10 +3647,10 @@ def _gen_decoupled_subtopic(
         tot = rate * x_val + fixed
         if "inequalit" in t_low:
             ineq_scenarios = [
-                ("A school club has ${fixed} and earns ${rate} per car washed. How many cars (x) must they wash to have at least ${tot}?", "cars", "wash"),
-                ("A student has ${fixed} in savings and earns ${rate} per hour tutoring. How many hours (x) must they tutor to have at least ${tot}?", "hours", "tutor"),
-                ("A sports team has ${fixed} in their travel fund and earns ${rate} per raffle ticket sold. How many tickets (x) must they sell to raise at least ${tot}?", "tickets", "sell"),
-                ("A community garden has ${fixed} and collects ${rate} per volunteer shift. How many shifts (x) are needed to collect at least ${tot}?", "shifts", "complete"),
+                (r"A school club has \${fixed} and earns \${rate} per car washed. How many cars (x) must they wash to have at least \${tot}?", "cars", "wash"),
+                (r"A student has \${fixed} in savings and earns \${rate} per hour tutoring. How many hours (x) must they tutor to have at least \${tot}?", "hours", "tutor"),
+                (r"A sports team has \${fixed} in their travel fund and earns \${rate} per raffle ticket sold. How many tickets (x) must they sell to raise at least \${tot}?", "tickets", "sell"),
+                (r"A community garden has \${fixed} and collects \${rate} per volunteer shift. How many shifts (x) are needed to collect at least \${tot}?", "shifts", "complete"),
             ]
             sc_text, unit_item, verb = rng.choice(ineq_scenarios)
             return {
@@ -3669,10 +3669,10 @@ def _gen_decoupled_subtopic(
                 ],
             }
         eq_scenarios = [
-            ("A service charges a ${fixed} base fee plus ${rate} per hour (x). For a total bill of y = ${tot}, find the hours x.", "hours"),
-            ("A bicycle rental service charges a ${fixed} reservation fee plus ${rate} per hour (x). For a total charge of y = ${tot}, find x.", "hours"),
-            ("A fitness center charges a ${fixed} registration fee plus ${rate} per month (x). For a total payment of y = ${tot}, find the months x.", "months"),
-            ("A canoe rental shop charges a ${fixed} deposit plus ${rate} per hour (x). For a total bill of y = ${tot}, find the hours x.", "hours"),
+            (r"A service charges a \${fixed} base fee plus \${rate} per hour (x). For a total bill of y = \${tot}, find the hours x.", "hours"),
+            (r"A bicycle rental service charges a \${fixed} reservation fee plus \${rate} per hour (x). For a total charge of y = \${tot}, find x.", "hours"),
+            (r"A fitness center charges a \${fixed} registration fee plus \${rate} per month (x). For a total payment of y = \${tot}, find the months x.", "months"),
+            (r"A canoe rental shop charges a \${fixed} deposit plus \${rate} per hour (x). For a total bill of y = \${tot}, find the hours x.", "hours"),
         ]
         sc_text, unit_item = rng.choice(eq_scenarios)
         return {
