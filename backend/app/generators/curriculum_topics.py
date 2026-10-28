@@ -1510,7 +1510,7 @@ def _gen_decoupled_subtopic(
         ext = a + b
         if scale > 1:
             ext_expr = f"{scale}x + {ext - scale * 15}"
-            eq_text = f"Remote interior angles: {a}° and {b}°. Exterior angle: ${ext_expr}^\\circ$."
+            eq_text = f"Remote interior angles: {a}° and {b}°. Exterior angle: ${ext_expr}^circle$."
             ans_typst = f"$ x = 15, quad \"Exterior angle\" = {ext}^circle $"
             diag = svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", ext_c=f"{ext_expr}°")
             ans_diag = svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", ext_c=f"{ext}°")

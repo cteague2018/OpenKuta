@@ -150,7 +150,7 @@ function typstToLatex(raw: string): string {
   s = s.replace(/\bintegral\b/g, "\\int ");
   s = s.replace(/\bdif\s+([a-zA-Z])/g, " \\, d$1");
   s = s.replace(/\boo\b/g, "\\infty ");
-  s = s.replace(/\^\s*\\?circle\b/g, "^{\\circ}");
+  s = s.replace(/(?:\^\s*\\?circle\b|°)/g, "^{\\circ}");
 
   // Matrices: mat(1, 0; 1, 2)
   s = s.replace(/\bmat\(([^)]+)\)/g, (_, inner) => {
@@ -242,20 +242,23 @@ function ProblemEquation({
   // If classified as Prose or Word Problem
   if (isProseProblem(trimmed)) {
     // 1. Clean legacy typst quote artifacts and normalize whitespace
-    let clean = trimmed.replace(/"/g, "").replace(/\\\$/g, "$").replace(/\s+/g, " ").trim();
+    let clean = trimmed.replace(/"/g, "").replace(/\s+/g, " ").trim();
     // Strip outer $ ... $ if present on prose problem
     if (clean.startsWith("$") && clean.endsWith("$") && (clean.match(/\$/g) || []).length === 2) {
       clean = clean.slice(1, -1).trim();
     }
-    clean = clean.replace(/\^\s*circle\b/g, "°").replace(/\bquad\b/g, " ");
+    clean = clean.replace(/\bquad\b/g, " ");
 
-    // 2. Protect currency amounts: e.g. $205, $8, $5, $12.50
+    // 2. Escaped dollars are definitely currency: e.g. \$205, \$8.50
     const CURRENCY_TOKEN = "___CURR___";
-    const protectedText = clean.replace(/\$\s*(\d+(?:,\d{3})*(?:\.\d+)?)/g, `${CURRENCY_TOKEN}$1`);
+    clean = clean.replace(/\\+\$/g, CURRENCY_TOKEN);
 
-    // 3. Check if there are actual LaTeX math pairs: $ ... $
-    if (protectedText.includes("$")) {
-      const parts = protectedText.split("$");
+    // 3. For unescaped dollars: only treat as currency if standalone money amount
+    clean = clean.replace(/\$\s*(\d+(?:,\d{3})*(?:\.\d+)?)(?=\s+(?:and|or|for|per|each|total|dollars?|cents?|[a-z]{3,})|[.,;!?)](?:\s|$)|$)/gi, `${CURRENCY_TOKEN}$1`);
+
+    // 4. Check if there are actual LaTeX math pairs: $ ... $
+    if (clean.includes("$")) {
+      const parts = clean.split("$");
       const Tag = inline ? "span" : "div";
       return (
         <Tag className={`${inline ? "inline pr-1" : "text-left px-1"} text-slate-800 text-sm leading-relaxed break-words ${className}`}>
@@ -271,7 +274,7 @@ function ProblemEquation({
       );
     }
 
-    const restoredText = protectedText.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
+    const restoredText = clean.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
     const Tag = inline ? "span" : "div";
     return (
       <Tag className={`${inline ? "inline pr-1" : "text-left px-1"} text-slate-800 text-sm font-normal leading-relaxed break-words ${className}`}>
