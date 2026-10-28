@@ -2,17 +2,19 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
+
 import pytest
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 try:
-    from backend.app.generators.svg_layout_engine import SVGCollisionSolver, BBox
-    from backend.app.generators.validator import validate_problem_sanity
     from backend.app.generators.registry import get_all_registered_generators
+    from backend.app.generators.svg_layout_engine import BBox, SVGCollisionSolver
+    from backend.app.generators.validator import validate_problem_sanity
 except ImportError:
-    from app.generators.svg_layout_engine import SVGCollisionSolver, BBox
-    from app.generators.validator import validate_problem_sanity
     from app.generators.registry import get_all_registered_generators
+    from app.generators.svg_layout_engine import BBox, SVGCollisionSolver
+    from app.generators.validator import validate_problem_sanity
 
 NAN_INF_REGEX = re.compile(r"\b(nan|inf|-inf|None)\b", re.IGNORECASE)
 

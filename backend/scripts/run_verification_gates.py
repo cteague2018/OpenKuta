@@ -17,7 +17,7 @@ def run_command(cmd: list[str]) -> int:
 def main() -> None:
     gates = [
         ["python", "backend/scripts/codemod_wrap_generators.py"],
-        ["python", "-m", "ruff", "check", "backend/app"],
+        ["python", "-m", "ruff", "check", "backend"],
         ["python", "-m", "mypy", "backend/app"],
         ["python", "-m", "pytest", "backend/tests/", "--ignore=backend/tests/test_hypothesis_fuzz_all.py", "-v"],
         ["python", "-m", "pytest", "backend/tests/test_hypothesis_fuzz_all.py", "-q"],
