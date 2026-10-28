@@ -4,6 +4,7 @@ import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 from backend.app.core.svg_utils import svg_coordinate_plane, svg_coordinate_plane_pair
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class SystemsGraphingGenerator(BaseGenerator):
@@ -12,6 +13,7 @@ class SystemsGraphingGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.REI.C.6", "CCSS.MATH.CONTENT.8.EE.C.8.A", "TEKS.MATH.A1.3.F"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -162,6 +164,7 @@ class SystemsSubstitutionGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.REI.C.6", "CCSS.MATH.CONTENT.8.EE.C.8.B", "TEKS.MATH.A1.5.C"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -283,6 +286,7 @@ class SystemsEliminationGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.REI.C.6", "CCSS.MATH.CONTENT.8.EE.C.8.B", "TEKS.MATH.A1.5.C"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -384,6 +388,7 @@ class SystemsInequalitiesGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.REI.D.12", "TEKS.MATH.A1.3.H"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -495,6 +500,7 @@ class SystemsOfEquationsGenerator(BaseGenerator):
         self._sub_gen = SystemsSubstitutionGenerator()
         self._elim_gen = SystemsEliminationGenerator()
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

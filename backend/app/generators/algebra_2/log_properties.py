@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class LogPropertiesGenerator(BaseGenerator):
@@ -11,6 +12,7 @@ class LogPropertiesGenerator(BaseGenerator):
     category = "Algebra 2"
     standards = ["CCSS.MATH.CONTENT.HSF.BF.B.5", "CCSS.MATH.CONTENT.HSF.LE.A.4"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

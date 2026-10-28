@@ -199,3 +199,12 @@ def validate_generated_problem(problem: Union[BaseProblem, Dict[str, Any]]) -> L
 
 
     return errors
+
+
+def validate_problem_sanity(problem: Any) -> None:
+    errors = validate_generated_problem(problem)
+    if errors:
+        raise ValueError(
+            f"Problem sanity validation failed with {len(errors)} defects:\n"
+            + "\n".join(f"  - {err}" for err in errors)
+        )

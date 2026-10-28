@@ -27,6 +27,8 @@ class BaseProblem(BaseModel):
     prompt_text: str = Field(..., description="Problem prompt instructions")
     equation_typst: str = Field(..., description="Problem equation in Typst syntax")
     answer_typst: str = Field(..., description="Final simplified answer in Typst syntax")
+    equation_latex: Optional[str] = Field(default=None, description="Pre-rendered KaTeX LaTeX equation")
+    answer_latex: Optional[str] = Field(default=None, description="Pre-rendered KaTeX LaTeX answer")
     steps_typst: List[str] = Field(default_factory=list, description="Step-by-step solution steps")
     distractors: List[str] = Field(default_factory=list, description="Common misconception-based distractors")
     choices: List[Dict[str, str]] = Field(default_factory=list, description="Multiple-choice options A, B, C, D with letter and text")
@@ -62,6 +64,8 @@ class BaseProblem(BaseModel):
                 s = re.sub(r'\barrow\.l\b', '<-', s)
                 s = re.sub(r'\barrow\.l\.r\.double\b', '<==>', s)
                 s = re.sub(r'\barrow\.l\.r\b', '<->', s)
+                # Replace legacy ^circle or ^\circle with standard degree symbol °
+                s = re.sub(r'\^\\?circle\b', '°', s)
                 return s
 
             for key in ["equation_typst", "answer_typst", "prompt_text"]:
@@ -70,22 +74,62 @@ class BaseProblem(BaseModel):
             if "steps_typst" in data and isinstance(data["steps_typst"], list):
                 data["steps_typst"] = [clean_str(item) for item in data["steps_typst"]]
             if "distractors" in data and isinstance(data["distractors"], list):
-                data["distractors"] = [clean_str(item) for item in data["distractors"]]
+                clean_ans = clean_str(data.get("answer_typst", "")).strip()
+                seen = {clean_ans}
+                unique_d = []
+                for item in data["distractors"]:
+                    cs = clean_str(item).strip()
+                    if cs and cs not in seen:
+                        seen.add(cs)
+                        unique_d.append(cs)
+
+                # Guarantee at least 3 distinct non-colliding distractors
+                has_dollars = clean_ans.startswith("$") and clean_ans.endswith("$")
+                stripped = clean_ans.replace("$", "").strip()
+                offset = 1
+                while len(unique_d) < 3:
+                    if "=" in stripped:
+                        vpart, valpart = stripped.split("=", 1)
+                        try:
+                            num = int(valpart.strip())
+                            fb_raw = f"{vpart.strip()} = {num + offset}"
+                        except Exception:
+                            fb_raw = f"{stripped} + {offset}"
+                    elif ">" in stripped:
+                        vpart, valpart = stripped.split(">", 1)
+                        try:
+                            num = int(valpart.strip())
+                            fb_raw = f"{vpart.strip()} > {num + offset}"
+                        except Exception:
+                            fb_raw = f"{stripped} + {offset}"
+                    elif "<" in stripped:
+                        vpart, valpart = stripped.split("<", 1)
+                        try:
+                            num = int(valpart.strip())
+                            fb_raw = f"{vpart.strip()} < {num + offset}"
+                        except Exception:
+                            fb_raw = f"{stripped} + {offset}"
+                    else:
+                        fb_raw = f"{stripped} + {offset}"
+
+                    fallback = f"$ {fb_raw} $" if has_dollars else fb_raw
+                    if fallback not in seen:
+                        seen.add(fallback)
+                        unique_d.append(fallback)
+                    offset += 1
+                    if offset > 15:
+                        break
+
+                data["distractors"] = unique_d
         return data
 
-    @property
-    def equation_latex(self) -> str:
-        """Helper returning basic LaTeX equivalent for web preview."""
-        # Convert common typst math symbols to LaTeX if needed
-        eq = self.equation_typst
-        eq = eq.replace("$", "").strip()
-        # Basic replacement for fractions: (a) / (b) or a/b -> \frac{a}{b}
-        return eq
-
-    @property
-    def answer_latex(self) -> str:
-        ans = self.answer_typst.replace("$", "").strip()
-        return ans
+    @model_validator(mode="after")
+    def populate_latex_fields(self) -> BaseProblem:
+        if not self.equation_latex:
+            self.equation_latex = self.equation_typst.replace("$", "").replace("°", "^{\\circ}").strip()
+        if not self.answer_latex:
+            self.answer_latex = self.answer_typst.replace("$", "").replace("°", "^{\\circ}").strip()
+        return self
 
 
 class GeneratorConfig(BaseModel):

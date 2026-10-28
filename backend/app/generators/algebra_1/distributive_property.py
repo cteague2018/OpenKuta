@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class DistributivePropertyGenerator(BaseGenerator):
@@ -11,6 +12,7 @@ class DistributivePropertyGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.SSE.A.2", "CCSS.MATH.CONTENT.6.EE.A.3"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

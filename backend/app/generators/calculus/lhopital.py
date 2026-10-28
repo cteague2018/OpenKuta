@@ -5,6 +5,7 @@ import random
 from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 def format_fraction_typst(num: int, den: int) -> str:
@@ -44,6 +45,7 @@ class LhopitalGenerator(BaseGenerator):
     category = "Calculus"
     standards = ["AP.CALC.LIM.3", "AP.CALC.LIM.4"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

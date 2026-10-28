@@ -4,6 +4,7 @@ import math
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class PythagoreanTheoremGenerator(BaseGenerator):
@@ -17,6 +18,7 @@ class PythagoreanTheoremGenerator(BaseGenerator):
         "TEKS.MATH.G.9.B"
     ]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

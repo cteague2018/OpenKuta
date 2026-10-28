@@ -8,6 +8,7 @@ import sympy as sp
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 from backend.app.core.svg_utils import svg_coordinate_plane_pair
 from backend.app.core.typst_utils import format_polynomial_typst
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class QuadraticEquationsGenerator(BaseGenerator):
@@ -21,6 +22,7 @@ class QuadraticEquationsGenerator(BaseGenerator):
         "TEKS.MATH.A1.8.A"
     ]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -237,6 +239,7 @@ class QuadraticsFactoringGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.REI.B.4.B", "TEKS.MATH.A1.8.A"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -334,6 +337,7 @@ class QuadraticsSquareRootsGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.REI.B.4.B", "TEKS.MATH.A1.8.A"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -408,6 +412,7 @@ class QuadraticsFormulaGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.REI.B.4.B", "TEKS.MATH.A1.8.A"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -478,6 +483,7 @@ class QuadraticsDiscriminantGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.REI.B.4.B", "TEKS.MATH.A1.8.A"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -562,6 +568,7 @@ class QuadraticsCompletingSquareGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.REI.B.4.B", "TEKS.MATH.A1.8.A"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -629,6 +636,7 @@ class GraphingQuadraticsGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSF.IF.C.7.A", "TEKS.MATH.A1.7.A"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

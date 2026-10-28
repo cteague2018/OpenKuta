@@ -4,6 +4,7 @@ import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 from backend.app.core.svg_utils import svg_angle_diagram, svg_parallel_transversal
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class GeometryAnglesLinesGenerator(BaseGenerator):
@@ -12,6 +13,7 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
     category = "Geometry"
     standards = ["CCSS.MATH.CONTENT.HSG.CO.C.9"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -38,28 +40,28 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
             given = rng.choice([18, 25, 32, 41, 48, 54, 63, 72])
 
         missing = total - given
-        eq_typst = f"\"angle 1 and angle 2 are \" {type_name}, quad m angle 1 = {given}^circle, quad m angle 2 = ?"
-        ans_typst = f"m angle 2 = {missing}^circle"
+        eq_typst = f"\"angle 1 and angle 2 are \" {type_name}, quad m angle 1 = {given}°, quad m angle 2 = ?"
+        ans_typst = f"m angle 2 = {missing}°"
 
         steps = [
-            f"Recall that {type_name} angles sum to $ {total}^circle $.",
-            f"Equation: $ m angle 1 + m angle 2 = {total}^circle $",
-            f"Substitute the given angle: $ {given}^circle + m angle 2 = {total}^circle $",
-            f"Subtract $ {given}^circle $ from both sides: $ m angle 2 = {total}^circle - {given}^circle = {missing}^circle $",
+            f"Recall that {type_name} angles sum to $ {total}° $.",
+            f"Equation: $ m angle 1 + m angle 2 = {total}° $",
+            f"Substitute the given angle: $ {given}° + m angle 2 = {total}° $",
+            f"Subtract $ {given}° $ from both sides: $ m angle 2 = {total}° - {given}° = {missing}° $",
             f"Result: $ {ans_typst} $"
         ]
 
         # Distractor 1: used wrong total (90 vs 180)
         wrong_total = 90 if is_supp else 180
-        d1 = f"m angle 2 = {abs(wrong_total - given)}^circle"
+        d1 = f"m angle 2 = {abs(wrong_total - given)}°"
         # Distractor 2: added instead of subtracted
-        d2 = f"m angle 2 = {missing + 10}^circle"
+        d2 = f"m angle 2 = {missing + 10}°"
         # Distractor 3: repeated given
-        d3 = f"m angle 2 = {given}^circle"
+        d3 = f"m angle 2 = {given}°"
 
         distractors = list(dict.fromkeys([d1, d2, d3]))
         while len(distractors) < 2:
-            distractors.append(f"m angle 2 = {missing + 5}^circle")
+            distractors.append(f"m angle 2 = {missing + 5}°")
 
         if is_supp:
             diag_mild = svg_angle_diagram(angle_degrees=float(given), mode="linear_pair", angle_label=f"{given}°", interior_angle_label="?")
@@ -149,8 +151,8 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
             sign_b = f"- {abs(b)}" if b < 0 else f"+ {b}"
             sign_d = f"- {abs(d)}" if d < 0 else f"+ {d}"
 
-            eq_typst = f"l_1 parallel l_2 \" cut by transversal.\" quad angle 1 \" and \" angle 2 \" are alternate interior:\" quad m angle 1 = ({a}x {sign_b})^circle, quad m angle 2 = ({c}x {sign_d})^circle"
-            ans_typst = f"x = {x_val}, quad m angle 1 = {target_angle}^circle"
+            eq_typst = f"l_1 parallel l_2 \" cut by transversal.\" quad angle 1 \" and \" angle 2 \" are alternate interior:\" quad m angle 1 = ({a}x {sign_b})°, quad m angle 2 = ({c}x {sign_d})°"
+            ans_typst = f"x = {x_val}, quad m angle 1 = {target_angle}°"
 
             steps = [
                 "Alternate Interior Angles Theorem: When two parallel lines are cut by a transversal, alternate interior angles are congruent: $ m angle 1 = m angle 2 $.",
@@ -158,13 +160,13 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
                 f"Subtract $ {c}x $ from both sides: $ {a - c}x {sign_b} = {d} $",
                 f"Isolate the $ x $-term: $ {a - c}x = {d - b} $",
                 f"Divide by $ {a - c} $: $ x = {d - b} / {a - c} = {x_val} $",
-                f"Find the angle measure: $ m angle 1 = {a}({x_val}) {sign_b} = {target_angle}^circle $",
+                f"Find the angle measure: $ m angle 1 = {a}({x_val}) {sign_b} = {target_angle}° $",
                 f"Result: $ {ans_typst} $"
             ]
 
-            d1 = f"x = {x_val + 2}, quad m angle 1 = {target_angle + 2 * a}^circle"
-            d2 = f"x = {x_val}, quad m angle 1 = {180 - target_angle}^circle"
-            d3 = f"x = {x_val - 2 if x_val > 3 else x_val + 3}, quad m angle 1 = {target_angle}^circle"
+            d1 = f"x = {x_val + 2}, quad m angle 1 = {target_angle + 2 * a}°"
+            d2 = f"x = {x_val}, quad m angle 1 = {180 - target_angle}°"
+            d3 = f"x = {x_val - 2 if x_val > 3 else x_val + 3}, quad m angle 1 = {target_angle}°"
 
         else:
             # Consecutive interior angles (supplementary: (ax + b) + (cx + d) = 180)
@@ -184,26 +186,26 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
             sign_b = f"- {abs(b)}" if b < 0 else f"+ {b}"
             sign_d = f"- {abs(d)}" if d < 0 else f"+ {d}"
 
-            eq_typst = f"l_1 parallel l_2 \" cut by transversal.\" quad angle 1 \" and \" angle 2 \" are consecutive interior:\" quad m angle 1 = ({a}x {sign_b})^circle, quad m angle 2 = ({c}x {sign_d})^circle"
-            ans_typst = f"x = {x_val}, quad m angle 1 = {ang1}^circle, quad m angle 2 = {ang2}^circle"
+            eq_typst = f"l_1 parallel l_2 \" cut by transversal.\" quad angle 1 \" and \" angle 2 \" are consecutive interior:\" quad m angle 1 = ({a}x {sign_b})°, quad m angle 2 = ({c}x {sign_d})°"
+            ans_typst = f"x = {x_val}, quad m angle 1 = {ang1}°, quad m angle 2 = {ang2}°"
 
             steps = [
-                "Consecutive Interior Angles Theorem: When two parallel lines are cut by a transversal, consecutive interior angles are supplementary: $ m angle 1 + m angle 2 = 180^circle $.",
+                "Consecutive Interior Angles Theorem: When two parallel lines are cut by a transversal, consecutive interior angles are supplementary: $ m angle 1 + m angle 2 = 180° $.",
                 f"Set up equation: $ ({a}x {sign_b}) + ({c}x {sign_d}) = 180 $",
                 f"Combine like terms: $ {sum_coef}x + {total_const} = 180 $",
                 f"Subtract $ {total_const} $ from both sides: $ {sum_coef}x = {180 - total_const} $",
                 f"Divide by $ {sum_coef} $: $ x = {180 - total_const} / {sum_coef} = {x_val} $",
-                f"Calculate angles: $ m angle 1 = {a}({x_val}) {sign_b} = {ang1}^circle $ and $ m angle 2 = {c}({x_val}) {sign_d} = {ang2}^circle $.",
+                f"Calculate angles: $ m angle 1 = {a}({x_val}) {sign_b} = {ang1}° $ and $ m angle 2 = {c}({x_val}) {sign_d} = {ang2}° $.",
                 f"Result: $ {ans_typst} $"
             ]
 
-            d1 = f"x = {x_val + 2}, quad m angle 1 = {ang1 + 2 * a}^circle, quad m angle 2 = {ang2 + 2 * c}^circle"
-            d2 = f"x = {x_val}, quad m angle 1 = {ang2}^circle, quad m angle 2 = {ang1}^circle"
-            d3 = f"x = {x_val - 1}, quad m angle 1 = {ang1 - a}^circle, quad m angle 2 = {ang2 - c}^circle"
+            d1 = f"x = {x_val + 2}, quad m angle 1 = {ang1 + 2 * a}°, quad m angle 2 = {ang2 + 2 * c}°"
+            d2 = f"x = {x_val}, quad m angle 1 = {ang2}°, quad m angle 2 = {ang1}°"
+            d3 = f"x = {x_val - 1}, quad m angle 1 = {ang1 - a}°, quad m angle 2 = {ang2 - c}°"
 
         distractors = list(dict.fromkeys([d1, d2, d3]))
         while len(distractors) < 2:
-            distractors.append(f"x = {x_val + 1}, quad m angle 1 = 60^circle")
+            distractors.append(f"x = {x_val + 1}, quad m angle 1 = 60°")
 
         return BaseProblem(
             id=f"geom_ang_spicy_{problem_idx}",

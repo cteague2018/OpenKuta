@@ -4,6 +4,7 @@ import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 from backend.app.core.svg_utils import svg_coordinate_plane_pair
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class ExponentialFunctionsGenerator(BaseGenerator):
@@ -12,6 +13,7 @@ class ExponentialFunctionsGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSF.LE.A.1", "CCSS.MATH.CONTENT.HSF.LE.A.2"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -110,6 +112,7 @@ class GraphingExponentialGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSF.IF.C.7.E", "TEKS.MATH.A1.9.D"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

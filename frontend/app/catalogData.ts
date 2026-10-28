@@ -26,6 +26,8 @@ export interface Problem {
   prompt_text: string;
   equation_typst: string;
   answer_typst: string;
+  equation_latex?: string;
+  answer_latex?: string;
   steps_typst: string[];
   distractors: string[];
   choices?: Choice[];

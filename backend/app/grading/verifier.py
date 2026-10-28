@@ -13,6 +13,8 @@ from sympy.parsing.sympy_parser import (
     standard_transformations,
 )
 
+from backend.app.grading.step_verifier import verify_student_step_transition
+
 _PARSER_TRANSFORMS = standard_transformations + (implicit_multiplication_application, convert_xor)
 
 
@@ -124,6 +126,16 @@ class CASStepVerifier:
         """Check if step_curr is an algebraically valid transition from step_prev."""
         expr_prev = self.extract_difference_expr(step_prev)
         expr_curr = self.extract_difference_expr(step_curr)
+
+        # Check relational solution-set equivalence
+        try:
+            prev_basic = sp.Eq(step_prev[0], step_prev[1]) if isinstance(step_prev, tuple) else step_prev
+            curr_basic = sp.Eq(step_curr[0], step_curr[1]) if isinstance(step_curr, tuple) else step_curr
+            valid, _ = verify_student_step_transition(prev_basic, curr_basic, self.x)
+            if valid:
+                return True, sp.Integer(0)
+        except Exception:
+            pass
 
         # Delta between expressions
         delta = sp.simplify(expr_curr - expr_prev)

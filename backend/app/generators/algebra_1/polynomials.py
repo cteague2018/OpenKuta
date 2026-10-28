@@ -6,6 +6,7 @@ import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 from backend.app.core.typst_utils import format_polynomial_typst
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class PolynomialFactoringGenerator(BaseGenerator):
@@ -19,6 +20,7 @@ class PolynomialFactoringGenerator(BaseGenerator):
         "TEKS.MATH.A1.10.F"
     ]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -170,6 +172,7 @@ class PolynomialAddSubGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.APR.A.1", "TEKS.MATH.A1.10.A"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -297,6 +300,7 @@ class PolynomialMultiplyGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.APR.A.1", "TEKS.MATH.A1.10.B"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

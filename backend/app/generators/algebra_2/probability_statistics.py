@@ -4,6 +4,7 @@ import math
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class ProbabilityStatisticsGenerator(BaseGenerator):
@@ -12,6 +13,7 @@ class ProbabilityStatisticsGenerator(BaseGenerator):
     category = "Algebra 2"
     standards = ["CCSS.MATH.CONTENT.HSS.CP.A.1", "CCSS.MATH.CONTENT.HSS.CP.B.9"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

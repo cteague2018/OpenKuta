@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class GeneralFunctionsGenerator(BaseGenerator):
@@ -11,6 +12,7 @@ class GeneralFunctionsGenerator(BaseGenerator):
     category = "Algebra 2"
     standards = ["CCSS.MATH.CONTENT.HSF.BF.A.1", "CCSS.MATH.CONTENT.HSF.BF.B.4"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

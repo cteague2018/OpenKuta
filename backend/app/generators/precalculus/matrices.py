@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class PrecalcMatricesGenerator(BaseGenerator):
@@ -11,6 +12,7 @@ class PrecalcMatricesGenerator(BaseGenerator):
     category = "Precalculus"
     standards = ["CCSS.MATH.CONTENT.HSN.VM.C.8", "CCSS.MATH.CONTENT.HSN.VM.C.10"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

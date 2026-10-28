@@ -169,7 +169,7 @@ def gen_adv_problem(
         return {
             "prompt_text": "Multiply the transformation matrix by the point matrix and plot both on the coordinate plane.",
             "equation_typst": f"$ mat(0, -1; 1, 0) mat({px}; {py}) $",
-            "answer_typst": f"$ mat({nx}; {ny}) quad (90^circle \" CCW rotation\") $",
+            "answer_typst": f"$ mat({nx}; {ny}) quad (90° \" CCW rotation\") $",
             "steps_typst": [
                 f"Multiply the first row by the column vector: $0({px}) + (-1)({py}) = {nx}$.",
                 f"Multiply the second row by the column vector: $1({px}) + 0({py}) = {ny}$.",
@@ -233,17 +233,17 @@ def gen_adv_problem(
         deg = rng.choice([30, 45, 60, 120, 135, 150, 240, 300])
         return {
             "prompt_text": "Plot the complex number in polar form on the polar grid and find its modulus and argument.",
-            "equation_typst": f"$ z = {r}(cos({deg}^circle) + i sin({deg}^circle)) $",
-            "answer_typst": f"$ |z| = {r}, quad theta = {deg}^circle $",
+            "equation_typst": f"$ z = {r}(cos({deg}°) + i sin({deg}°)) $",
+            "answer_typst": f"$ |z| = {r}, quad theta = {deg}° $",
             "steps_typst": [
                 f"In polar form $z = r(cos theta + i sin theta)$, the modulus is $r = {r}$.",
-                f"The argument (angle from the positive real axis) is $theta = {deg}^circle$.",
-                f"Plot at radius $r = {min(r, 4)}$ along ray ${deg}^circle$.",
+                f"The argument (angle from the positive real axis) is $theta = {deg}°$.",
+                f"Plot at radius $r = {min(r, 4)}$ along ray ${deg}°$.",
             ],
             "distractors": [
-                f"$ |z| = {r * r}, quad theta = {deg}^circle $",
-                f"$ |z| = {r}, quad theta = {360 - deg}^circle $",
-                f"$ |z| = {r // 2}, quad theta = {deg + 90}^circle $",
+                f"$ |z| = {r * r}, quad theta = {deg}° $",
+                f"$ |z| = {r}, quad theta = {360 - deg}° $",
+                f"$ |z| = {r // 2}, quad theta = {deg + 90}° $",
             ],
             "diagram_svg": svg_polar_grid(),
             "answer_svg": svg_polar_grid(points=[(min(r / 2, 4), deg, "z")]),
@@ -883,11 +883,11 @@ def gen_adv_problem(
                 y_val_clean = round(r_mult * s_val, 2)
                 return {
                     "prompt_text": "Convert the polar coordinates (r, theta) to exact rectangular coordinates (x, y).",
-                    "equation_typst": f"$ (r, theta) = ({r_mult}, {d_ang}^circle) $",
+                    "equation_typst": f"$ (r, theta) = ({r_mult}, {d_ang}°) $",
                     "answer_typst": f"$ (x, y) = ({x_val_clean}, {y_val_clean}) $",
                     "steps_typst": [
-                        f"Compute x-coordinate: $x = r cos(theta) = {r_mult} cos({d_ang}^circle) = {r_mult}({cos_s}) = {x_val_clean}$.",
-                        f"Compute y-coordinate: $y = r sin(theta) = {r_mult} sin({d_ang}^circle) = {r_mult}({sin_s}) = {y_val_clean}$.",
+                        f"Compute x-coordinate: $x = r cos(theta) = {r_mult} cos({d_ang}°) = {r_mult}({cos_s}) = {x_val_clean}$.",
+                        f"Compute y-coordinate: $y = r sin(theta) = {r_mult} sin({d_ang}°) = {r_mult}({sin_s}) = {y_val_clean}$.",
                         f"Result: $(x, y) = ({x_val_clean}, {y_val_clean})$.",
                     ],
                     "distractors": [
@@ -904,16 +904,16 @@ def gen_adv_problem(
                 return {
                     "prompt_text": "Convert the rectangular coordinates (x, y) to polar coordinates (r, theta) with r > 0 and 0 <= theta < 360 deg.",
                     "equation_typst": f"$ (x, y) = ({rx}, {ry}) $",
-                    "answer_typst": f"$ (r, theta) = ({r_ans}, {th_ans}^circle) $",
+                    "answer_typst": f"$ (r, theta) = ({r_ans}, {th_ans}°) $",
                     "steps_typst": [
                         f"Calculate radius $r = sqrt(x^2 + y^2) = sqrt(({rx})^2 + ({ry})^2) = {r_ans}$.",
-                        f"Calculate angle $theta = arctan(y / x) = arctan(({ry}) / ({rx})) ==> theta = {th_ans}^circle$.",
-                        f"Result: $(r, theta) = ({r_ans}, {th_ans}^circle)$.",
+                        f"Calculate angle $theta = arctan(y / x) = arctan(({ry}) / ({rx})) ==> theta = {th_ans}°$.",
+                        f"Result: $(r, theta) = ({r_ans}, {th_ans}°)$.",
                     ],
                     "distractors": [
-                        f"$ (r, theta) = ({r_ans}, {(th_ans + 90) % 360}^circle) $",
-                        f"$ (r, theta) = ({rx + ry}, {th_ans}^circle) $",
-                        f"$ (r, theta) = ({ry}, {rx}^circle) $",
+                        f"$ (r, theta) = ({r_ans}, {(th_ans + 90) % 360}°) $",
+                        f"$ (r, theta) = ({rx + ry}, {th_ans}°) $",
+                        f"$ (r, theta) = ({ry}, {rx}°) $",
                     ],
                     "diagram_svg": svg_coordinate_plane(points=[(rx, ry, f"({rx}, {ry})", True)]),
                     "answer_svg": svg_polar_grid(),
@@ -976,17 +976,17 @@ def gen_adv_problem(
         alt_deg2 = (deg + 180) % 360
         return {
             "prompt_text": "Plot the polar point (r, theta) on the polar grid and find an equivalent polar representation with r > 0 and r < 0.",
-            "equation_typst": f"$ P({r}, {deg}^circle) $",
-            "answer_typst": f"$ ({r}, {alt_deg1}^circle) \" and \" ({-r}, {alt_deg2}^circle) $",
+            "equation_typst": f"$ P({r}, {deg}°) $",
+            "answer_typst": f"$ ({r}, {alt_deg1}°) \" and \" ({-r}, {alt_deg2}°) $",
             "steps_typst": [
-                f"Locate angle $theta = {deg}^circle$ on the grid and measure $r = {r}$ concentric units outward.",
-                f"Adding $360^circle$ preserves direction: $({r}, {deg}^circle + 360^circle) = ({r}, {alt_deg1}^circle)$.",
-                f"Negating $r$ and adding $180^circle$ reflects through the pole to the same point: $({-r}, {alt_deg2}^circle)$.",
+                f"Locate angle $theta = {deg}°$ on the grid and measure $r = {r}$ concentric units outward.",
+                f"Adding $360°$ preserves direction: $({r}, {deg}° + 360°) = ({r}, {alt_deg1}°)$.",
+                f"Negating $r$ and adding $180°$ reflects through the pole to the same point: $({-r}, {alt_deg2}°)$.",
             ],
             "distractors": [
-                f"$ ({-r}, {deg}^circle) $",
-                f"$ ({r}, {alt_deg2}^circle) $",
-                f"$ ({r * 2}, {deg}^circle) $",
+                f"$ ({-r}, {deg}°) $",
+                f"$ ({r}, {alt_deg2}°) $",
+                f"$ ({r * 2}, {deg}°) $",
             ],
             "diagram_svg": svg_polar_grid(),
             "answer_svg": svg_polar_grid(max_r=max(5, r), points=[(r, deg, "P")]),
@@ -1123,10 +1123,10 @@ def gen_adv_problem(
             rad_str = f"({num_str}pi)/({den})" if den != 1 else f"{num_str}pi"
             return {
                 "prompt_text": "Convert the angle measure from degrees to radians in exact simplified form.",
-                "equation_typst": f"$ {deg}^circle $",
+                "equation_typst": f"$ {deg}° $",
                 "answer_typst": f"$ {rad_str} $",
                 "steps_typst": [
-                    f"Multiply by the conversion factor $(pi \" rad\") / (180^circle)$: ${deg}^circle times pi / 180^circle$.",
+                    f"Multiply by the conversion factor $(pi \" rad\") / (180°)$: ${deg}° times pi / 180°$.",
                     f"Simplify fraction $({deg})/(180)$ by dividing by GCF ${g}$.",
                     f"Exact radian measure: ${rad_str}$.",
                 ],
@@ -1141,13 +1141,13 @@ def gen_adv_problem(
             return {
                 "prompt_text": "Convert the angle measure from radians to degrees.",
                 "equation_typst": f"$ {rad_expr} $",
-                "answer_typst": f"$ {deg}^circle $",
+                "answer_typst": f"$ {deg}° $",
                 "steps_typst": [
-                    f"Multiply by the conversion factor $180^circle / pi$: ${rad_expr} times (180^circle) / pi$.",
-                    f"Cancel $pi$ and simplify: $({num} times 180^circle) / {den}$.",
-                    f"Result: ${deg}^circle$.",
+                    f"Multiply by the conversion factor $180° / pi$: ${rad_expr} times (180°) / pi$.",
+                    f"Cancel $pi$ and simplify: $({num} times 180°) / {den}$.",
+                    f"Result: ${deg}°$.",
                 ],
-                "distractors": [f"$ {deg + 30}^circle $", f"$ {180 - deg}^circle $", f"$ {deg * 2}^circle $"],
+                "distractors": [f"$ {deg + 30}° $", f"$ {180 - deg}° $", f"$ {deg * 2}° $"],
             }
 
     if "coterminal angles" in t_low:
@@ -1156,17 +1156,17 @@ def gen_adv_problem(
         neg_cot = ang - 360
         return {
             "prompt_text": "Find one positive angle and one negative angle that are coterminal with the given angle.",
-            "equation_typst": f"$ {ang}^circle $",
-            "answer_typst": f"$ {pos_cot}^circle \" and \" {neg_cot}^circle $",
+            "equation_typst": f"$ {ang}° $",
+            "answer_typst": f"$ {pos_cot}° \" and \" {neg_cot}° $",
             "steps_typst": [
-                f"Add $360^circle$ for a positive coterminal angle: ${ang}^circle + 360^circle = {pos_cot}^circle$.",
-                f"Subtract $360^circle$ for a negative coterminal angle: ${ang}^circle - 360^circle = {neg_cot}^circle$.",
-                f"Coterminal angles: ${pos_cot}^circle$ and ${neg_cot}^circle$.",
+                f"Add $360°$ for a positive coterminal angle: ${ang}° + 360° = {pos_cot}°$.",
+                f"Subtract $360°$ for a negative coterminal angle: ${ang}° - 360° = {neg_cot}°$.",
+                f"Coterminal angles: ${pos_cot}°$ and ${neg_cot}°$.",
             ],
             "distractors": [
-                f"$ {ang + 180}^circle \" and \" {ang - 180}^circle $",
-                f"$ {360 - ang}^circle \" and \" {-ang}^circle $",
-                f"$ {ang + 90}^circle \" and \" {ang - 90}^circle $",
+                f"$ {ang + 180}° \" and \" {ang - 180}° $",
+                f"$ {360 - ang}° \" and \" {-ang}° $",
+                f"$ {ang + 90}° \" and \" {ang - 90}° $",
             ],
         }
 

@@ -41,6 +41,7 @@ Desktop.ini
 .idea/
 
 # Testing & Compilation Temp Output
+.hypothesis/
 *.pdf
 aruco_*.png
 qr_*.png

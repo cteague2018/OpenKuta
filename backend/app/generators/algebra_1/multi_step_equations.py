@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class MultiStepEquationsGenerator(BaseGenerator):
@@ -16,6 +17,7 @@ class MultiStepEquationsGenerator(BaseGenerator):
         "TEKS.MATH.A1.5.A",
     ]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

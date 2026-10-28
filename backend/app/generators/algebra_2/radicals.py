@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 def simplify_radical(n: int) -> tuple[int, int]:
@@ -23,6 +24,7 @@ class Algebra2RadicalsGenerator(BaseGenerator):
     category = "Algebra 2"
     standards = ["CCSS.MATH.CONTENT.HSN.RN.A.2", "CCSS.MATH.CONTENT.HSA.REI.A.2"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

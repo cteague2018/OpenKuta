@@ -5,6 +5,7 @@ import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 from backend.app.core.svg_utils import svg_circle_diagram
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class GeometryCirclesGenerator(BaseGenerator):
@@ -13,6 +14,7 @@ class GeometryCirclesGenerator(BaseGenerator):
     category = "Geometry"
     standards = ["CCSS.MATH.CONTENT.HSG.C.A.2", "CCSS.MATH.CONTENT.HSG.C.B.5"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -83,12 +85,12 @@ class GeometryCirclesGenerator(BaseGenerator):
         else:
             arc_str = f"({num} pi)/{den}"
 
-        eq_typst = f"\"radius \" r = {r}, quad \"central angle \" theta = {theta}^circle"
+        eq_typst = f"\"radius \" r = {r}, quad \"central angle \" theta = {theta}°"
         ans_typst = f"s = {arc_str}"
 
         steps = [
-            "Recall the arc length formula: $ s = 2 pi r dot (theta / 360^circle) $",
-            f"Substitute known values: $ s = 2 pi ({r}) dot ({theta}^circle / 360^circle) $",
+            "Recall the arc length formula: $ s = 2 pi r dot (theta / 360°) $",
+            f"Substitute known values: $ s = 2 pi ({r}) dot ({theta}° / 360°) $",
             f"Multiply the terms: $ s = ({raw_num} pi) / 360 $",
             f"Divide numerator and denominator by $ gcd({raw_num}, 360) = {g} $ to simplify completely.",
             f"Result: $ {ans_typst} $"
@@ -148,12 +150,12 @@ class GeometryCirclesGenerator(BaseGenerator):
         else:
             sector_str = f"({num} pi)/{den}"
 
-        eq_typst = f"\"radius \" r = {r}, quad \"central angle \" theta = {theta}^circle"
+        eq_typst = f"\"radius \" r = {r}, quad \"central angle \" theta = {theta}°"
         ans_typst = f"A = {sector_str}"
 
         steps = [
-            "Recall the sector area formula: $ A = pi r^2 dot (theta / 360^circle) $",
-            f"Substitute known values: $ A = pi ({r})^2 dot ({theta}^circle / 360^circle) $",
+            "Recall the sector area formula: $ A = pi r^2 dot (theta / 360°) $",
+            f"Substitute known values: $ A = pi ({r})^2 dot ({theta}° / 360°) $",
             f"Square the radius: $ ({r})^2 = {r2} $, yielding $ A = ({r2} dot {theta} pi) / 360 = ({raw_num} pi) / 360 $",
             f"Simplify fraction by dividing numerator and denominator by $ gcd({raw_num}, 360) = {g} $.",
             f"Result: $ {ans_typst} $"

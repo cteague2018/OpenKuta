@@ -31,6 +31,10 @@ class WorksheetAligner:
             cv2.aruco.DICT_4X4_50
         )
         self.aruco_params = cv2.aruco.DetectorParameters()
+        self.aruco_params.cornerRefinementMethod = cv2.aruco.CORNER_REFINE_SUBPIX
+        self.aruco_params.cornerRefinementWinSize = 5
+        self.aruco_params.cornerRefinementMaxIterations = 30
+        self.aruco_params.cornerRefinementMinAccuracy = 0.05
         self.aruco_detector = cv2.aruco.ArucoDetector(
             self.aruco_dict, self.aruco_params
         )

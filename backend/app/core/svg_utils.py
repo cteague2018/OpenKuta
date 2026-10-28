@@ -5,6 +5,8 @@ import math
 import re
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
+from backend.app.generators.svg_layout_engine import BBox, SVGCollisionSolver
+
 _SVG_STYLE = 'style="max-width:100%;height:auto;display:block;margin:0 auto;"'
 
 
@@ -81,7 +83,7 @@ def svg_coordinate_plane(
 
     if polygons:
         for poly in polygons:
-            if poly.get("stroke") == "none":
+            if poly.get("stroke") in ("none", "transparent"):
                 continue
             verts = poly.get("vertices") or poly.get("points") or []
             for vx, vy in verts:
@@ -265,6 +267,8 @@ def svg_coordinate_plane(
                 f'fill="#60a5fa" fill-opacity="0.3" stroke="#2563eb" stroke-width="1" clip-path="url(#plot-clip)"/>'
             )
 
+    collision_solver = SVGCollisionSolver(width=width, height=height, margin=pad)
+
     # Axes
     ox, oy = to_px(0, 0)
     ox_clamped = min(max(ox, pad), width - pad)
@@ -281,18 +285,31 @@ def svg_coordinate_plane(
         px, _ = to_px(gx, 0)
         parts.append(f'<line x1="{px}" y1="{oy_clamped - 2.5}" x2="{px}" y2="{oy_clamped + 2.5}" stroke="#0f172a" stroke-width="1.2"/>')
         if show_numbers and gx % label_step_x == 0 and pad + 8 <= px <= width - pad - 8:
-            parts.append(f'<text x="{px}" y="{min(oy_clamped + 11, height - 5)}" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#0f172a" text-anchor="middle">{gx}</text>')
+            tx = px
+            ty = min(oy_clamped + 11, height - 5)
+            collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(tx, ty, str(gx), 10.5))
+            parts.append(f'<text x="{tx}" y="{ty}" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#0f172a" text-anchor="middle">{gx}</text>')
     for gy in range(int(math.ceil(y_min)), int(math.floor(y_max)) + 1):
         if gy == 0:
             continue
         _, py = to_px(0, gy)
         parts.append(f'<line x1="{ox_clamped - 2.5}" y1="{py}" x2="{ox_clamped + 2.5}" y2="{py}" stroke="#0f172a" stroke-width="1.2"/>')
         if show_numbers and gy % label_step_y == 0 and pad + 6 <= py <= height - pad - 6:
-            parts.append(f'<text x="{max(ox_clamped - 4, pad + 10)}" y="{py + 3}" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#0f172a" text-anchor="end">{gy}</text>')
+            tx = max(ox_clamped - 4, pad + 10)
+            ty = py + 3
+            collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(tx, ty, str(gy), 10.5))
+            parts.append(f'<text x="{tx}" y="{ty}" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#0f172a" text-anchor="end">{gy}</text>')
 
     # Axis names
-    parts.append(f'<text x="{width - pad + 5}" y="{oy_clamped + 3.5}" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a">{_esc(axis_labels[0])}</text>')
-    parts.append(f'<text x="{ox_clamped}" y="{pad - 6}" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">{_esc(axis_labels[1])}</text>')
+    x_ax_x = width - pad + 5
+    x_ax_y = oy_clamped + 3.5
+    collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(x_ax_x, x_ax_y, axis_labels[0], 12.0))
+    parts.append(f'<text x="{x_ax_x}" y="{x_ax_y}" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a">{_esc(axis_labels[0])}</text>')
+
+    y_ax_x = ox_clamped
+    y_ax_y = pad - 6
+    collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(y_ax_x, y_ax_y, axis_labels[1], 12.0))
+    parts.append(f'<text x="{y_ax_x}" y="{y_ax_y}" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">{_esc(axis_labels[1])}</text>')
 
     # Slope field
     if slope_field is not None:
@@ -338,7 +355,11 @@ def svg_coordinate_plane(
             if not verts:
                 continue
             color = poly.get("color") or poly.get("stroke") or "#2563eb"
+            if color == "none":
+                color = "transparent"
             fill = poly.get("fill", color)
+            if fill == "none":
+                fill = "transparent"
             dash = ' stroke-dasharray="4,3"' if poly.get("dashed") else ""
             px_verts = [to_px(vx, vy) for vx, vy in verts]
             pts_str = " ".join(f"{px},{py}" for px, py in px_verts)
@@ -347,13 +368,11 @@ def svg_coordinate_plane(
             )
             labels = poly.get("labels", [])
             for idx, (px, py) in enumerate(px_verts):
-                if poly.get("stroke") != "none":
+                if poly.get("stroke") not in ("none", "transparent"):
                     parts.append(f'<circle cx="{px}" cy="{py}" r="2.5" fill="{color}"/>')
                 if idx < len(labels) and labels[idx]:
-                    anchor = "end" if px > width - pad - 28 else "start"
-                    lx = round(px - 4, 2) if anchor == "end" else round(px + 4, 2)
-                    ly = round(py + 10, 2) if py < pad + 14 else round(py - 4, 2)
-                    parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(labels[idx])}</text>')
+                    lx, ly = collision_solver.place_label(px, py, labels[idx], preferred_angle_deg=45.0)
+                    parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="{color}" text-anchor="middle">{_esc(labels[idx])}</text>')
 
     # Circles / Ellipses
     if circles_ellipses:
@@ -364,7 +383,7 @@ def svg_coordinate_plane(
             color = ce.get("color", "#dc2626")
             dash = ' stroke-dasharray="4,3"' if ce.get("dashed") else ""
             parts.append(
-                f'<ellipse cx="{cx}" cy="{cy}" rx="{round(rx, 2)}" ry="{round(ry, 2)}" fill="none" stroke="{color}" stroke-width="1.8"{dash} clip-path="url(#plot-clip)"/>'
+                f'<ellipse cx="{cx}" cy="{cy}" rx="{round(rx, 2)}" ry="{round(ry, 2)}" fill="transparent" stroke="{color}" stroke-width="1.8"{dash} clip-path="url(#plot-clip)"/>'
             )
 
     # Lines
@@ -405,24 +424,24 @@ def svg_coordinate_plane(
                         yv = fn(xv)
                         if yv is None or isinstance(yv, complex) or math.isnan(yv) or math.isinf(yv):
                             if len(segment) >= 2:
-                                parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
+                                parts.append(f'<polyline points="{" ".join(segment)}" fill="transparent" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
                             segment = []
                             prev_y = None
                             continue
                         if abs(yv) > max(abs(y_min), abs(y_max)) * 6 or (prev_y is not None and abs(yv - prev_y) > dy * 1.5):
                             if len(segment) >= 2:
-                                parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
+                                parts.append(f'<polyline points="{" ".join(segment)}" fill="transparent" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
                             segment = []
                         px, py = to_px(xv, yv)
                         segment.append(f"{px},{py}")
                         prev_y = yv
                     except Exception:
                         if len(segment) >= 2:
-                            parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
+                            parts.append(f'<polyline points="{" ".join(segment)}" fill="transparent" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
                         segment = []
                         prev_y = None
                 if len(segment) >= 2:
-                    parts.append(f'<polyline points="{" ".join(segment)}" fill="none" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
+                    parts.append(f'<polyline points="{" ".join(segment)}" fill="transparent" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
 
     # Vectors
     if vectors:
@@ -451,10 +470,9 @@ def svg_coordinate_plane(
             if vec.get("label"):
                 mx = round((x1 + x2) / 2, 2)
                 my = round((y1 + y2) / 2, 2)
-                anchor = "end" if mx > width - pad - 35 else "start"
-                lx = round(mx - 4, 2) if anchor == "end" else round(mx + 4, 2)
-                ly = round(my + 10, 2) if my < pad + 14 else round(my - 4, 2)
-                parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(vec["label"])}</text>')
+                v_ang_deg = math.degrees(math.atan2(-(y2 - y1), x2 - x1)) + 90.0
+                lx, ly = collision_solver.place_label(mx, my, vec["label"], preferred_angle_deg=v_ang_deg)
+                parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8" font-weight="bold" fill="{color}" text-anchor="middle">{_esc(vec["label"])}</text>')
 
     # Points
     if points:
@@ -482,12 +500,8 @@ def svg_coordinate_plane(
             fill = "#ffffff" if is_open else color
             parts.append(f'<circle cx="{px_c}" cy="{py_c}" r="{r_pt}" fill="{fill}" stroke="{color}" stroke-width="1.8"/>')
             if lbl:
-                anchor = "end" if px_c > width - pad - 36 else "start"
-                lx = round(px_c - 5, 2) if anchor == "end" else round(px_c + 5, 2)
-                ly = round(py_c + 11, 2) if py_c < pad + 14 else round(py_c - 5, 2)
-                lx_c = round(max(10.0, min(width - 10.0, lx)), 2)
-                ly_c = round(max(10.0, min(height - 10.0, ly)), 2)
-                parts.append(f'<text x="{lx_c}" y="{ly_c}" font-family="sans-serif" font-size="9" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(lbl)}</text>')
+                lx_c, ly_c = collision_solver.place_label(px_c, py_c, lbl, preferred_angle_deg=45.0)
+                parts.append(f'<text x="{lx_c}" y="{ly_c}" font-family="sans-serif" font-size="9" font-weight="bold" fill="{color}" text-anchor="middle">{_esc(lbl)}</text>')
 
     parts.append("</svg>")
     return "".join(parts)
@@ -604,7 +618,7 @@ def svg_number_line(
     min_val: int = -10,
     max_val: int = 10,
     width: int = 240,
-    height: int = 62,
+    height: int = 76,
     intervals: Optional[List[Dict[str, Any]]] = None,
     rays: Optional[Sequence[Tuple[float, str, bool]]] = None,
     segments: Optional[Sequence[Tuple[float, float, bool, bool]]] = None,
@@ -633,7 +647,7 @@ def svg_number_line(
         max_val = max(max_val, int(math.ceil(max(req_vals))) + 2)
 
     pad = 22.0
-    line_y = 34.0
+    line_y = 48.0
     span = max(max_val - min_val, 1)
     plot_w = width - 2 * pad
 
@@ -647,7 +661,17 @@ def svg_number_line(
         f'<polygon points="{width - pad + 10},{line_y} {width - pad + 4},{line_y - 3.5} {width - pad + 4},{line_y + 3.5}" fill="#334155"/>',
     ]
 
-    step = 1 if span <= 14 else (2 if span <= 24 else max(1, span // 10))
+    px_per_unit = plot_w / span
+    raw_step = max(1, math.ceil(22.0 / px_per_unit))
+    if raw_step <= 1:
+        step = 1
+    elif raw_step <= 2:
+        step = 2
+    elif raw_step <= 5:
+        step = 5
+    else:
+        step = max(5, math.ceil(raw_step / 5) * 5)
+
     for v in range(min_val, max_val + 1):
         xv = to_x(v)
         parts.append(f'<line x1="{xv}" y1="{line_y - 4}" x2="{xv}" y2="{line_y + 4}" stroke="#475569" stroke-width="1"/>')
@@ -682,6 +706,7 @@ def svg_number_line(
                 parts.append(f'<circle cx="{x1}" cy="{line_y}" r="4.2" fill="{c1}" stroke="{color}" stroke-width="2"/>')
                 parts.append(f'<circle cx="{x2}" cy="{line_y}" r="4.2" fill="{c2}" stroke="{color}" stroke-width="2"/>')
 
+    placed_point_boxes: List[BBox] = []
     if points:
         for pt in points:
             if isinstance(pt, (tuple, list)):
@@ -695,7 +720,17 @@ def svg_number_line(
             parts.append(f'<circle cx="{xv}" cy="{line_y}" r="4" fill="{color}" stroke="#ffffff" stroke-width="1"/>')
             if lbl:
                 anchor = "start" if xv < pad + 18 else ("end" if xv > width - pad - 18 else "middle")
-                parts.append(f'<text x="{xv}" y="{line_y - 8}" font-family="sans-serif" font-size="8" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(lbl)}</text>')
+                chosen_y = line_y - 10
+                chosen_box = SVGCollisionSolver.estimate_text_bbox(xv, chosen_y, lbl, 8.0)
+                for offset in (-10, -24, -38):
+                    cand_y = line_y + offset
+                    cand_box = SVGCollisionSolver.estimate_text_bbox(xv, cand_y, lbl, 8.0)
+                    if not any(cand_box.intersects(b, padding=-1.5) for b in placed_point_boxes):
+                        chosen_y = cand_y
+                        chosen_box = cand_box
+                        break
+                placed_point_boxes.append(chosen_box)
+                parts.append(f'<text x="{xv}" y="{chosen_y}" font-family="sans-serif" font-size="8" font-weight="bold" fill="{color}" text-anchor="{anchor}">{_esc(lbl)}</text>')
 
     parts.append("</svg>")
     return "".join(parts)
@@ -727,10 +762,27 @@ def svg_polar_grid(
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<rect x="0" y="0" width="{width}" height="{height}" fill="#ffffff"/>',
     ]
+    collision_solver = SVGCollisionSolver(width=width, height=height, margin=6.0)
+    for deg in (0, 90, 180, 270):
+        ang = math.radians(deg)
+        lx = round(cx + (max_px + 12) * math.cos(ang), 2)
+        ly = round(cy - (max_px + 12) * math.sin(ang) + 3, 2)
+        collision_solver.placed_boxes.append(
+            SVGCollisionSolver.estimate_text_bbox(lx, ly, f"{deg}°", 7.0)
+        )
+
+    min_px_spacing = 18.0
+    r_step = max(1, math.ceil(min_px_spacing / (max_px / max_r)))
     for r in range(1, max_r + 1):
         rad = round(r / max_r * max_px, 2)
-        parts.append(f'<circle cx="{cx}" cy="{cy}" r="{rad}" fill="none" stroke="#cbd5e1" stroke-width="0.8"/>')
-        parts.append(f'<text x="{round(cx + rad + 2, 1)}" y="{cy + 8}" font-family="sans-serif" font-size="6.5" fill="#64748b">{r}</text>')
+        parts.append(f'<circle cx="{cx}" cy="{cy}" r="{rad}" fill="transparent" stroke="#cbd5e1" stroke-width="0.8"/>')
+        if r % r_step == 0:
+            r_ang = math.radians(45)
+            rx_pos = round(cx + rad * math.cos(r_ang) + 2, 1)
+            ry_pos = round(cy - rad * math.sin(r_ang) - 2, 1)
+            r_box = SVGCollisionSolver.estimate_text_bbox(rx_pos, ry_pos, str(r), 6.5)
+            collision_solver.placed_boxes.append(r_box)
+            parts.append(f'<text x="{rx_pos}" y="{ry_pos}" font-family="sans-serif" font-size="6.5" fill="#64748b">{r}</text>')
 
     for deg in range(0, 360, 30):
         ang = math.radians(deg)
@@ -738,8 +790,8 @@ def svg_polar_grid(
         y2 = round(cy - max_px * math.sin(ang), 2)
         parts.append(f'<line x1="{cx}" y1="{cy}" x2="{x2}" y2="{y2}" stroke="#e2e8f0" stroke-width="0.8"/>')
         if deg in (0, 90, 180, 270):
-            lx = round(cx + (max_px + 10) * math.cos(ang), 2)
-            ly = round(cy - (max_px + 10) * math.sin(ang) + 3, 2)
+            lx = round(cx + (max_px + 12) * math.cos(ang), 2)
+            ly = round(cy - (max_px + 12) * math.sin(ang) + 3, 2)
             parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7" fill="#334155" text-anchor="middle">{deg}°</text>')
 
     if curve_fn is not None:
@@ -751,7 +803,7 @@ def svg_polar_grid(
             px = round(cx + (rv / max_r * max_px) * math.cos(th), 2)
             py = round(cy - (rv / max_r * max_px) * math.sin(th), 2)
             pts.append(f"{px},{py}")
-        parts.append(f'<polyline points="{" ".join(pts)}" fill="none" stroke="#dc2626" stroke-width="1.8"/>')
+        parts.append(f'<polyline points="{" ".join(pts)}" fill="transparent" stroke="#dc2626" stroke-width="1.8"/>')
 
     if curve_points:
         pts_c: List[str] = []
@@ -760,7 +812,7 @@ def svg_polar_grid(
             px = round(cx + (rv / max_r * max_px) * math.cos(th), 2)
             py = round(cy - (rv / max_r * max_px) * math.sin(th), 2)
             pts_c.append(f"{px},{py}")
-        parts.append(f'<polyline points="{" ".join(pts_c)}" fill="none" stroke="#dc2626" stroke-width="1.8"/>')
+        parts.append(f'<polyline points="{" ".join(pts_c)}" fill="transparent" stroke="#dc2626" stroke-width="1.8"/>')
 
     if points:
         for rv, th_val, lbl in points:
@@ -770,10 +822,8 @@ def svg_polar_grid(
             parts.append(f'<line x1="{cx}" y1="{cy}" x2="{px}" y2="{py}" stroke="#2563eb" stroke-width="1.4"/>')
             parts.append(f'<circle cx="{px}" cy="{py}" r="3.5" fill="#dc2626"/>')
             if lbl:
-                anchor = "end" if px > width - 38 else "start"
-                lx = round(px - 5, 2) if anchor == "end" else round(px + 5, 2)
-                ly = round(py + 11, 2) if py < 22 else round(py - 4, 2)
-                parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="{anchor}">{_esc(lbl)}</text>')
+                lx, ly = collision_solver.place_label(px, py, lbl, preferred_angle_deg=45.0)
+                parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(lbl)}</text>')
 
     parts.append("</svg>")
     return "".join(parts)
@@ -1015,7 +1065,7 @@ def svg_right_triangle(
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<polygon points="{x1},{y1} {x2},{y2} {x3},{y3}" fill="#eff6ff" stroke="#1e40af" stroke-width="1.8"/>',
-        f'<rect x="{x1}" y="{y1 - 10}" width="10" height="10" fill="none" stroke="#1e40af" stroke-width="1.2"/>',
+        f'<rect x="{x1}" y="{y1 - 10}" width="10" height="10" fill="transparent" stroke="#1e40af" stroke-width="1.2"/>',
         f'<text x="{x1 - 10}" y="{y1 + 11}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">C</text>',
         f'<text x="{x2 + 6}" y="{y2 + 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">B</text>',
         f'<text x="{x3 - 10}" y="{y3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">A</text>',
@@ -1135,7 +1185,8 @@ def svg_angle_diagram(
     - interior_ray: Angle ∠ABC with interior ray BD (Angle Addition Postulate or Bisector)
     - linear_pair: Straight line AC with vertex B and ray BD forming a linear pair
     """
-    width, height = 210, 124
+    width, height = 210, 134
+    collision_solver = SVGCollisionSolver(width=width, height=height, margin=6.0)
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
@@ -1149,7 +1200,7 @@ def svg_angle_diagram(
     if mode == "linear_pair":
         theta = float(angle_degrees)
         theta = max(15.0, min(165.0, theta))
-        bx, by = 105.0, 85.0
+        bx, by = 105.0, 72.0
         line_len = 80.0
 
         ax = bx - line_len
@@ -1162,42 +1213,43 @@ def svg_angle_diagram(
         parts.append(f'<line x1="{bx}" y1="{by}" x2="{dx}" y2="{dy}" stroke="#1e40af" stroke-width="2" marker-end="url(#ang-arrow)"/>')
 
         if shade:
-            parts.append(f'<path d="M {bx} {by} L {cx - 20} {by} A 60 60 0 0 0 {dx} {dy} Z" fill="#bfdbfe" fill-opacity="0.25" stroke="none"/>')
+            parts.append(f'<path d="M {bx} {by} L {cx - 20} {by} A 60 60 0 0 0 {dx} {dy} Z" fill="#bfdbfe" fill-opacity="0.25" stroke="transparent"/>')
 
         parts.append(f'<circle cx="{bx}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(bx, by + 14, "B", 9.0))
         parts.append(f'<text x="{bx}" y="{by + 14}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">B</text>')
 
         parts.append(f'<circle cx="{cx - 25}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(cx - 25, by + 14, "C", 9.0))
         parts.append(f'<text x="{cx - 25}" y="{by + 14}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">C</text>')
 
         parts.append(f'<circle cx="{ax + 25}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(ax + 25, by + 14, "A", 9.0))
         parts.append(f'<text x="{ax + 25}" y="{by + 14}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">A</text>')
 
         parts.append(f'<circle cx="{round(bx + line_len * 0.6 * math.cos(rad), 2)}" cy="{round(by - line_len * 0.6 * math.sin(rad), 2)}" r="2.5" fill="#1e293b"/>')
         off_d_x = round(bx + (line_len * 0.6 + 9) * math.cos(rad), 2)
         off_d_y = round(by - (line_len * 0.6 + 9) * math.sin(rad) + 3, 2)
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(off_d_x, off_d_y, "D", 9.0))
         parts.append(f'<text x="{off_d_x}" y="{off_d_y}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">D</text>')
 
         r_arc1 = 20.0
         a1_x = round(bx + r_arc1 * math.cos(rad), 2)
         a1_y = round(by - r_arc1 * math.sin(rad), 2)
-        parts.append(f'<path d="M {bx + r_arc1} {by} A {r_arc1} {r_arc1} 0 0 0 {a1_x} {a1_y}" fill="none" stroke="#2563eb" stroke-width="1.6"/>')
+        parts.append(f'<path d="M {bx + r_arc1} {by} A {r_arc1} {r_arc1} 0 0 0 {a1_x} {a1_y}" fill="transparent" stroke="#2563eb" stroke-width="1.6"/>')
 
         lbl1 = angle_label if angle_label else f"{int(theta)}°"
-        mid_rad1 = math.radians(theta / 2.0)
-        lx1 = round(bx + 32.0 * math.cos(mid_rad1), 2)
-        ly1 = round(by - 32.0 * math.sin(mid_rad1) + 3, 2)
+        lx1, ly1 = collision_solver.place_label(bx, by, lbl1, preferred_angle_deg=theta / 2.0)
         parts.append(f'<text x="{lx1}" y="{ly1}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{lbl1}</text>')
 
         if interior_angle_label:
             r_arc2 = 24.0
             a2_x = round(bx + r_arc2 * math.cos(rad), 2)
             a2_y = round(by - r_arc2 * math.sin(rad), 2)
-            parts.append(f'<path d="M {a2_x} {a2_y} A {r_arc2} {r_arc2} 0 0 0 {bx - r_arc2} {by}" fill="none" stroke="#16a34a" stroke-width="1.6"/>')
+            parts.append(f'<path d="M {a2_x} {a2_y} A {r_arc2} {r_arc2} 0 0 0 {bx - r_arc2} {by}" fill="transparent" stroke="#16a34a" stroke-width="1.6"/>')
 
-            mid_rad2 = math.radians(180 - (180 - theta) / 2.0)
-            lx2 = round(bx + 36.0 * math.cos(mid_rad2), 2)
-            ly2 = round(by - 36.0 * math.sin(mid_rad2) + 3, 2)
+            mid_deg2 = 180.0 - (180.0 - theta) / 2.0
+            lx2, ly2 = collision_solver.place_label(bx, by, interior_angle_label, preferred_angle_deg=mid_deg2)
             parts.append(f'<text x="{lx2}" y="{ly2}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#16a34a" text-anchor="middle">{_esc(interior_angle_label)}</text>')
 
     elif mode == "interior_ray":
@@ -1206,14 +1258,14 @@ def svg_angle_diagram(
         tot = a1 + a2
 
         if tot <= 85:
-            bx, by = 55.0, 92.0
-            ray_len = 80.0
+            bx, by = 55.0, 72.0
+            ray_len = 75.0
         elif tot <= 115:
-            bx, by = 80.0, 92.0
-            ray_len = 75.0
+            bx, by = 80.0, 72.0
+            ray_len = 70.0
         else:
-            bx, by = 115.0, 92.0
-            ray_len = 75.0
+            bx, by = 115.0, 72.0
+            ray_len = 70.0
 
         rad1 = math.radians(a1)
         rad_tot = math.radians(tot)
@@ -1230,56 +1282,60 @@ def svg_angle_diagram(
         parts.append(f'<line x1="{bx}" y1="{by}" x2="{ax}" y2="{ay}" stroke="#1e40af" stroke-width="2" marker-end="url(#ray-arrow)"/>')
 
         if shade:
-            parts.append(f'<path d="M {bx} {by} L {cx} {cy} A {ray_len} {ray_len} 0 0 0 {ax} {ay} Z" fill="#bfdbfe" fill-opacity="0.25" stroke="none"/>')
+            parts.append(f'<path d="M {bx} {by} L {cx} {cy} A {ray_len} {ray_len} 0 0 0 {ax} {ay} Z" fill="#bfdbfe" fill-opacity="0.25" stroke="transparent"/>')
 
         parts.append(f'<circle cx="{bx}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(bx - 7, by + 13, "B", 9.0))
         parts.append(f'<text x="{bx - 7}" y="{by + 13}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b">B</text>')
 
         p_c_x = round(bx + ray_len * 0.65, 2)
         parts.append(f'<circle cx="{p_c_x}" cy="{by}" r="2.5" fill="#1e293b"/>')
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(p_c_x, by + 13, "C", 9.0))
         parts.append(f'<text x="{p_c_x}" y="{by + 13}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">C</text>')
 
         p_d_x = round(bx + ray_len * 0.65 * math.cos(rad1), 2)
         p_d_y = round(by - ray_len * 0.65 * math.sin(rad1), 2)
         parts.append(f'<circle cx="{p_d_x}" cy="{p_d_y}" r="2.5" fill="#1e293b"/>')
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(p_d_x + 9, p_d_y + 4, "D", 9.0))
         parts.append(f'<text x="{p_d_x + 9}" y="{p_d_y + 4}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">D</text>')
 
         p_a_x = round(bx + ray_len * 0.65 * math.cos(rad_tot), 2)
         p_a_y = round(by - ray_len * 0.65 * math.sin(rad_tot), 2)
         parts.append(f'<circle cx="{p_a_x}" cy="{p_a_y}" r="2.5" fill="#1e293b"/>')
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(p_a_x - 7, p_a_y - 4, "A", 9.0))
         parts.append(f'<text x="{p_a_x - 7}" y="{p_a_y - 4}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">A</text>')
 
         r_arc1 = 18.0
         a1_x = round(bx + r_arc1 * math.cos(rad1), 2)
         a1_y = round(by - r_arc1 * math.sin(rad1), 2)
-        parts.append(f'<path d="M {bx + r_arc1} {by} A {r_arc1} {r_arc1} 0 0 0 {a1_x} {a1_y}" fill="none" stroke="#2563eb" stroke-width="1.5"/>')
+        parts.append(f'<path d="M {bx + r_arc1} {by} A {r_arc1} {r_arc1} 0 0 0 {a1_x} {a1_y}" fill="transparent" stroke="#2563eb" stroke-width="1.5"/>')
         lbl1 = angle_label if angle_label else f"{int(a1)}°"
-        mid1 = rad1 / 2.0
-        parts.append(f'<text x="{round(bx + 30 * math.cos(mid1), 2)}" y="{round(by - 30 * math.sin(mid1) + 3, 2)}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e40af" text-anchor="middle">{lbl1}</text>')
+        lx1, ly1 = collision_solver.place_label(bx, by, lbl1, preferred_angle_deg=a1 / 2.0)
+        parts.append(f'<text x="{lx1}" y="{ly1}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e40af" text-anchor="middle">{lbl1}</text>')
 
         r_arc2 = 24.0
         a2_start_x = round(bx + r_arc2 * math.cos(rad1), 2)
         a2_start_y = round(by - r_arc2 * math.sin(rad1), 2)
         a2_end_x = round(bx + r_arc2 * math.cos(rad_tot), 2)
         a2_end_y = round(by - r_arc2 * math.sin(rad_tot), 2)
-        parts.append(f'<path d="M {a2_start_x} {a2_start_y} A {r_arc2} {r_arc2} 0 0 0 {a2_end_x} {a2_end_y}" fill="none" stroke="#16a34a" stroke-width="1.5"/>')
+        parts.append(f'<path d="M {a2_start_x} {a2_start_y} A {r_arc2} {r_arc2} 0 0 0 {a2_end_x} {a2_end_y}" fill="transparent" stroke="#16a34a" stroke-width="1.5"/>')
         lbl2 = interior_angle_label if interior_angle_label else f"{int(a2)}°"
-        mid2 = math.radians(a1 + a2 / 2.0)
-        parts.append(f'<text x="{round(bx + 38 * math.cos(mid2), 2)}" y="{round(by - 38 * math.sin(mid2) + 3, 2)}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#16a34a" text-anchor="middle">{lbl2}</text>')
+        lx2, ly2 = collision_solver.place_label(bx, by, lbl2, preferred_angle_deg=a1 + a2 / 2.0)
+        parts.append(f'<text x="{lx2}" y="{ly2}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#16a34a" text-anchor="middle">{lbl2}</text>')
 
     else:
         theta = float(angle_degrees)
         theta = max(5.0, min(180.0, theta))
 
         if theta <= 80:
-            bx, by = 55.0, 92.0
-            ray_len = 80.0
+            bx, by = 55.0, 72.0
+            ray_len = 75.0
         elif theta <= 105:
-            bx, by = 80.0, 92.0
-            ray_len = 75.0
+            bx, by = 80.0, 72.0
+            ray_len = 70.0
         else:
-            bx, by = 118.0, 92.0
-            ray_len = 75.0
+            bx, by = 118.0, 72.0
+            ray_len = 70.0
 
         rad = math.radians(theta)
         ax = round(bx + ray_len * math.cos(rad), 2)
@@ -1290,9 +1346,9 @@ def svg_angle_diagram(
 
         if shade:
             if abs(theta - 180.0) < 1e-2:
-                parts.append(f'<path d="M {ax} {by} A {ray_len} {ray_len} 0 0 0 {cx} {by} Z" fill="#bfdbfe" fill-opacity="0.3" stroke="none"/>')
+                parts.append(f'<path d="M {ax} {by} A {ray_len} {ray_len} 0 0 0 {cx} {by} Z" fill="#bfdbfe" fill-opacity="0.3" stroke="transparent"/>')
             else:
-                parts.append(f'<path d="M {bx} {by} L {cx} {cy} A {ray_len} {ray_len} 0 {large_arc} 0 {ax} {ay} Z" fill="#bfdbfe" fill-opacity="0.28" stroke="none"/>')
+                parts.append(f'<path d="M {bx} {by} L {cx} {cy} A {ray_len} {ray_len} 0 {large_arc} 0 {ax} {ay} Z" fill="#bfdbfe" fill-opacity="0.28" stroke="transparent"/>')
 
         parts.append(f'<line x1="{bx}" y1="{by}" x2="{cx}" y2="{cy}" stroke="#1e40af" stroke-width="2" marker-end="url(#ray-arrow)"/>')
         parts.append(f'<line x1="{bx}" y1="{by}" x2="{ax}" y2="{ay}" stroke="#1e40af" stroke-width="2" marker-end="url(#ray-arrow)"/>')
@@ -1306,35 +1362,36 @@ def svg_angle_diagram(
         parts.append(f'<circle cx="{p_c_x}" cy="{p_c_y}" r="2.5" fill="#1e293b"/>')
         parts.append(f'<circle cx="{p_a_x}" cy="{p_a_y}" r="2.5" fill="#1e293b"/>')
 
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(bx - 7, by + 13, vertex_label, 9.0))
         parts.append(f'<text x="{bx - 7}" y="{by + 13}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b">{_esc(vertex_label)}</text>')
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(p_c_x, p_c_y + 13, ray1_label, 9.0))
         parts.append(f'<text x="{p_c_x}" y="{p_c_y + 13}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(ray1_label)}</text>')
 
         perp_rad = rad + math.pi / 2.0
         off_a_x = round(p_a_x + 9 * math.cos(perp_rad), 2)
         off_a_y = round(p_a_y - 9 * math.sin(perp_rad) + 3, 2)
+        collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(off_a_x, off_a_y, ray2_label, 9.0))
         parts.append(f'<text x="{off_a_x}" y="{off_a_y}" font-family="sans-serif" font-size="9" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(ray2_label)}</text>')
 
         if abs(theta - 90.0) < 1e-2:
             sz = 12.0
-            parts.append(f'<path d="M {bx + sz} {by} L {bx + sz} {by - sz} L {bx} {by - sz}" fill="none" stroke="#2563eb" stroke-width="1.6"/>')
+            parts.append(f'<path d="M {bx + sz} {by} L {bx + sz} {by - sz} L {bx} {by - sz}" fill="transparent" stroke="#2563eb" stroke-width="1.6"/>')
         elif abs(theta - 180.0) < 1e-2:
             r_arc = 18.0
-            parts.append(f'<path d="M {bx + r_arc} {by} A {r_arc} {r_arc} 0 0 0 {bx - r_arc} {by}" fill="none" stroke="#2563eb" stroke-width="1.6"/>')
+            parts.append(f'<path d="M {bx + r_arc} {by} A {r_arc} {r_arc} 0 0 0 {bx - r_arc} {by}" fill="transparent" stroke="#2563eb" stroke-width="1.6"/>')
         else:
             r_arc = 20.0
             abx = round(bx + r_arc * math.cos(rad), 2)
             aby = round(by - r_arc * math.sin(rad), 2)
-            parts.append(f'<path d="M {bx + r_arc} {by} A {r_arc} {r_arc} 0 {large_arc} 0 {abx} {aby}" fill="none" stroke="#2563eb" stroke-width="1.6"/>')
+            parts.append(f'<path d="M {bx + r_arc} {by} A {r_arc} {r_arc} 0 {large_arc} 0 {abx} {aby}" fill="transparent" stroke="#2563eb" stroke-width="1.6"/>')
 
         lbl_text = angle_label if angle_label else f"{int(theta) if theta.is_integer() else theta}°"
-        mid_rad = math.radians(theta / 2.0)
-        r_lbl = 34.0 if theta >= 50 else 44.0
-        lx = round(bx + r_lbl * math.cos(mid_rad), 2)
-        ly = round(by - r_lbl * math.sin(mid_rad) + 3, 2)
+        lx, ly = collision_solver.place_label(bx, by, lbl_text, preferred_angle_deg=theta / 2.0)
         parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{lbl_text}</text>')
 
     if bottom_label:
-        parts.append(f'<text x="105" y="115" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{_esc(bottom_label)}</text>')
+        bl_x, bl_y = collision_solver.place_label(105.0, 122.0, bottom_label, preferred_angle_deg=270.0)
+        parts.append(f'<text x="{bl_x}" y="{bl_y}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{_esc(bottom_label)}</text>')
 
     parts.append("</svg>")
     return "".join(parts)
@@ -1370,10 +1427,12 @@ def svg_circle_diagram(
             mode = "secants"
         elif chord_segments is not None or ("=" in chord_label and "*" in chord_label) or ("chords" in lbl_low):
             mode = "chords"
-        elif angle_degrees is not None or (angle_label and any(c.isdigit() for c in angle_label)):
+        elif angle_degrees is not None or any(k in lbl_low for k in ("°", "deg", "angle", "theta")):
             mode = "central"
         else:
             mode = "radius"
+
+    collision_solver = SVGCollisionSolver(width=width, height=height, margin=6.0)
 
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
@@ -1398,7 +1457,7 @@ def svg_circle_diagram(
 
         parts.append(f'<line x1="{vx}" y1="{vy}" x2="{ax}" y2="{ay}" stroke="#1e40af" stroke-width="1.8"/>')
         parts.append(f'<line x1="{vx}" y1="{vy}" x2="{bx}" y2="{by}" stroke="#1e40af" stroke-width="1.8"/>')
-        parts.append(f'<path d="M {bx} {by} A {r} {r} 0 0 0 {ax} {ay}" fill="none" stroke="#2563eb" stroke-width="2.6"/>')
+        parts.append(f'<path d="M {bx} {by} A {r} {r} 0 0 0 {ax} {ay}" fill="transparent" stroke="#2563eb" stroke-width="2.6"/>')
 
         r_arc = 16.0
         v_rad_a = math.atan2(vy - ay, ax - vx)
@@ -1407,7 +1466,7 @@ def svg_circle_diagram(
         vay = round(vy - r_arc * math.sin(v_rad_a), 2)
         vbx = round(vx + r_arc * math.cos(v_rad_b), 2)
         vby = round(vy - r_arc * math.sin(v_rad_b), 2)
-        parts.append(f'<path d="M {vbx} {vby} A {r_arc} {r_arc} 0 0 0 {vax} {vay}" fill="none" stroke="#2563eb" stroke-width="1.4"/>')
+        parts.append(f'<path d="M {vbx} {vby} A {r_arc} {r_arc} 0 0 0 {vax} {vay}" fill="transparent" stroke="#2563eb" stroke-width="1.4"/>')
 
         parts.append(f'<circle cx="{vx}" cy="{vy}" r="2.5" fill="#1e293b"/>')
         parts.append(f'<text x="{vx - 8}" y="{vy + 3}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b">V</text>')
@@ -1477,8 +1536,8 @@ def svg_circle_diagram(
 
         parts.append(f'<line x1="{px}" y1="{py}" x2="{p1_far[0]}" y2="{p1_far[1]}" stroke="#1e40af" stroke-width="1.8"/>')
         parts.append(f'<line x1="{px}" y1="{py}" x2="{p2_far[0]}" y2="{p2_far[1]}" stroke="#1e40af" stroke-width="1.8"/>')
-        parts.append(f'<path d="M {p2_near[0]} {p2_near[1]} A {r} {r} 0 0 1 {p1_near[0]} {p1_near[1]}" fill="none" stroke="#16a34a" stroke-width="2.5"/>')
-        parts.append(f'<path d="M {p2_far[0]} {p2_far[1]} A {r} {r} 0 0 0 {p1_far[0]} {p1_far[1]}" fill="none" stroke="#2563eb" stroke-width="2.5"/>')
+        parts.append(f'<path d="M {p2_near[0]} {p2_near[1]} A {r} {r} 0 0 1 {p1_near[0]} {p1_near[1]}" fill="transparent" stroke="#16a34a" stroke-width="2.5"/>')
+        parts.append(f'<path d="M {p2_far[0]} {p2_far[1]} A {r} {r} 0 0 0 {p1_far[0]} {p1_far[1]}" fill="transparent" stroke="#2563eb" stroke-width="2.5"/>')
 
         parts.append(f'<circle cx="{px}" cy="{py}" r="2.5" fill="#1e293b"/>')
         parts.append(f'<text x="{px - 6}" y="{py + 3}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b">P</text>')
@@ -1502,46 +1561,43 @@ def svg_circle_diagram(
         large_arc = 1 if theta > 180 else 0
 
         if shade_sector:
-            parts.append(f'<path d="M {cx} {cy} L {cx + r} {cy} A {r} {r} 0 {large_arc} 0 {bx} {by} Z" fill="#93c5fd" fill-opacity="0.38" stroke="none"/>')
+            parts.append(f'<path d="M {cx} {cy} L {cx + r} {cy} A {r} {r} 0 {large_arc} 0 {bx} {by} Z" fill="#93c5fd" fill-opacity="0.38" stroke="transparent"/>')
 
-        parts.append(f'<path d="M {cx + r} {cy} A {r} {r} 0 {large_arc} 0 {bx} {by}" fill="none" stroke="#2563eb" stroke-width="2.6"/>')
+        parts.append(f'<path d="M {cx + r} {cy} A {r} {r} 0 {large_arc} 0 {bx} {by}" fill="transparent" stroke="#2563eb" stroke-width="2.6"/>')
         parts.append(f'<line x1="{cx}" y1="{cy}" x2="{cx + r}" y2="{cy}" stroke="#1e40af" stroke-width="1.8"/>')
         parts.append(f'<line x1="{cx}" y1="{cy}" x2="{bx}" y2="{by}" stroke="#1e40af" stroke-width="1.8"/>')
 
         if abs(theta - 90.0) < 1e-2:
             sz = 10.0
-            parts.append(f'<path d="M {cx + sz} {cy} L {cx + sz} {cy - sz} L {cx} {cy - sz}" fill="none" stroke="#2563eb" stroke-width="1.4"/>')
+            parts.append(f'<path d="M {cx + sz} {cy} L {cx + sz} {cy - sz} L {cx} {cy - sz}" fill="transparent" stroke="#2563eb" stroke-width="1.4"/>')
         else:
             r_arc = 14.0
             abx = round(cx + r_arc * math.cos(rad), 2)
             aby = round(cy - r_arc * math.sin(rad), 2)
-            parts.append(f'<path d="M {cx + r_arc} {cy} A {r_arc} {r_arc} 0 {large_arc} 0 {abx} {aby}" fill="none" stroke="#2563eb" stroke-width="1.4"/>')
+            parts.append(f'<path d="M {cx + r_arc} {cy} A {r_arc} {r_arc} 0 {large_arc} 0 {abx} {aby}" fill="transparent" stroke="#2563eb" stroke-width="1.4"/>')
 
         if show_points:
             parts.append(f'<circle cx="{cx}" cy="{cy}" r="2.5" fill="#1e293b"/>')
-            parts.append(f'<text x="{cx - 7}" y="{cy + 10}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b">O</text>')
+            ox, oy = collision_solver.place_label(cx, cy, "O", preferred_angle_deg=225.0)
+            parts.append(f'<text x="{ox}" y="{oy}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">O</text>')
 
             parts.append(f'<circle cx="{cx + r}" cy="{cy}" r="2.5" fill="#1e293b"/>')
-            parts.append(f'<text x="{cx + r + 5}" y="{cy + 4}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b">A</text>')
+            ax, ay = collision_solver.place_label(cx + r, cy, "A", preferred_angle_deg=0.0)
+            parts.append(f'<text x="{ax}" y="{ay}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">A</text>')
 
             parts.append(f'<circle cx="{bx}" cy="{by}" r="2.5" fill="#1e293b"/>')
-            off_bx = round(bx + 8 * math.cos(rad), 2)
-            off_by = round(by - 8 * math.sin(rad) + 3, 2)
-            parts.append(f'<text x="{off_bx}" y="{off_by}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">B</text>')
+            bx_lbl, by_lbl = collision_solver.place_label(bx, by, "B", preferred_angle_deg=theta)
+            parts.append(f'<text x="{bx_lbl}" y="{by_lbl}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">B</text>')
 
             major_mid_rad = math.radians(theta + (360.0 - theta) / 2.0)
             cx_c = round(cx + r * math.cos(major_mid_rad), 2)
             cy_c = round(cy - r * math.sin(major_mid_rad), 2)
-            off_cx = round(cx + (r + 8) * math.cos(major_mid_rad), 2)
-            off_cy = round(cy - (r + 8) * math.sin(major_mid_rad) + 3, 2)
+            cx_lbl, cy_lbl = collision_solver.place_label(cx_c, cy_c, "C", preferred_angle_deg=math.degrees(major_mid_rad))
             parts.append(f'<circle cx="{cx_c}" cy="{cy_c}" r="2.5" fill="#64748b"/>')
-            parts.append(f'<text x="{off_cx}" y="{off_cy}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#475569" text-anchor="middle">C</text>')
+            parts.append(f'<text x="{cx_lbl}" y="{cy_lbl}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#475569" text-anchor="middle">C</text>')
 
-        mid_rad = math.radians(theta / 2.0)
-        r_lbl = 24.0 if theta >= 60 else 28.0
-        lx = round(cx + r_lbl * math.cos(mid_rad), 2)
-        ly = round(cy - r_lbl * math.sin(mid_rad) + 3, 2)
         deg_str = f"{int(theta) if theta.is_integer() else theta}°"
+        lx, ly = collision_solver.place_label(cx, cy, deg_str, preferred_angle_deg=theta / 2.0)
         parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{deg_str}</text>')
 
     else:
@@ -1549,6 +1605,9 @@ def svg_circle_diagram(
         parts.append(f'<line x1="{cx}" y1="{cy}" x2="{cx + r}" y2="{cy}" stroke="#dc2626" stroke-width="1.8"/>')
         if radius_label:
             parts.append(f'<text x="{cx + r / 2}" y="{cy + 12}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(radius_label)}</text>')
+        if angle_label:
+            c_lbl_x, c_lbl_y = collision_solver.place_label(cx, cy, angle_label, preferred_angle_deg=135.0)
+            parts.append(f'<text x="{c_lbl_x}" y="{c_lbl_y}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e40af" text-anchor="middle">{_esc(angle_label)}</text>')
 
     if chord_label and mode != "chords":
         parts.append(f'<line x1="{cx - 30}" y1="{cy - 28}" x2="{cx + 30}" y2="{cy - 28}" stroke="#15803d" stroke-width="1.8"/>')
@@ -1589,7 +1648,7 @@ def svg_solid_3d(solid: str = "prism", dim1: str = "", dim2: str = "", dim3: str
     elif solid == "sphere":
         parts.extend([
             '<circle cx="105" cy="58" r="40" fill="#eff6ff" stroke="#1e40af" stroke-width="1.6"/>',
-            '<ellipse cx="105" cy="58" rx="40" ry="12" fill="none" stroke="#64748b" stroke-width="1.2" stroke-dasharray="3,2"/>',
+            '<ellipse cx="105" cy="58" rx="40" ry="12" fill="transparent" stroke="#64748b" stroke-width="1.2" stroke-dasharray="3,2"/>',
             '<line x1="105" y1="58" x2="145" y2="58" stroke="#dc2626" stroke-width="1.6"/>',
             f'<text x="125" y="53" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(dim1)}</text>',
         ])
@@ -1619,7 +1678,7 @@ def svg_tape_or_hanger(
     if mode == "hanger":
         parts.extend([
             '<line x1="107" y1="8" x2="107" y2="20" stroke="#334155" stroke-width="1.8"/>',
-            '<polygon points="107,18 47,32 167,32" fill="none" stroke="#334155" stroke-width="1.6"/>',
+            '<polygon points="107,18 47,32 167,32" fill="transparent" stroke="#334155" stroke-width="1.6"/>',
             '<rect x="25" y="36" width="56" height="26" rx="4" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.4"/>',
             '<rect x="133" y="36" width="56" height="26" rx="4" fill="#fef3c7" stroke="#d97706" stroke-width="1.4"/>',
             f'<text x="53" y="53" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e3a8a" text-anchor="middle">{_esc(" + ".join(labels))}</text>',

@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class LiteralEquationsGenerator(BaseGenerator):
@@ -11,6 +12,7 @@ class LiteralEquationsGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.CED.A.4", "CCSS.MATH.CONTENT.HSA.REI.B.3"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -143,6 +145,40 @@ class LiteralEquationsGenerator(BaseGenerator):
                         "Collect $x$ terms on one side and constants on the other: $a x - c x = d - b$.",
                         "Factor out $x$: $x(a - c) = d - b$.",
                         "Divide both sides by $(a - c)$: $x = (d - b) / (a - c)$."
+                    ]
+                ),
+                (
+                    "Solve for h",
+                    "A = 1/2 b h",
+                    "h = (2A) / b",
+                    ["h = A / (2b)", "h = (2b) / A", "h = 2A - b"],
+                    [
+                        "Given triangle area formula: $A = 1/2 b h$.",
+                        "Multiply both sides by $2$: $2A = b h$.",
+                        "Divide both sides by $b$: $h = (2A) / b$.",
+                        "Result: $h = (2A) / b$."
+                    ]
+                ),
+                (
+                    "Solve for m",
+                    "y - y_1 = m(x - x_1)",
+                    "m = (y - y_1) / (x - x_1)",
+                    ["m = (x - x_1) / (y - y_1)", "m = y - y_1 - x + x_1", "m = (y + y_1) / (x + x_1)"],
+                    [
+                        "Given point-slope equation: $y - y_1 = m(x - x_1)$.",
+                        "Divide both sides by $(x - x_1)$: $m = (y - y_1) / (x - x_1)$.",
+                        "Result: $m = (y - y_1) / (x - x_1)$."
+                    ]
+                ),
+                (
+                    "Solve for r",
+                    "C = 2 pi r",
+                    "r = C / (2 pi)",
+                    ["r = (2C) / pi", "r = C - 2 pi", "r = (2 pi) / C"],
+                    [
+                        "Given circumference formula: $C = 2 pi r$.",
+                        "Divide both sides by $2 pi$: $r = C / (2 pi)$.",
+                        "Result: $r = C / (2 pi)$."
                     ]
                 ),
             ]

@@ -5,6 +5,7 @@ import random
 from typing import Dict
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 def _format_var_power(var: str, power: int) -> str:
@@ -82,6 +83,7 @@ class ExponentRulesGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.SSE.A.2", "CCSS.MATH.CONTENT.8.EE.A.1"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

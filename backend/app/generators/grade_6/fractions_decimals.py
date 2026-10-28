@@ -6,6 +6,7 @@ import random
 import sympy as sp
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class Grade6FractionsDecimalsGenerator(BaseGenerator):
@@ -14,6 +15,7 @@ class Grade6FractionsDecimalsGenerator(BaseGenerator):
     category = "Grade 6"
     standards = ["CCSS.MATH.CONTENT.6.NS.A.1", "CCSS.MATH.CONTENT.6.NS.B.3"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -280,6 +282,7 @@ class RationalNumbersArithmeticGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.7.NS.A.1", "CCSS.MATH.CONTENT.7.NS.A.2"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

@@ -4,6 +4,7 @@ import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 from backend.app.core.svg_utils import svg_coordinate_plane_pair
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class AbsoluteValueEquationsGenerator(BaseGenerator):
@@ -12,6 +13,7 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSA.REI.B.3", "CCSS.MATH.CONTENT.HSA.CED.A.1"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -127,6 +129,7 @@ class GraphingAbsoluteValueGenerator(BaseGenerator):
     category = "Algebra 1"
     standards = ["CCSS.MATH.CONTENT.HSF.IF.C.7.B", "TEKS.MATH.A1.6.C"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

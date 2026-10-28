@@ -988,8 +988,8 @@ def gen_alg_geo_problem(
                 f"$ \"Domain\": ({x1}, {x2}), quad \"Range\": ({y1}, {y2}), quad \"Not a function\" $",
                 f"$ \"Domain\": [{x1}, {y2}], quad \"Range\": [{y1}, {x2}], quad \"Function\" $",
             ],
-            "diagram_svg": svg_coordinate_plane(polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#2563eb", "fill": "none"}], points=[(x1, y1, "", True), (x2, y2, "", True)]),
-            "answer_svg": svg_coordinate_plane(polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#2563eb", "fill": "none"}], points=[(x1, y1, f"({x1},{y1})", True), (x2, y2, f"({x2},{y2})", True)]),
+            "diagram_svg": svg_coordinate_plane(polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#2563eb", "fill": "transparent"}], points=[(x1, y1, "", True), (x2, y2, "", True)]),
+            "answer_svg": svg_coordinate_plane(polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#2563eb", "fill": "transparent"}], points=[(x1, y1, f"({x1},{y1})", True), (x2, y2, f"({x2},{y2})", True)]),
         }
 
     if "direct and inverse variation" in t_low:
@@ -1189,7 +1189,7 @@ def gen_alg_geo_problem(
             ],
             "diagram_svg": svg_coordinate_plane(),
             "answer_svg": svg_coordinate_plane(
-                polygons=[{"points": poly_pts, "fill": "#3b82f6", "stroke": "none"}],
+                polygons=[{"points": poly_pts, "fill": "#3b82f6", "stroke": "transparent"}],
                 functions=[{"fn": _fn_quad, "color": "#1d4ed8", "dashed": dashed}],
                 points=[(h, k, f"V({h},{k})", True)],
             ),
@@ -1241,11 +1241,11 @@ def gen_alg_geo_problem(
                 f"$ M({mx + 1}, {my - 1}) $",
             ],
             "diagram_svg": svg_coordinate_plane(
-                polygons=[{"points": [(x1 / 2, y1 / 2), (x2 / 2, y2 / 2)], "stroke": "#2563eb", "fill": "none"}],
+                polygons=[{"points": [(x1 / 2, y1 / 2), (x2 / 2, y2 / 2)], "stroke": "#2563eb", "fill": "transparent"}],
                 points=[(x1 / 2, y1 / 2, "A", True), (x2 / 2, y2 / 2, "B", True)],
             ),
             "answer_svg": svg_coordinate_plane(
-                polygons=[{"points": [(x1 / 2, y1 / 2), (x2 / 2, y2 / 2)], "stroke": "#2563eb", "fill": "none"}],
+                polygons=[{"points": [(x1 / 2, y1 / 2), (x2 / 2, y2 / 2)], "stroke": "#2563eb", "fill": "transparent"}],
                 points=[(x1 / 2, y1 / 2, "A", True), (x2 / 2, y2 / 2, "B", True), (mx / 2, my / 2, f"M({mx},{my})", True)],
             ),
         }
@@ -1266,11 +1266,11 @@ def gen_alg_geo_problem(
             ],
             "distractors": [f"$ d = {dx + dy} $", f"$ d = sqrt({dx + dy}) $", f"$ d = {d + 2} $"],
             "diagram_svg": svg_coordinate_plane(
-                polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#2563eb", "fill": "none"}],
+                polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#2563eb", "fill": "transparent"}],
                 points=[(x1, y1, "A", True), (x2, y2, "B", True)],
             ),
             "answer_svg": svg_coordinate_plane(
-                polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#dc2626", "fill": "none"}],
+                polygons=[{"points": [(x1, y1), (x2, y2)], "stroke": "#dc2626", "fill": "transparent"}],
                 points=[(x1, y1, f"({x1},{y1})", True), (x2, y2, f"d={d}", True)],
             ),
         }
@@ -1389,11 +1389,11 @@ def gen_alg_geo_problem(
         kind = "Acute" if deg < 90 else ("Right" if deg == 90 else ("Obtuse" if deg < 180 else "Straight"))
         return {
             "prompt_text": "Classify the angle as acute, right, obtuse, or straight.",
-            "equation_typst": f"$ m angle A B C = {deg}^circle $",
+            "equation_typst": f"$ m angle A B C = {deg}° $",
             "answer_typst": f"$ \"{kind} angle\" $",
             "steps_typst": [
-                "Recall: Acute ($0^circle < theta < 90^circle$), Right ($90^circle$), Obtuse ($90^circle < theta < 180^circle$), Straight ($180^circle$).",
-                f"Compare ${deg}^circle$ to $90^circle$ and $180^circle$.",
+                "Recall: Acute ($0° < theta < 90°$), Right ($90°$), Obtuse ($90° < theta < 180°$), Straight ($180°$).",
+                f"Compare ${deg}°$ to $90°$ and $180°$.",
                 f"Classification: {kind} angle.",
             ],
             "distractors": [
@@ -1413,17 +1413,17 @@ def gen_alg_geo_problem(
             a1 = 3 * xv + 10
         return {
             "prompt_text": "Lines l and m are parallel and cut by transversal t. Find the value of x and the angle measure.",
-            "equation_typst": f"$ \"Alternate interior angles: \" (3x + 10)^circle \" and \" {a1}^circle $",
-            "answer_typst": f"$ x = {xv}, quad m angle = {a1}^circle $",
+            "equation_typst": f"$ \"Alternate interior angles: \" (3x + 10)° \" and \" {a1}° $",
+            "answer_typst": f"$ x = {xv}, quad m angle = {a1}° $",
             "steps_typst": [
                 "By the Alternate Interior Angles Theorem, alternate interior angles are congruent.",
                 f"Set up the equation: $3x + 10 = {a1} arrow.r.double 3x = {a1 - 10}$.",
                 f"Divide by $3$: $x = {xv}$.",
             ],
             "distractors": [
-                f"$ x = {(180 - a1 - 10) // 3}, quad m angle = {180 - a1}^circle $",
-                f"$ x = {xv + 3}, quad m angle = {a1}^circle $",
-                f"$ x = {xv - 2}, quad m angle = {a1}^circle $",
+                f"$ x = {(180 - a1 - 10) // 3}, quad m angle = {180 - a1}° $",
+                f"$ x = {xv + 3}, quad m angle = {a1}° $",
+                f"$ x = {xv - 2}, quad m angle = {a1}° $",
             ],
             "diagram_svg": svg_parallel_transversal(mode="parallel", angle1_label="3x + 10", angle2_label=f"{a1} deg"),
             "answer_svg": svg_parallel_transversal(mode="parallel", angle1_label=f"x = {xv}", angle2_label=f"{a1} deg"),
@@ -1598,17 +1598,17 @@ def gen_alg_geo_problem(
             base_ang = (180 - vertex_ang) // 2
             return {
                 "prompt_text": "In isosceles triangle ABC with AB = BC, find the measure of each base angle.",
-                "equation_typst": f"$ m angle B = {vertex_ang}^circle, quad A B = B C $",
-                "answer_typst": f"$ m angle A = m angle C = {base_ang}^circle $",
+                "equation_typst": f"$ m angle B = {vertex_ang}°, quad A B = B C $",
+                "answer_typst": f"$ m angle A = m angle C = {base_ang}° $",
                 "steps_typst": [
                     "By the Base Angles Theorem, the angles opposite congruent sides are congruent ($m angle A = m angle C = x$).",
                     f"Use the Triangle Angle-Sum Theorem: $x + x + {vertex_ang} = 180$.",
-                    f"Solve $2x = {180 - vertex_ang} arrow.r.double x = {base_ang}^circle$.",
+                    f"Solve $2x = {180 - vertex_ang} arrow.r.double x = {base_ang}°$.",
                 ],
                 "distractors": [
-                    f"$ m angle A = {180 - vertex_ang}^circle $",
-                    f"$ m angle A = {vertex_ang}^circle $",
-                    f"$ m angle A = {base_ang + 10}^circle $",
+                    f"$ m angle A = {180 - vertex_ang}° $",
+                    f"$ m angle A = {vertex_ang}° $",
+                    f"$ m angle A = {base_ang + 10}° $",
                 ],
                 "diagram_svg": svg_general_triangle(angle_b=f"{vertex_ang} deg", angle_a="x", angle_c="x", side_c="AB=BC"),
                 "answer_svg": svg_general_triangle(angle_b=f"{vertex_ang} deg", angle_a=f"{base_ang} deg", angle_c=f"{base_ang} deg"),
@@ -1662,17 +1662,17 @@ def gen_alg_geo_problem(
             a4 = 360 - (a1 + a2 + a3)
             return {
                 "prompt_text": "Three interior angles of quadrilateral ABCD are given. Find the measure of the fourth angle.",
-                "equation_typst": f"$ m angle A = {a1}^circle, quad m angle B = {a2}^circle, quad m angle C = {a3}^circle $",
-                "answer_typst": f"$ m angle D = {a4}^circle $",
+                "equation_typst": f"$ m angle A = {a1}°, quad m angle B = {a2}°, quad m angle C = {a3}° $",
+                "answer_typst": f"$ m angle D = {a4}° $",
                 "steps_typst": [
-                    "The sum of interior angles in any quadrilateral is $(4 - 2) times 180^circle = 360^circle$.",
-                    f"Add the three given angles: ${a1}^circle + {a2}^circle + {a3}^circle = {a1 + a2 + a3}^circle$.",
-                    f"Subtract from $360^circle$: $360^circle - {a1 + a2 + a3}^circle = {a4}^circle$.",
+                    "The sum of interior angles in any quadrilateral is $(4 - 2) times 180° = 360°$.",
+                    f"Add the three given angles: ${a1}° + {a2}° + {a3}° = {a1 + a2 + a3}°$.",
+                    f"Subtract from $360°$: $360° - {a1 + a2 + a3}° = {a4}°$.",
                 ],
                 "distractors": [
-                    f"$ m angle D = {180 - a1}^circle $",
-                    f"$ m angle D = {a4 + 10}^circle $",
-                    f"$ m angle D = {360 - a1 - a2}^circle $",
+                    f"$ m angle D = {180 - a1}° $",
+                    f"$ m angle D = {a4 + 10}° $",
+                    f"$ m angle D = {360 - a1 - a2}° $",
                 ],
                 "diagram_svg": svg_polygon_diagram("quad", dim1=f"A={a1}, B={a2}", dim2=f"C={a3}, D=?"),
                 "answer_svg": svg_polygon_diagram("quad", dim1=f"A={a1}, B={a2}", dim2=f"C={a3}, D={a4}"),
@@ -1709,16 +1709,16 @@ def gen_alg_geo_problem(
                 return {
                     "prompt_text": f"Find the measure of each exterior angle and the sum of exterior angles of a regular {n}-gon.",
                     "equation_typst": f"$ \"Regular \" {n}\"-gon\" $",
-                    "answer_typst": f"$ \"Each exterior angle\" = {each_ext:g}^circle, quad \"Sum\" = 360^circle $",
+                    "answer_typst": f"$ \"Each exterior angle\" = {each_ext:g}°, quad \"Sum\" = 360° $",
                     "steps_typst": [
-                        "The sum of exterior angles of any convex polygon is always $360^circle$.",
-                        f"Divide by the number of sides $n = {n}$: $360^circle div {n} = {each_ext:g}^circle$.",
-                        f"Each exterior angle = ${each_ext:g}^circle$, Sum = $360^circle$.",
+                        "The sum of exterior angles of any convex polygon is always $360°$.",
+                        f"Divide by the number of sides $n = {n}$: $360° div {n} = {each_ext:g}°$.",
+                        f"Each exterior angle = ${each_ext:g}°$, Sum = $360°$.",
                     ],
                     "distractors": [
-                        f"$ \"Each exterior angle\" = {each_int:g}^circle, quad \"Sum\" = 180^circle $",
-                        f"$ \"Each exterior angle\" = {round(180/n, 1):g}^circle, quad \"Sum\" = 360^circle $",
-                        f"$ \"Each exterior angle\" = {each_ext + 5:g}^circle, quad \"Sum\" = 720^circle $",
+                        f"$ \"Each exterior angle\" = {each_int:g}°, quad \"Sum\" = 180° $",
+                        f"$ \"Each exterior angle\" = {round(180/n, 1):g}°, quad \"Sum\" = 360° $",
+                        f"$ \"Each exterior angle\" = {each_ext + 5:g}°, quad \"Sum\" = 720° $",
                     ],
                     "diagram_svg": svg_polygon_diagram("regular", dim1=f"n = {n}", dim2="Exterior angles = ?"),
                     "answer_svg": svg_polygon_diagram("regular", dim1=f"Each = {each_ext:g} deg", dim2="Sum = 360 deg"),
@@ -1726,11 +1726,11 @@ def gen_alg_geo_problem(
             elif poly_mode == "reverse_sum":
                 return {
                     "prompt_text": "The sum of the interior angles of a convex polygon is given. Find the number of sides n.",
-                    "equation_typst": f"$ \"Sum of interior angles\" = {sum_int}^circle $",
+                    "equation_typst": f"$ \"Sum of interior angles\" = {sum_int}° $",
                     "answer_typst": f"$ n = {n} $",
                     "steps_typst": [
-                        f"Set up the Polygon Interior Angles formula: $(n - 2) times 180^circle = {sum_int}^circle$.",
-                        f"Divide by $180^circle$: $n - 2 = {sum_int} / 180 = {n - 2}$.",
+                        f"Set up the Polygon Interior Angles formula: $(n - 2) times 180° = {sum_int}°$.",
+                        f"Divide by $180°$: $n - 2 = {sum_int} / 180 = {n - 2}$.",
                         f"Add 2: $n = {n - 2} + 2 = {n}$.",
                     ],
                     "distractors": [f"$ n = {n - 1} $", f"$ n = {n + 2} $", f"$ n = {sum_int // 360} $"],
@@ -1741,16 +1741,16 @@ def gen_alg_geo_problem(
                 return {
                     "prompt_text": f"Find the sum of the interior angles of a regular {n}-gon and the measure of each interior angle.",
                     "equation_typst": f"$ \"Regular \" {n}\"-gon\" $",
-                    "answer_typst": f"$ \"Sum\" = {sum_int}^circle, quad \"Each angle\" = {each_int:g}^circle $",
+                    "answer_typst": f"$ \"Sum\" = {sum_int}°, quad \"Each angle\" = {each_int:g}° $",
                     "steps_typst": [
-                        f"Use Polygon Interior Angles Theorem: $(n - 2) times 180^circle = ({n} - 2) times 180^circle = {sum_int}^circle$.",
-                        f"Divide by $n = {n}$ for each angle: ${sum_int}^circle div {n} = {each_int:g}^circle$.",
-                        f"Sum = ${sum_int}^circle$, Each interior angle = ${each_int:g}^circle$.",
+                        f"Use Polygon Interior Angles Theorem: $(n - 2) times 180° = ({n} - 2) times 180° = {sum_int}°$.",
+                        f"Divide by $n = {n}$ for each angle: ${sum_int}° div {n} = {each_int:g}°$.",
+                        f"Sum = ${sum_int}°$, Each interior angle = ${each_int:g}°$.",
                     ],
                     "distractors": [
-                        f"$ \"Sum\" = {n * 180}^circle, quad \"Each angle\" = 180^circle $",
-                        f"$ \"Sum\" = {sum_int}^circle, quad \"Each angle\" = {each_ext:g}^circle $",
-                        f"$ \"Sum\" = {(n - 1) * 180}^circle, quad \"Each angle\" = {each_int + 10:g}^circle $",
+                        f"$ \"Sum\" = {n * 180}°, quad \"Each angle\" = 180° $",
+                        f"$ \"Sum\" = {sum_int}°, quad \"Each angle\" = {each_ext:g}° $",
+                        f"$ \"Sum\" = {(n - 1) * 180}°, quad \"Each angle\" = {each_int + 10:g}° $",
                     ],
                     "diagram_svg": svg_polygon_diagram("regular", dim1=f"n = {n}", dim2="Interior angles = ?"),
                     "answer_svg": svg_polygon_diagram("regular", dim1=f"Sum = {sum_int}", dim2=f"Each = {each_int:g} deg"),
@@ -1881,14 +1881,14 @@ def gen_alg_geo_problem(
             arc = 2 * ins
             return {
                 "prompt_text": "Find the measure of the intercepted arc (or inscribed angle) in the circle.",
-                "equation_typst": f"$ \"Inscribed angle\" = {ins}^circle $",
-                "answer_typst": f"$ \"Intercepted arc\" = {arc}^circle $",
+                "equation_typst": f"$ \"Inscribed angle\" = {ins}° $",
+                "answer_typst": f"$ \"Intercepted arc\" = {arc}° $",
                 "steps_typst": [
                     "By the Inscribed Angle Theorem, the measure of an inscribed angle is half the measure of its intercepted arc.",
-                    f"Multiply the inscribed angle by $2$: $2 times {ins}^circle = {arc}^circle$.",
-                    f"Intercepted arc = ${arc}^circle$.",
+                    f"Multiply the inscribed angle by $2$: $2 times {ins}° = {arc}°$.",
+                    f"Intercepted arc = ${arc}°$.",
                 ],
-                "distractors": [f"$ \"Intercepted arc\" = {ins // 2}^circle $", f"$ \"Intercepted arc\" = {ins}^circle $", f"$ \"Intercepted arc\" = {180 - ins}^circle $"],
+                "distractors": [f"$ \"Intercepted arc\" = {ins // 2}° $", f"$ \"Intercepted arc\" = {ins}° $", f"$ \"Intercepted arc\" = {180 - ins}° $"],
                 "diagram_svg": svg_circle_diagram(mode="inscribed", inscribed_angle=ins, intercepted_arc=arc),
                 "answer_svg": svg_circle_diagram(mode="inscribed", inscribed_angle=ins, intercepted_arc=arc, shade_sector=True, bottom_label=f"Intercepted arc = {arc}°"),
             }
@@ -1900,14 +1900,14 @@ def gen_alg_geo_problem(
             ext_ang = (arc_big - arc_small) // 2
             return {
                 "prompt_text": "Find the measure of the exterior angle formed by the secant/tangent lines intersecting outside the circle.",
-                "equation_typst": f"$ \"Far arc\" = {arc_big}^circle, quad \"Near arc\" = {arc_small}^circle $",
-                "answer_typst": f"$ m angle = {ext_ang}^circle $",
+                "equation_typst": f"$ \"Far arc\" = {arc_big}°, quad \"Near arc\" = {arc_small}° $",
+                "answer_typst": f"$ m angle = {ext_ang}° $",
                 "steps_typst": [
                     "The angle formed outside a circle by two secants/tangents equals half the difference of the intercepted arcs.",
-                    f"Compute $1/2({arc_big}^circle - {arc_small}^circle) = 1/2({arc_big - arc_small}^circle)$.",
-                    f"Simplify: $m angle = {ext_ang}^circle$.",
+                    f"Compute $1/2({arc_big}° - {arc_small}°) = 1/2({arc_big - arc_small}°)$.",
+                    f"Simplify: $m angle = {ext_ang}°$.",
                 ],
-                "distractors": [f"$ m angle = {(arc_big + arc_small) // 2}^circle $", f"$ m angle = {arc_big - arc_small}^circle $", f"$ m angle = {ext_ang + 10}^circle $"],
+                "distractors": [f"$ m angle = {(arc_big + arc_small) // 2}° $", f"$ m angle = {arc_big - arc_small}° $", f"$ m angle = {ext_ang + 10}° $"],
                 "diagram_svg": svg_circle_diagram(mode="secants", far_arc=arc_big, near_arc=arc_small),
                 "answer_svg": svg_circle_diagram(mode="secants", far_arc=arc_big, near_arc=arc_small, bottom_label=f"Angle = {ext_ang}°"),
             }

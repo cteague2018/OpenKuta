@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class Grade6OneStepGenerator(BaseGenerator):
@@ -11,6 +12,7 @@ class Grade6OneStepGenerator(BaseGenerator):
     category = "Grade 6"
     standards = ["CCSS.MATH.CONTENT.6.EE.B.7", "CCSS.MATH.CONTENT.6.EE.B.8"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

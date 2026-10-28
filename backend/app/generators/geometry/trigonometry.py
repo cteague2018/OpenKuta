@@ -5,6 +5,7 @@ import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
 from backend.app.core.svg_utils import svg_right_triangle
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class GeometryTrigonometryGenerator(BaseGenerator):
@@ -13,6 +14,7 @@ class GeometryTrigonometryGenerator(BaseGenerator):
     category = "Geometry"
     standards = ["CCSS.MATH.CONTENT.HSG.SRT.C.6", "CCSS.MATH.CONTENT.HSG.SRT.C.8"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -104,14 +106,14 @@ class GeometryTrigonometryGenerator(BaseGenerator):
                 theta = 30
                 hyp = rng.choice([8, 10, 12, 14, 16, 20])
                 ans_val = hyp // 2
-                eq_typst = f"theta = 30^circle, quad \"hypotenuse = \" {hyp}, quad \"opposite (x) = ?\""
+                eq_typst = f"theta = 30°, quad \"hypotenuse = \" {hyp}, quad \"opposite (x) = ?\""
                 ans_typst = f"x = {ans_val}"
                 steps = [
                     f"Identify sides relative to angle $ theta $: opposite is $ x $, hypotenuse is $ {hyp} $.",
                     "Use the sine ratio: $ sin(theta) = text(\"opposite\") / text(\"hypotenuse\") $",
-                    f"Substitute known values: $ sin(30^circle) = x / {hyp} $",
-                    "Recall that $ sin(30^circle) = 1/2 = 0.5 $.",
-                    f"Solve for $ x $: $ x = {hyp} dot sin(30^circle) = {hyp} dot 0.5 = {ans_val} $",
+                    f"Substitute known values: $ sin(30°) = x / {hyp} $",
+                    "Recall that $ sin(30°) = 1/2 = 0.5 $.",
+                    f"Solve for $ x $: $ x = {hyp} dot sin(30°) = {hyp} dot 0.5 = {ans_val} $",
                     f"Result: $ {ans_typst} $"
                 ]
                 d1 = f"x = {hyp}"
@@ -121,14 +123,14 @@ class GeometryTrigonometryGenerator(BaseGenerator):
                 theta = 60
                 hyp = rng.choice([8, 10, 12, 14, 16, 20])
                 ans_val = hyp // 2
-                eq_typst = f"theta = 60^circle, quad \"hypotenuse = \" {hyp}, quad \"adjacent (x) = ?\""
+                eq_typst = f"theta = 60°, quad \"hypotenuse = \" {hyp}, quad \"adjacent (x) = ?\""
                 ans_typst = f"x = {ans_val}"
                 steps = [
                     f"Identify sides relative to angle $ theta $: adjacent is $ x $, hypotenuse is $ {hyp} $.",
                     "Use the cosine ratio: $ cos(theta) = text(\"adjacent\") / text(\"hypotenuse\") $",
-                    f"Substitute known values: $ cos(60^circle) = x / {hyp} $",
-                    "Recall that $ cos(60^circle) = 1/2 = 0.5 $.",
-                    f"Solve for $ x $: $ x = {hyp} dot cos(60^circle) = {hyp} dot 0.5 = {ans_val} $",
+                    f"Substitute known values: $ cos(60°) = x / {hyp} $",
+                    "Recall that $ cos(60°) = 1/2 = 0.5 $.",
+                    f"Solve for $ x $: $ x = {hyp} dot cos(60°) = {hyp} dot 0.5 = {ans_val} $",
                     f"Result: $ {ans_typst} $"
                 ]
                 d1 = f"x = {hyp}"
@@ -138,14 +140,14 @@ class GeometryTrigonometryGenerator(BaseGenerator):
                 theta = 45
                 adj = rng.choice([5, 6, 7, 8, 9, 10, 12])
                 ans_val = adj
-                eq_typst = f"theta = 45^circle, quad \"adjacent = \" {adj}, quad \"opposite (x) = ?\""
+                eq_typst = f"theta = 45°, quad \"adjacent = \" {adj}, quad \"opposite (x) = ?\""
                 ans_typst = f"x = {ans_val}"
                 steps = [
                     f"Identify sides relative to angle $ theta $: opposite is $ x $, adjacent is $ {adj} $.",
                     "Use the tangent ratio: $ tan(theta) = text(\"opposite\") / text(\"adjacent\") $",
-                    f"Substitute known values: $ tan(45^circle) = x / {adj} $",
-                    "Recall that $ tan(45^circle) = 1 $.",
-                    f"Solve for $ x $: $ x = {adj} dot tan(45^circle) = {adj} dot 1 = {ans_val} $",
+                    f"Substitute known values: $ tan(45°) = x / {adj} $",
+                    "Recall that $ tan(45°) = 1 $.",
+                    f"Solve for $ x $: $ x = {adj} dot tan(45°) = {adj} dot 1 = {ans_val} $",
                     f"Result: $ {ans_typst} $"
                 ]
                 d1 = f"x = {round(adj * math.sqrt(2), 1)}"
@@ -157,14 +159,14 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             hyp = rng.choice([10, 12, 14, 15, 18, 20])
             sin_val = math.sin(math.radians(theta))
             ans_num = round(hyp * sin_val, 1)
-            eq_typst = f"theta = {theta}^circle, quad \"hypotenuse = \" {hyp}, quad \"opposite (x) = ?\""
+            eq_typst = f"theta = {theta}°, quad \"hypotenuse = \" {hyp}, quad \"opposite (x) = ?\""
             ans_typst = f"x approx {ans_num:.1f}"
 
             steps = [
                 f"Identify sides relative to angle $ theta $: opposite side is $ x $, hypotenuse is $ {hyp} $.",
                 "Select sine ratio: $ sin(theta) = text(\"opposite\") / text(\"hypotenuse\") $",
-                f"Substitute given values: $ sin({theta}^circle) = x / {hyp} $",
-                f"Solve for $ x $: $ x = {hyp} dot sin({theta}^circle) $",
+                f"Substitute given values: $ sin({theta}°) = x / {hyp} $",
+                f"Solve for $ x $: $ x = {hyp} dot sin({theta}°) $",
                 f"Compute: $ {hyp} dot {sin_val:.4f} approx {ans_num:.1f} $",
                 f"Result: $ {ans_typst} $"
             ]
@@ -205,22 +207,22 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             angle_deg = round(math.degrees(math.atan(ratio)), 1)
 
             eq_typst = f"\"opposite = \" {opp}, quad \"adjacent = \" {adj}, quad theta = ?"
-            ans_typst = f"theta approx {angle_deg:.1f}^circle"
+            ans_typst = f"theta approx {angle_deg:.1f}°"
 
             steps = [
                 f"Identify given sides relative to angle $ theta $: opposite is $ {opp} $, adjacent is $ {adj} $.",
                 f"Select tangent ratio: $ tan(theta) = text(\"opposite\") / text(\"adjacent\") = {opp} / {adj} $",
                 f"Calculate ratio: $ tan(theta) = {ratio:.4f} $",
                 f"Apply inverse tangent: $ theta = arctan({ratio:.4f}) $",
-                f"Compute angle measure: $ theta approx {angle_deg:.1f}^circle $",
+                f"Compute angle measure: $ theta approx {angle_deg:.1f}° $",
                 f"Result: $ {ans_typst} $"
             ]
 
             comp_angle = round(90.0 - angle_deg, 1)
             inv_ratio_angle = round(math.degrees(math.atan(adj / opp)), 1)
-            d1 = f"theta approx {comp_angle:.1f}^circle"
-            d2 = f"theta approx {inv_ratio_angle:.1f}^circle"
-            d3 = f"theta approx {round(angle_deg + 4.5, 1):.1f}^circle"
+            d1 = f"theta approx {comp_angle:.1f}°"
+            d2 = f"theta approx {inv_ratio_angle:.1f}°"
+            d3 = f"theta approx {round(angle_deg + 4.5, 1):.1f}°"
 
         elif case == "arcsin":
             hyp = rng.choice([10, 13, 15, 17, 20, 25])
@@ -231,21 +233,21 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             angle_deg = round(math.degrees(math.asin(ratio)), 1)
 
             eq_typst = f"\"opposite = \" {opp}, quad \"hypotenuse = \" {hyp}, quad theta = ?"
-            ans_typst = f"theta approx {angle_deg:.1f}^circle"
+            ans_typst = f"theta approx {angle_deg:.1f}°"
 
             steps = [
                 f"Identify given sides relative to angle $ theta $: opposite is $ {opp} $, hypotenuse is $ {hyp} $.",
                 f"Select sine ratio: $ sin(theta) = text(\"opposite\") / text(\"hypotenuse\") = {opp} / {hyp} $",
                 f"Calculate ratio: $ sin(theta) = {ratio:.4f} $",
                 f"Apply inverse sine: $ theta = arcsin({ratio:.4f}) $",
-                f"Compute angle measure: $ theta approx {angle_deg:.1f}^circle $",
+                f"Compute angle measure: $ theta approx {angle_deg:.1f}° $",
                 f"Result: $ {ans_typst} $"
             ]
 
             comp_angle = round(90.0 - angle_deg, 1)
-            d1 = f"theta approx {comp_angle:.1f}^circle"
-            d2 = f"theta approx {round(math.degrees(math.acos(ratio)), 1):.1f}^circle"
-            d3 = f"theta approx {round(angle_deg + 5.0, 1):.1f}^circle"
+            d1 = f"theta approx {comp_angle:.1f}°"
+            d2 = f"theta approx {round(math.degrees(math.acos(ratio)), 1):.1f}°"
+            d3 = f"theta approx {round(angle_deg + 5.0, 1):.1f}°"
 
         else:  # arccos
             hyp = rng.choice([10, 13, 15, 17, 20, 25])
@@ -256,25 +258,25 @@ class GeometryTrigonometryGenerator(BaseGenerator):
             angle_deg = round(math.degrees(math.acos(ratio)), 1)
 
             eq_typst = f"\"adjacent = \" {adj}, quad \"hypotenuse = \" {hyp}, quad theta = ?"
-            ans_typst = f"theta approx {angle_deg:.1f}^circle"
+            ans_typst = f"theta approx {angle_deg:.1f}°"
 
             steps = [
                 f"Identify given sides relative to angle $ theta $: adjacent is $ {adj} $, hypotenuse is $ {hyp} $.",
                 f"Select cosine ratio: $ cos(theta) = text(\"adjacent\") / text(\"hypotenuse\") = {adj} / {hyp} $",
                 f"Calculate ratio: $ cos(theta) = {ratio:.4f} $",
                 f"Apply inverse cosine: $ theta = arccos({ratio:.4f}) $",
-                f"Compute angle measure: $ theta approx {angle_deg:.1f}^circle $",
+                f"Compute angle measure: $ theta approx {angle_deg:.1f}° $",
                 f"Result: $ {ans_typst} $"
             ]
 
             comp_angle = round(90.0 - angle_deg, 1)
-            d1 = f"theta approx {comp_angle:.1f}^circle"
-            d2 = f"theta approx {round(math.degrees(math.asin(ratio)), 1):.1f}^circle"
-            d3 = f"theta approx {round(angle_deg + 4.8, 1):.1f}^circle"
+            d1 = f"theta approx {comp_angle:.1f}°"
+            d2 = f"theta approx {round(math.degrees(math.asin(ratio)), 1):.1f}°"
+            d3 = f"theta approx {round(angle_deg + 4.8, 1):.1f}°"
 
         distractors = list(dict.fromkeys([d1, d2, d3]))
         while len(distractors) < 2:
-            distractors.append("theta approx 45.0^circle")
+            distractors.append("theta approx 45.0°")
 
         return BaseProblem(
             id=f"geom_trig_spicy_{problem_idx}",

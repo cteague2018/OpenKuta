@@ -3,6 +3,7 @@ from __future__ import annotations
 import random
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 class SpecialRightTrianglesGenerator(BaseGenerator):
@@ -11,6 +12,7 @@ class SpecialRightTrianglesGenerator(BaseGenerator):
     category = "Geometry"
     standards = ["CCSS.MATH.CONTENT.HSG.SRT.C.8"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -52,16 +54,16 @@ class SpecialRightTrianglesGenerator(BaseGenerator):
             flavor = rng.choice(["given_short_find_all", "given_hyp_find_legs"])
 
             if flavor == "given_short_find_all":
-                eq_typst = f"\"30-60-90 triangle with shorter leg (opposite 30^\\circle) = \" {x}"
+                eq_typst = f"\"30-60-90 triangle with shorter leg (opposite 30°) = \" {x}"
                 long_leg = f"{x} sqrt(3)"
                 hyp = f"{2 * x}"
                 ans_typst = f"\"longer leg = \" {long_leg}, quad \"hypotenuse = \" {hyp}"
 
                 steps = [
                     "Recall 30-60-90 triangle side ratios: $ 1 : sqrt(3) : 2 $",
-                    rf"Shorter leg (opposite 30^\circle) is $ x = {x} $",
-                    rf"Longer leg (opposite 60^\circle) is $ x sqrt(3) = {long_leg} $",
-                    rf"Hypotenuse (opposite 90^\circle) is $ 2x = 2({x}) = {hyp} $",
+                    rf"Shorter leg (opposite 30°) is $ x = {x} $",
+                    rf"Longer leg (opposite 60°) is $ x sqrt(3) = {long_leg} $",
+                    rf"Hypotenuse (opposite 90°) is $ 2x = 2({x}) = {hyp} $",
                     f"Result: $ {ans_typst} $"
                 ]
                 d1 = f"longer leg = {2*x}, hypotenuse = {x} sqrt(3)"

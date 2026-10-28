@@ -5,6 +5,7 @@ import random
 from typing import List, Tuple
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 def simplify_radical(n: int) -> Tuple[int, int]:
@@ -69,6 +70,7 @@ class CoordinateGeometryGenerator(BaseGenerator):
     category = "Geometry"
     standards = ["CCSS.MATH.CONTENT.HSG.GPE.B.7", "CCSS.MATH.CONTENT.HSG.GPE.B.5"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

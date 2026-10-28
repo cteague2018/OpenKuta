@@ -213,29 +213,42 @@ function isProseProblem(raw: string): boolean {
   return false;
 }
 
-function KaTeXInline({ math, className = "" }: { math: string; className?: string }) {
-  if (!math) return null;
-  const latex = typstToLatex(math);
+function KaTeXInline({ math, latex, className = "" }: { math?: string; latex?: string; className?: string }) {
+  let latexStr = latex ?? (math ? typstToLatex(math) : "");
+  if (!latexStr) return null;
+  latexStr = latexStr.replace(/(?:\^\s*\\?circle\b|°)/g, "^{\\circ}");
   try {
-    const html = katex.renderToString(latex, {
+    const html = katex.renderToString(latexStr, {
       throwOnError: false,
       displayMode: false,
     });
     return <span className={className} dangerouslySetInnerHTML={{ __html: html }} />;
   } catch {
-    return <span className={className}>{latex}</span>;
+    return <span className={className}>{latexStr}</span>;
   }
 }
 
 function ProblemEquation({
   raw,
+  latex,
   className = "",
   inline = false,
 }: {
   raw: string;
+  latex?: string;
   className?: string;
   inline?: boolean;
 }) {
+  if (latex && !isProseProblem(raw)) {
+    if (inline) {
+      return <KaTeXInline latex={latex} className={className} />;
+    }
+    return (
+      <div className={`py-1 text-center text-sm font-medium text-slate-900 ${className}`}>
+        <KaTeXInline latex={latex} />
+      </div>
+    );
+  }
   if (!raw) return null;
   const trimmed = raw.trim();
 
@@ -243,6 +256,7 @@ function ProblemEquation({
   if (isProseProblem(trimmed)) {
     // 1. Clean legacy typst quote artifacts and normalize whitespace
     let clean = trimmed.replace(/"/g, "").replace(/\s+/g, " ").trim();
+    clean = clean.replace(/(?:\^\s*\\?circle\b)/g, "°");
     // Strip outer $ ... $ if present on prose problem
     if (clean.startsWith("$") && clean.endsWith("$") && (clean.match(/\$/g) || []).length === 2) {
       clean = clean.slice(1, -1).trim();
@@ -267,14 +281,14 @@ function ProblemEquation({
               const restoredMath = p.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
               return <KaTeXInline key={idx} math={restoredMath} className="font-semibold mx-0.5 inline-block" />;
             }
-            const restoredText = p.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
+            const restoredText = p.replace(new RegExp(CURRENCY_TOKEN, "g"), "$").replace(/(?:\^\s*\\?circle\b)/g, "°");
             return <span key={idx}>{restoredText}</span>;
           })}
         </Tag>
       );
     }
 
-    const restoredText = clean.replace(new RegExp(CURRENCY_TOKEN, "g"), "$");
+    const restoredText = clean.replace(new RegExp(CURRENCY_TOKEN, "g"), "$").replace(/(?:\^\s*\\?circle\b)/g, "°");
     const Tag = inline ? "span" : "div";
     return (
       <Tag className={`${inline ? "inline pr-1" : "text-left px-1"} text-slate-800 text-sm font-normal leading-relaxed break-words ${className}`}>
@@ -297,7 +311,7 @@ function ProblemEquation({
 function StepTextWithMath({ text }: { text: string }) {
   if (!text) return null;
   const trimmed = text.trim();
-  const cleaned = trimmed.replace(/"/g, "");
+  const cleaned = trimmed.replace(/"/g, "").replace(/(?:\^\s*\\?circle\b)/g, "°");
 
   // If the whole string is an equation like "$ 2x + 4 = 10 $"
   if (cleaned.startsWith("$") && cleaned.endsWith("$") && (cleaned.match(/\$/g) || []).length === 2) {
@@ -316,7 +330,7 @@ function StepTextWithMath({ text }: { text: string }) {
         if (idx % 2 === 1) {
           return <KaTeXInline key={idx} math={p} className="font-semibold mx-1 text-amber-950" />;
         }
-        return <span key={idx}>{p}</span>;
+        return <span key={idx}>{p.replace(/(?:\^\s*\\?circle\b)/g, "°")}</span>;
       })}
     </span>
   );
@@ -2103,7 +2117,7 @@ export default function OpenMathForgeApp() {
                                       <div className="flex-1 flex flex-col justify-between min-w-0 pr-2">
                                         <div>
                                           <div className="py-1 text-center text-sm font-semibold text-slate-900">
-                                            <ProblemEquation raw={prob.equation_typst} />
+                                            <ProblemEquation raw={prob.equation_typst} latex={prob.equation_latex} />
                                           </div>
 
                                           {prob.choices && prob.choices.length >= 4 && (
@@ -2132,7 +2146,7 @@ export default function OpenMathForgeApp() {
                                                     {prob.correct_choice})
                                                   </span>
                                                 )}
-                                                <ProblemEquation raw={prob.answer_typst} inline />
+                                                <ProblemEquation raw={prob.answer_typst} latex={prob.answer_latex} inline />
                                               </div>
                                               {prob.steps_typst && prob.steps_typst.length > 0 && (
                                                 <div className="mt-2 space-y-1 text-[10.5px] leading-relaxed text-amber-900">
@@ -2198,7 +2212,7 @@ export default function OpenMathForgeApp() {
                                           </button>
                                         </div>
                                         <div className={`flex-1 ${isWordProblem ? "text-left font-normal text-slate-800 pr-2 break-words" : "text-center font-medium text-slate-900"} text-sm min-w-0`}>
-                                          <ProblemEquation raw={prob.equation_typst} inline />
+                                          <ProblemEquation raw={prob.equation_typst} latex={prob.equation_latex} inline />
                                         </div>
                                       </div>
 
@@ -2247,7 +2261,7 @@ export default function OpenMathForgeApp() {
                                                {prob.correct_choice})
                                              </span>
                                            )}
-                                           <ProblemEquation raw={prob.answer_typst} inline />
+                                           <ProblemEquation raw={prob.answer_typst} latex={prob.answer_latex} inline />
                                          </div>
 
                                          {/* Solution Steps: Flow clearly below Ans with zero clipping */}
@@ -3292,11 +3306,11 @@ export default function OpenMathForgeApp() {
                         <div className="flex justify-between items-start">
                           <div>
                             <span className="font-bold mr-2 text-slate-800">{i + 1})</span>
-                            <ProblemEquation raw={p.equation_typst} inline />
+                            <ProblemEquation raw={p.equation_typst} latex={p.equation_latex} inline />
                           </div>
                           <div className="text-slate-500 font-mono text-xs shrink-0 ml-2">
                             Ans: {modalQuestionType === "multiple_choice" && p.correct_choice ? `${p.correct_choice}) ` : ""}
-                            <ProblemEquation raw={p.answer_typst} inline />
+                            <ProblemEquation raw={p.answer_typst} latex={p.answer_latex} inline />
                           </div>
                         </div>
 

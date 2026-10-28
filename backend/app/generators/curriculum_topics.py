@@ -26,6 +26,7 @@ from backend.app.generators.topic_generators_alg_geo import (
     _fmt_frac,
     gen_alg_geo_problem,
 )
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 def _gen_decoupled_subtopic(
@@ -923,16 +924,16 @@ def _gen_decoupled_subtopic(
         return {
             "prompt_text": "Find the measure of angle theta to the nearest tenth of a degree.",
             "equation_typst": eq_s,
-            "answer_typst": f"$ theta approx {deg}^circle $",
+            "answer_typst": f"$ theta approx {deg}° $",
             "steps_typst": [
                 step_id,
                 f"Apply inverse function: $theta = arc{trig_mode}({eq_s.split('=')[1].strip().replace('$', '')})$.",
-                f"Evaluate in degree mode: $theta approx {deg}^circle$.",
+                f"Evaluate in degree mode: $theta approx {deg}°$.",
             ],
             "distractors": [
-                f"$ theta approx {round(90.0 - deg, 1)}^circle $",
-                f"$ theta approx {round(deg + 10.0, 1)}^circle $",
-                f"$ theta approx {round(abs(deg - 15.0), 1)}^circle $",
+                f"$ theta approx {round(90.0 - deg, 1)}° $",
+                f"$ theta approx {round(deg + 10.0, 1)}° $",
+                f"$ theta approx {round(abs(deg - 15.0), 1)}° $",
             ],
             "diagram_svg": svg_right_triangle(a_label=diag_a, b_label=diag_b, c_label=diag_c, theta_label="theta=?"),
             "answer_svg": svg_right_triangle(a_label=diag_a, b_label=diag_b, c_label=diag_c, theta_label=f"{deg} deg"),
@@ -944,40 +945,40 @@ def _gen_decoupled_subtopic(
         if side_mode == "find_opp_from_hyp":
             hyp = rng.randint(8, 45)
             val = round(hyp * math.sin(math.radians(ang)), 1)
-            eq_s = f"$ sin({ang}^circle) = (x)/({hyp}) $"
+            eq_s = f"$ sin({ang}°) = (x)/({hyp}) $"
             steps = [
-                f"Set up sine ratio: $sin({ang}^circle) = x / {hyp}$.",
-                f"Multiply by ${hyp}$: $x = {hyp} sin({ang}^circle)$.",
+                f"Set up sine ratio: $sin({ang}°) = x / {hyp}$.",
+                f"Multiply by ${hyp}$: $x = {hyp} sin({ang}°)$.",
                 f"Round to nearest tenth: $x approx {val}$.",
             ]
             d_a, d_b, d_c = "", "x", str(hyp)
         elif side_mode == "find_adj_from_hyp":
             hyp = rng.randint(8, 45)
             val = round(hyp * math.cos(math.radians(ang)), 1)
-            eq_s = f"$ cos({ang}^circle) = (x)/({hyp}) $"
+            eq_s = f"$ cos({ang}°) = (x)/({hyp}) $"
             steps = [
-                f"Set up cosine ratio: $cos({ang}^circle) = x / {hyp}$.",
-                f"Multiply by ${hyp}$: $x = {hyp} cos({ang}^circle)$.",
+                f"Set up cosine ratio: $cos({ang}°) = x / {hyp}$.",
+                f"Multiply by ${hyp}$: $x = {hyp} cos({ang}°)$.",
                 f"Round to nearest tenth: $x approx {val}$.",
             ]
             d_a, d_b, d_c = "x", "", str(hyp)
         elif side_mode == "find_opp_from_adj":
             adj = rng.randint(5, 35)
             val = round(adj * math.tan(math.radians(ang)), 1)
-            eq_s = f"$ tan({ang}^circle) = (x)/({adj}) $"
+            eq_s = f"$ tan({ang}°) = (x)/({adj}) $"
             steps = [
-                f"Set up tangent ratio: $tan({ang}^circle) = x / {adj}$.",
-                f"Multiply by ${adj}$: $x = {adj} tan({ang}^circle)$.",
+                f"Set up tangent ratio: $tan({ang}°) = x / {adj}$.",
+                f"Multiply by ${adj}$: $x = {adj} tan({ang}°)$.",
                 f"Round to nearest tenth: $x approx {val}$.",
             ]
             d_a, d_b, d_c = str(adj), "x", ""
         else:
             opp = rng.randint(5, 35)
             val = round(opp / math.sin(math.radians(ang)), 1)
-            eq_s = f"$ sin({ang}^circle) = ({opp})/(x) $"
+            eq_s = f"$ sin({ang}°) = ({opp})/(x) $"
             steps = [
-                f"Set up sine ratio: $sin({ang}^circle) = {opp} / x$.",
-                f"Solve for $x$: $x = ({opp}) / (sin({ang}^circle))$.",
+                f"Set up sine ratio: $sin({ang}°) = {opp} / x$.",
+                f"Solve for $x$: $x = ({opp}) / (sin({ang}°))$.",
                 f"Round to nearest tenth: $x approx {val}$.",
             ]
             d_a, d_b, d_c = "", str(opp), "x"
@@ -998,11 +999,11 @@ def _gen_decoupled_subtopic(
         b = round(a * math.sin(math.radians(B)) / math.sin(math.radians(A)), 1)
         return {
             "prompt_text": "Use the Law of Sines to find the missing side length b to the nearest tenth.",
-            "equation_typst": f"$ m angle A = {A}^circle, quad m angle B = {B}^circle, quad a = {a} $",
+            "equation_typst": f"$ m angle A = {A}°, quad m angle B = {B}°, quad a = {a} $",
             "answer_typst": f"$ b approx {b} $",
             "steps_typst": [
-                f"Set up the Law of Sines: $(b)/(sin B) = (a)/(sin A) arrow.r.double (b)/(sin {B}^circle) = ({a})/(sin {A}^circle)$.",
-                f"Solve for $b$: $b = ({a} sin {B}^circle)/(sin {A}^circle)$.",
+                f"Set up the Law of Sines: $(b)/(sin B) = (a)/(sin A) arrow.r.double (b)/(sin {B}°) = ({a})/(sin {A}°)$.",
+                f"Solve for $b$: $b = ({a} sin {B}°)/(sin {A}°)$.",
                 f"Evaluate: $b approx {b}$.",
             ],
             "distractors": [
@@ -1021,11 +1022,11 @@ def _gen_decoupled_subtopic(
         c_side = round(math.sqrt(c_sq), 1)
         return {
             "prompt_text": "Use the Law of Cosines to find side c to the nearest tenth.",
-            "equation_typst": f"$ a = {a}, quad b = {b}, quad m angle C = 60^circle $",
+            "equation_typst": f"$ a = {a}, quad b = {b}, quad m angle C = 60° $",
             "answer_typst": f"$ c = sqrt({c_sq}) approx {c_side} $",
             "steps_typst": [
                 "Apply the Law of Cosines: $c^2 = a^2 + b^2 - 2 a b cos(C)$.",
-                f"Substitute $a = {a}, b = {b}, cos(60^circle) = 1/2$: $c^2 = {a}^2 + {b}^2 - {a}({b}) = {c_sq}$.",
+                f"Substitute $a = {a}, b = {b}, cos(60°) = 1/2$: $c^2 = {a}^2 + {b}^2 - {a}({b}) = {c_sq}$.",
                 f"Take the square root: $c = sqrt({c_sq}) approx {c_side}$.",
             ],
             "distractors": [
@@ -1452,10 +1453,10 @@ def _gen_decoupled_subtopic(
         side_type = "Equilateral" if a == b == c else ("Isosceles" if len({a, b, c}) == 2 else "Scalene")
         return {
             "prompt_text": "Classify the triangle by its angles and by its sides.",
-            "equation_typst": f"$ m angle A = {a}^circle, quad m angle B = {b}^circle, quad m angle C = {c}^circle $",
+            "equation_typst": f"$ m angle A = {a}°, quad m angle B = {b}°, quad m angle C = {c}° $",
             "answer_typst": f"$ \"{ang_type} {side_type.lower()} triangle\" $",
             "steps_typst": [
-                f"Examine the largest angle (${max(a, b, c)}^circle$) to classify by angles: {ang_type}.",
+                f"Examine the largest angle (${max(a, b, c)}°$) to classify by angles: {ang_type}.",
                 f"Count equal angles/sides to classify by sides: {side_type}.",
                 f"Classification: {ang_type} {side_type.lower()} triangle.",
             ],
@@ -1479,27 +1480,27 @@ def _gen_decoupled_subtopic(
             c_expr = f"{k}x {'+ ' + str(const) if const >= 0 else '- ' + str(abs(const))}"
             return {
                 "prompt_text": "Use the Triangle Angle-Sum Theorem to solve for x and find m angle C.",
-                "equation_typst": f"$ m angle A = {a}^circle, quad m angle B = {b}^circle, quad m angle C = ({c_expr})^circle $",
-                "answer_typst": f"$ x = {xv}, quad m angle C = {c}^circle $",
+                "equation_typst": f"$ m angle A = {a}°, quad m angle B = {b}°, quad m angle C = ({c_expr})° $",
+                "answer_typst": f"$ x = {xv}, quad m angle C = {c}° $",
                 "steps_typst": [
                     f"By the Triangle Angle-Sum Theorem, ${a} + {b} + ({c_expr}) = 180$.",
                     f"Simplify: ${k}x = {k * xv} arrow.r.double x = {xv}$.",
-                    f"Therefore, $m angle C = {c}^circle$.",
+                    f"Therefore, $m angle C = {c}°$.",
                 ],
-                "distractors": [f"$ x = {xv + 2}, quad m angle C = {c}^circle $", f"$ x = {c}, quad m angle C = {xv}^circle $", f"$ x = {xv - 2}, quad m angle C = {180 - a}^circle $"],
+                "distractors": [f"$ x = {xv + 2}, quad m angle C = {c}° $", f"$ x = {c}, quad m angle C = {xv}° $", f"$ x = {xv - 2}, quad m angle C = {180 - a}° $"],
                 "diagram_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=c_expr),
                 "answer_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=f"x={xv}, {c} deg"),
             }
         return {
             "prompt_text": "Find the measure of the third angle C in triangle ABC.",
-            "equation_typst": f"$ m angle A = {a}^circle, quad m angle B = {b}^circle $",
-            "answer_typst": f"$ m angle C = {c}^circle $",
+            "equation_typst": f"$ m angle A = {a}°, quad m angle B = {b}° $",
+            "answer_typst": f"$ m angle C = {c}° $",
             "steps_typst": [
-                "By the Triangle Angle-Sum Theorem, $m angle A + m angle B + m angle C = 180^circle$.",
-                f"Add the known angles: ${a}^circle + {b}^circle = {a + b}^circle$.",
-                f"Subtract from $180^circle$: $m angle C = 180^circle - {a + b}^circle = {c}^circle$.",
+                "By the Triangle Angle-Sum Theorem, $m angle A + m angle B + m angle C = 180°$.",
+                f"Add the known angles: ${a}° + {b}° = {a + b}°$.",
+                f"Subtract from $180°$: $m angle C = 180° - {a + b}° = {c}°$.",
             ],
-            "distractors": [f"$ m angle C = {a + b}^circle $", f"$ m angle C = {abs(90 - a)}^circle $", f"$ m angle C = {c + 10}^circle $"],
+            "distractors": [f"$ m angle C = {a + b}° $", f"$ m angle C = {abs(90 - a)}° $", f"$ m angle C = {c + 10}° $"],
             "diagram_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c="?"),
             "answer_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=f"{c} deg"),
         }
@@ -1510,13 +1511,13 @@ def _gen_decoupled_subtopic(
         ext = a + b
         if scale > 1:
             ext_expr = f"{scale}x + {ext - scale * 15}"
-            eq_text = f"Remote interior angles: {a}° and {b}°. Exterior angle: ${ext_expr}^circle$."
-            ans_typst = f"$ x = 15, quad \"Exterior angle\" = {ext}^circle $"
+            eq_text = f"Remote interior angles: {a}° and {b}°. Exterior angle: ${ext_expr}°$."
+            ans_typst = f"$ x = 15, quad \"Exterior angle\" = {ext}° $"
             diag = svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", ext_c=f"{ext_expr}°")
             ans_diag = svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", ext_c=f"{ext}°")
         else:
             eq_text = f"Remote interior angles: {a}° and {b}°. Find the exterior angle."
-            ans_typst = f"$ \"Exterior angle\" = {ext}^circle $"
+            ans_typst = f"$ \"Exterior angle\" = {ext}° $"
             diag = svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", ext_c="?")
             ans_diag = svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", ext_c=f"{ext}°")
         return {
@@ -1525,13 +1526,13 @@ def _gen_decoupled_subtopic(
             "answer_typst": ans_typst,
             "steps_typst": [
                 "By the Exterior Angle Theorem, an exterior angle of a triangle equals the sum of its two remote interior angles.",
-                f"Sum the remote interior angles: ${a}^circle + {b}^circle = {ext}^circle$.",
-                f"Result: Exterior angle = ${ext}^circle$" + (", $x = 15$." if scale > 1 else "."),
+                f"Sum the remote interior angles: ${a}° + {b}° = {ext}°$.",
+                f"Result: Exterior angle = ${ext}°$" + (", $x = 15$." if scale > 1 else "."),
             ],
             "distractors": [
-                f"$ \"Exterior angle\" = {180 - ext}^circle $",
-                f"$ \"Exterior angle\" = {abs(a - b)}^circle $",
-                f"$ \"Exterior angle\" = {ext + 10}^circle $",
+                f"$ \"Exterior angle\" = {180 - ext}° $",
+                f"$ \"Exterior angle\" = {abs(a - b)}° $",
+                f"$ \"Exterior angle\" = {ext + 10}° $",
             ],
             "diagram_svg": diag,
             "answer_svg": ans_diag,
@@ -1543,14 +1544,14 @@ def _gen_decoupled_subtopic(
         tot = a1 + a2
         return {
             "prompt_text": "Ray BD lies in the interior of angle ABC. Use the Angle Addition Postulate to find the missing angle.",
-            "equation_typst": f"$ m angle A B D = {a1}^circle, quad m angle D B C = {a2}^circle, quad \"find \" m angle A B C $",
-            "answer_typst": f"$ m angle A B C = {tot}^circle $",
+            "equation_typst": f"$ m angle A B D = {a1}°, quad m angle D B C = {a2}°, quad \"find \" m angle A B C $",
+            "answer_typst": f"$ m angle A B C = {tot}° $",
             "steps_typst": [
                 "By the Angle Addition Postulate, $m angle A B D + m angle D B C = m angle A B C$.",
-                f"Substitute the given measures: ${a1}^circle + {a2}^circle = {tot}^circle$.",
-                f"Answer: $m angle A B C = {tot}^circle$.",
+                f"Substitute the given measures: ${a1}° + {a2}° = {tot}°$.",
+                f"Answer: $m angle A B C = {tot}°$.",
             ],
-            "distractors": [f"$ m angle A B C = {abs(a1 - a2)}^circle $", f"$ m angle A B C = {180 - tot}^circle $", f"$ m angle A B C = {tot + 10}^circle $"],
+            "distractors": [f"$ m angle A B C = {abs(a1 - a2)}° $", f"$ m angle A B C = {180 - tot}° $", f"$ m angle A B C = {tot + 10}° $"],
             "diagram_svg": svg_angle_diagram(angle_degrees=a2, interior_angle=a1, mode="interior_ray", angle_label=f"{a2}°", interior_angle_label=f"{a1}°"),
             "answer_svg": svg_angle_diagram(angle_degrees=a2, interior_angle=a1, mode="interior_ray", angle_label=f"{a2}°", interior_angle_label=f"{a1}°", shade=True, bottom_label=f"m∠ABC = {tot}°"),
         }
@@ -1560,17 +1561,17 @@ def _gen_decoupled_subtopic(
         major = 360 - central
         return {
             "prompt_text": "Given the central angle of circle O, find the measure of minor arc AB and major arc ACB.",
-            "equation_typst": f"$ m angle A O B = {central}^circle $",
-            "answer_typst": f"$ m \"arc\"(A B) = {central}^circle, quad m \"arc\"(A C B) = {major}^circle $",
+            "equation_typst": f"$ m angle A O B = {central}° $",
+            "answer_typst": f"$ m \"arc\"(A B) = {central}°, quad m \"arc\"(A C B) = {major}° $",
             "steps_typst": [
-                f"The measure of a minor arc equals its central angle: $m \"arc\"(A B) = {central}^circle$.",
-                f"The measure of the corresponding major arc is $360^circle - {central}^circle = {major}^circle$.",
-                f"Minor arc = ${central}^circle$, Major arc = ${major}^circle$.",
+                f"The measure of a minor arc equals its central angle: $m \"arc\"(A B) = {central}°$.",
+                f"The measure of the corresponding major arc is $360° - {central}° = {major}°$.",
+                f"Minor arc = ${central}°$, Major arc = ${major}°$.",
             ],
             "distractors": [
-                f"$ m \"arc\"(A B) = {central // 2}^circle, quad m \"arc\"(A C B) = {180 - central}^circle $",
-                f"$ m \"arc\"(A B) = {major}^circle, quad m \"arc\"(A C B) = {central}^circle $",
-                f"$ m \"arc\"(A B) = {2 * central}^circle, quad m \"arc\"(A C B) = {360 - 2 * central}^circle $",
+                f"$ m \"arc\"(A B) = {central // 2}°, quad m \"arc\"(A C B) = {180 - central}° $",
+                f"$ m \"arc\"(A B) = {major}°, quad m \"arc\"(A C B) = {central}° $",
+                f"$ m \"arc\"(A B) = {2 * central}°, quad m \"arc\"(A C B) = {360 - 2 * central}° $",
             ],
             "diagram_svg": svg_circle_diagram(angle_degrees=central, angle_label=f"{central}°", show_points=True),
             "answer_svg": svg_circle_diagram(
@@ -1588,11 +1589,11 @@ def _gen_decoupled_subtopic(
         sec_f = Fraction(theta * r * r, 360)
         return {
             "prompt_text": "Find the exact arc length s and sector area A of the circle.",
-            "equation_typst": f"$ r = {r}, quad theta = {theta}^circle $",
+            "equation_typst": f"$ r = {r}, quad theta = {theta}° $",
             "answer_typst": f"$ s = {_fmt_frac(arc_f)} pi, quad A = {_fmt_frac(sec_f)} pi $",
             "steps_typst": [
-                f"Arc length: $s = (theta / 360^circle) dot 2 pi r = ({theta} / 360) dot 2 pi ({r}) = {_fmt_frac(arc_f)} pi$.",
-                f"Sector area: $A = (theta / 360^circle) dot pi r^2 = ({theta} / 360) dot pi ({r}^2) = {_fmt_frac(sec_f)} pi$.",
+                f"Arc length: $s = (theta / 360°) dot 2 pi r = ({theta} / 360) dot 2 pi ({r}) = {_fmt_frac(arc_f)} pi$.",
+                f"Sector area: $A = (theta / 360°) dot pi r^2 = ({theta} / 360) dot pi ({r}^2) = {_fmt_frac(sec_f)} pi$.",
                 f"Result: $s = {_fmt_frac(arc_f)} pi, A = {_fmt_frac(sec_f)} pi$.",
             ],
             "distractors": [
@@ -1762,10 +1763,10 @@ def _gen_decoupled_subtopic(
         if sub_type == "45_45_90_leg":
             return {
                 "prompt_text": "Find the hypotenuse c of the 45-45-90 special right triangle.",
-                "equation_typst": f"$ \"45\"^circle\"-45\"^circle\"-90\"^circle \" triangle with leg \" a = {leg_val} $",
+                "equation_typst": f"$ \"45\"°\"-45\"°\"-90\"° \" triangle with leg \" a = {leg_val} $",
                 "answer_typst": f"$ c = {leg_val}sqrt(2) $",
                 "steps_typst": [
-                    "In a $45^circle$-$45^circle$-$90^circle$ triangle, sides are in ratio $1 : 1 : sqrt(2)$.",
+                    "In a $45°$-$45°$-$90°$ triangle, sides are in ratio $1 : 1 : sqrt(2)$.",
                     f"Multiply leg length by $sqrt(2)$: $c = a sqrt(2) = {leg_val}sqrt(2)$.",
                     f"Hypotenuse: $c = {leg_val}sqrt(2)$.",
                 ],
@@ -1777,10 +1778,10 @@ def _gen_decoupled_subtopic(
             hyp_even = leg_val * 2
             return {
                 "prompt_text": "Find the leg length a of the 45-45-90 special right triangle given hypotenuse c.",
-                "equation_typst": f"$ \"45\"^circle\"-45\"^circle\"-90\"^circle \" triangle with hypotenuse \" c = {hyp_even} $",
+                "equation_typst": f"$ \"45\"°\"-45\"°\"-90\"° \" triangle with hypotenuse \" c = {hyp_even} $",
                 "answer_typst": f"$ a = {leg_val}sqrt(2) $",
                 "steps_typst": [
-                    "In a $45^circle$-$45^circle$-$90^circle$ triangle, $c = a sqrt(2) ==> a = c / sqrt(2)$.",
+                    "In a $45°$-$45°$-$90°$ triangle, $c = a sqrt(2) ==> a = c / sqrt(2)$.",
                     f"Rationalize the denominator: $a = ({hyp_even} sqrt(2)) / 2 = {leg_val}sqrt(2)$.",
                     f"Leg length: $a = {leg_val}sqrt(2)$.",
                 ],
@@ -1792,10 +1793,10 @@ def _gen_decoupled_subtopic(
             b_val = leg_val
             return {
                 "prompt_text": "Find the short leg a and hypotenuse c of the 30-60-90 special right triangle given long leg b.",
-                "equation_typst": f"$ \"30\"^circle\"-60\"^circle\"-90\"^circle \" triangle with long leg \" b = {3 * b_val} $",
+                "equation_typst": f"$ \"30\"°\"-60\"°\"-90\"° \" triangle with long leg \" b = {3 * b_val} $",
                 "answer_typst": f"$ a = {b_val}sqrt(3), quad c = {2 * b_val}sqrt(3) $",
                 "steps_typst": [
-                    "In a $30^circle$-$60^circle$-$90^circle$ triangle, $b = a sqrt(3) ==> a = b / sqrt(3)$.",
+                    "In a $30°$-$60°$-$90°$ triangle, $b = a sqrt(3) ==> a = b / sqrt(3)$.",
                     f"Rationalize denominator: $a = ({3 * b_val} sqrt(3)) / 3 = {b_val}sqrt(3)$.",
                     f"Hypotenuse $c = 2a = 2({b_val}sqrt(3)) = {2 * b_val}sqrt(3)$.",
                 ],
@@ -1807,7 +1808,7 @@ def _gen_decoupled_subtopic(
             hyp_val = leg_val * 2
             return {
                 "prompt_text": "Find the short leg a and long leg b of the 30-60-90 special right triangle given hypotenuse c.",
-                "equation_typst": f"$ \"30\"^circle\"-60\"^circle\"-90\"^circle \" triangle with hypotenuse \" c = {hyp_val} $",
+                "equation_typst": f"$ \"30\"°\"-60\"°\"-90\"° \" triangle with hypotenuse \" c = {hyp_val} $",
                 "answer_typst": f"$ a = {leg_val}, quad b = {leg_val}sqrt(3) $",
                 "steps_typst": [
                     f"Short leg $a = c / 2 = {hyp_val} / 2 = {leg_val}$.",
@@ -1821,10 +1822,10 @@ def _gen_decoupled_subtopic(
         else:
             return {
                 "prompt_text": "Find the long leg b and hypotenuse c of the 30-60-90 special right triangle given short leg a.",
-                "equation_typst": f"$ \"30\"^circle\"-60\"^circle\"-90\"^circle \" triangle with short leg \" a = {leg_val} $",
+                "equation_typst": f"$ \"30\"°\"-60\"°\"-90\"° \" triangle with short leg \" a = {leg_val} $",
                 "answer_typst": f"$ b = {leg_val}sqrt(3), quad c = {2 * leg_val} $",
                 "steps_typst": [
-                    "In a $30^circle$-$60^circle$-$90^circle$ triangle, sides are in ratio $1 : sqrt(3) : 2$.",
+                    "In a $30°$-$60°$-$90°$ triangle, sides are in ratio $1 : sqrt(3) : 2$.",
                     f"Long leg $b = a sqrt(3) = {leg_val}sqrt(3)$.",
                     f"Hypotenuse $c = 2a = {2 * leg_val}$.",
                 ],
@@ -2628,14 +2629,14 @@ def _gen_decoupled_subtopic(
             half = deg // 2
             return {
                 "prompt_text": "Compass-and-straightedge construction: if angle ABC is bisected by ray BD, find m angle ABD.",
-                "equation_typst": f"$ m angle A B C = {deg}^circle, quad \"ray \" B D \" bisects \" angle A B C $",
-                "answer_typst": f"$ m angle A B D = {half}^circle $",
+                "equation_typst": f"$ m angle A B C = {deg}°, quad \"ray \" B D \" bisects \" angle A B C $",
+                "answer_typst": f"$ m angle A B D = {half}° $",
                 "steps_typst": [
                     "An angle bisector construction divides the angle into two congruent angles.",
-                    f"Divide $m angle A B C = {deg}^circle$ by $2$.",
-                    f"Result: $m angle A B D = {half}^circle$.",
+                    f"Divide $m angle A B C = {deg}°$ by $2$.",
+                    f"Result: $m angle A B D = {half}°$.",
                 ],
-                "distractors": [f"$ {deg}^circle $", f"$ {2 * deg}^circle $", f"$ {180 - deg}^circle $"],
+                "distractors": [f"$ {deg}° $", f"$ {2 * deg}° $", f"$ {180 - deg}° $"],
                 "diagram_svg": svg_angle_diagram(angle_degrees=half, interior_angle=half, mode="interior_ray", angle_label="?", interior_angle_label=f"{half}°"),
                 "answer_svg": svg_angle_diagram(angle_degrees=half, interior_angle=half, mode="interior_ray", angle_label=f"{half}°", interior_angle_label=f"{half}°", shade=True, bottom_label=f"m∠ABD = {half}°"),
             }
@@ -2665,11 +2666,11 @@ def _gen_decoupled_subtopic(
             area = Fraction(a * b, 4)  # sin(30 deg) = 1/2 -> 1/2 * a * b * 1/2
             return {
                 "prompt_text": "Find the area of triangle ABC using the trigonometric area formula A = (1/2)ab sin(C).",
-                "equation_typst": f"$ a = {a}, quad b = {b}, quad m angle C = 30^circle $",
+                "equation_typst": f"$ a = {a}, quad b = {b}, quad m angle C = 30° $",
                 "answer_typst": f"$ A = {_fmt_frac(area)} $",
                 "steps_typst": [
                     "Use the area formula $A = 1/2 a b sin(C)$.",
-                    f"Substitute $a = {a}, b = {b}$, and $sin(30^circle) = 1/2$: $A = 1/2 ({a})({b})(1/2)$.",
+                    f"Substitute $a = {a}, b = {b}$, and $sin(30°) = 1/2$: $A = 1/2 ({a})({b})(1/2)$.",
                     f"Simplify: $A = {_fmt_frac(area)}$.",
                 ],
                 "distractors": [
@@ -2686,17 +2687,17 @@ def _gen_decoupled_subtopic(
             dec = round(deg + mins / 60.0, 2)
             return {
                 "prompt_text": "Convert the angle measure from degrees-minutes-seconds (DMS) to decimal degrees.",
-                "equation_typst": f"$ {deg}^circle {mins}' $",
-                "answer_typst": f"$ {dec:g}^circle $",
+                "equation_typst": f"$ {deg}° {mins}' $",
+                "answer_typst": f"$ {dec:g}° $",
                 "steps_typst": [
-                    "Use the conversion $1^circle = 60'$.",
-                    f"Convert ${mins}'$ to degrees: ${mins}/60 = {mins / 60.0:g}^circle$.",
-                    f"Add to ${deg}^circle$: ${deg} + {mins / 60.0:g} = {dec:g}^circle$.",
+                    "Use the conversion $1° = 60'$.",
+                    f"Convert ${mins}'$ to degrees: ${mins}/60 = {mins / 60.0:g}°$.",
+                    f"Add to ${deg}°$: ${deg} + {mins / 60.0:g} = {dec:g}°$.",
                 ],
                 "distractors": [
-                    f"$ {deg}.{mins}^circle $",
-                    f"$ {round(deg + mins / 100.0, 2):g}^circle $",
-                    f"$ {deg * 60 + mins}^circle $",
+                    f"$ {deg}.{mins}° $",
+                    f"$ {round(deg + mins / 100.0, 2):g}° $",
+                    f"$ {deg * 60 + mins}° $",
                 ],
             }
         if "angles and angle measure" in t_low:
@@ -2709,13 +2710,13 @@ def _gen_decoupled_subtopic(
                 return {
                     "prompt_text": "Convert the angle measure from radians to degrees.",
                     "equation_typst": f"$ ({num_str}pi)/({den_k}) $",
-                    "answer_typst": f"$ {deg_ans}^circle $",
+                    "answer_typst": f"$ {deg_ans}° $",
                     "steps_typst": [
-                        f"Multiply by conversion factor $(180^circle) / pi$: $({num_str}pi)/({den_k}) times (180^circle)/pi$.",
-                        f"Cancel $pi$ and simplify: $({num_k} times 180^circle) / {den_k} = {deg_ans}^circle$.",
-                        f"Answer: ${deg_ans}^circle$.",
+                        f"Multiply by conversion factor $(180°) / pi$: $({num_str}pi)/({den_k}) times (180°)/pi$.",
+                        f"Cancel $pi$ and simplify: $({num_k} times 180°) / {den_k} = {deg_ans}°$.",
+                        f"Answer: ${deg_ans}°$.",
                     ],
-                    "distractors": [f"$ {deg_ans + 30}^circle $", f"$ {180 - deg_ans}^circle $", f"$ {deg_ans * 2}^circle $"],
+                    "distractors": [f"$ {deg_ans + 30}° $", f"$ {180 - deg_ans}° $", f"$ {deg_ans * 2}° $"],
                 }
             elif conv_dir == "coterminal":
                 base_ang = rng.randint(15, 345)
@@ -2723,24 +2724,24 @@ def _gen_decoupled_subtopic(
                 neg_c = base_ang - 360
                 return {
                     "prompt_text": "Find one positive and one negative coterminal angle for the given angle.",
-                    "equation_typst": f"$ {base_ang}^circle $",
-                    "answer_typst": f"$ {pos_c}^circle \" and \" {neg_c}^circle $",
+                    "equation_typst": f"$ {base_ang}° $",
+                    "answer_typst": f"$ {pos_c}° \" and \" {neg_c}° $",
                     "steps_typst": [
-                        f"Add $360^circle$: ${base_ang}^circle + 360^circle = {pos_c}^circle$.",
-                        f"Subtract $360^circle$: ${base_ang}^circle - 360^circle = {neg_c}^circle$.",
-                        f"Coterminal angles: ${pos_c}^circle$ and ${neg_c}^circle$.",
+                        f"Add $360°$: ${base_ang}° + 360° = {pos_c}°$.",
+                        f"Subtract $360°$: ${base_ang}° - 360° = {neg_c}°$.",
+                        f"Coterminal angles: ${pos_c}°$ and ${neg_c}°$.",
                     ],
-                    "distractors": [f"$ {base_ang + 180}^circle, {base_ang - 180}^circle $", f"$ {pos_c + 360}^circle, {neg_c}^circle $", f"$ {pos_c}^circle, 0^circle $"],
+                    "distractors": [f"$ {base_ang + 180}°, {base_ang - 180}° $", f"$ {pos_c + 360}°, {neg_c}° $", f"$ {pos_c}°, 0° $"],
                 }
             else:
                 deg = rng.choice([15 * k for k in range(-24, 25) if k != 0] + [rng.randint(-360, 360)])
                 f = Fraction(deg, 180)
                 return {
                     "prompt_text": "Convert the angle measure from degrees to radians in exact simplified form.",
-                    "equation_typst": f"$ {deg}^circle $",
+                    "equation_typst": f"$ {deg}° $",
                     "answer_typst": f"$ {_fmt_frac(f)} pi $",
                     "steps_typst": [
-                        "Multiply degree measure by $(pi \" radians\")/(180^circle)$.",
+                        "Multiply degree measure by $(pi \" radians\")/(180°)$.",
                         f"Form fraction $({deg})/(180) pi$ and divide by $\\gcd({abs(deg)}, 180) = {math.gcd(abs(deg), 180)}$.",
                         f"Exact radian measure: ${_fmt_frac(f)} pi$.",
                     ],
@@ -2862,10 +2863,10 @@ def _gen_decoupled_subtopic(
             prefix = f"{k_mult} " if k_mult > 1 else ""
             return {
                 "prompt_text": f"Use the sum or difference identity to find the exact value of {prefix}{fn_t}({ang_name} deg).",
-                "equation_typst": f"$ {prefix}{fn_t}({ang_name}^circle) = {prefix}{fn_t}({ang1}^circle {sign_op} {ang2}^circle) $",
+                "equation_typst": f"$ {prefix}{fn_t}({ang_name}°) = {prefix}{fn_t}({ang1}° {sign_op} {ang2}°) $",
                 "answer_typst": ans_str,
                 "steps_typst": [
-                    f"Express ${ang_name}^circle$ as a sum or difference of special angles: ${ang1}^circle {sign_op} {ang2}^circle$.",
+                    f"Express ${ang_name}°$ as a sum or difference of special angles: ${ang1}° {sign_op} {ang2}°$.",
                     f"Apply identity ${id_formula}$.",
                     f"Substitute exact values of special angles and simplify to find ${ans_str.replace('$', '')}$.",
                 ],
@@ -3011,11 +3012,11 @@ def _gen_decoupled_subtopic(
             h = rng.randint(10, 24) * scale
             return {
                 "prompt_text": "Solve the multi-step right triangle trigonometry problem. Find x to the nearest tenth.",
-                "equation_typst": f"$ \"Altitude\" h = {h}, quad angle A = 30^circle, quad angle B = 45^circle, quad \"find base \" x = A D + D B $",
+                "equation_typst": f"$ \"Altitude\" h = {h}, quad angle A = 30°, quad angle B = 45°, quad \"find base \" x = A D + D B $",
                 "answer_typst": f"$ x = {h}sqrt(3) + {h} approx {round(h * (math.sqrt(3) + 1), 1)} $",
                 "steps_typst": [
-                    f"In the $30^circle$-$60^circle$-$90^circle$ sub-triangle, $A D = {h} / tan(30^circle) = {h}sqrt(3)$.",
-                    f"In the $45^circle$-$45^circle$-$90^circle$ sub-triangle, $D B = {h} / tan(45^circle) = {h}$.",
+                    f"In the $30°$-$60°$-$90°$ sub-triangle, $A D = {h} / tan(30°) = {h}sqrt(3)$.",
+                    f"In the $45°$-$45°$-$90°$ sub-triangle, $D B = {h} / tan(45°) = {h}$.",
                     f"Sum the two segments: $x = {h}sqrt(3) + {h} approx {round(h * (math.sqrt(3) + 1), 1)}$.",
                 ],
                 "distractors": [
@@ -3184,25 +3185,25 @@ def _gen_decoupled_subtopic(
             return {
                 "prompt_text": "Find the acute angle of rotation theta (0 < theta < 90 deg) that eliminates the xy-term.",
                 "equation_typst": "$ x^2 + 2 sqrt(3) x y + 3 y^2 - 12 = 0 $",
-                "answer_typst": "$ theta = 30^circle $",
+                "answer_typst": "$ theta = 30° $",
                 "steps_typst": [
                     "Identify $A = 1, B = 2 sqrt(3), C = 3$.",
                     "Use $\\cot(2 theta) = (A - C)/B = (1 - 3)/(2 sqrt(3)) = -1/sqrt(3)$.",
-                    "Then $2 theta = 120^circle ==> theta = 60^circle$ or choose acute angle $theta = 30^circle$.",
+                    "Then $2 theta = 120° ==> theta = 60°$ or choose acute angle $theta = 30°$.",
                 ],
-                "distractors": ["$ theta = 45^circle $", "$ theta = 60^circle $", "$ theta = 15^circle $"],
+                "distractors": ["$ theta = 45° $", "$ theta = 60° $", "$ theta = 15° $"],
             }
         elif rot_case == "60_deg":
             return {
                 "prompt_text": "Find the acute angle of rotation theta (0 < theta < 90 deg) that eliminates the xy-term.",
                 "equation_typst": "$ 3 x^2 + 2 sqrt(3) x y + y^2 - 16 = 0 $",
-                "answer_typst": "$ theta = 30^circle $",
+                "answer_typst": "$ theta = 30° $",
                 "steps_typst": [
                     "Identify $A = 3, B = 2 sqrt(3), C = 1$.",
                     "Use $\\cot(2 theta) = (A - C)/B = (3 - 1)/(2 sqrt(3)) = 1/sqrt(3)$.",
-                    "Since $\\cot(2 theta) = 1/sqrt(3)$, $2 theta = 60^circle ==> theta = 30^circle$.",
+                    "Since $\\cot(2 theta) = 1/sqrt(3)$, $2 theta = 60° ==> theta = 30°$.",
                 ],
-                "distractors": ["$ theta = 45^circle $", "$ theta = 60^circle $", "$ theta = 15^circle $"],
+                "distractors": ["$ theta = 45° $", "$ theta = 60° $", "$ theta = 15° $"],
             }
         else:
             b_coef = rng.randint(2, 20)
@@ -3210,13 +3211,13 @@ def _gen_decoupled_subtopic(
             return {
                 "prompt_text": "Find the acute angle of rotation theta (0 < theta < 90 deg) that eliminates the xy-term.",
                 "equation_typst": f"$ x^2 + {b_coef}x y + y^2 - {const_k} = 0 $",
-                "answer_typst": "$ theta = 45^circle $",
+                "answer_typst": "$ theta = 45° $",
                 "steps_typst": [
                     f"Identify $A = 1, B = {b_coef}, C = 1$.",
                     f"Use $\\cot(2 theta) = (A - C)/B = (1 - 1)/{b_coef} = 0$.",
-                    "Since $\\cot(2 theta) = 0$, $2 theta = 90^circle ==> theta = 45^circle$.",
+                    "Since $\\cot(2 theta) = 0$, $2 theta = 90° ==> theta = 45°$.",
                 ],
-                "distractors": ["$ theta = 30^circle $", "$ theta = 60^circle $", "$ theta = 90^circle $"],
+                "distractors": ["$ theta = 30° $", "$ theta = 60° $", "$ theta = 90° $"],
             }
 
     if "general sequences" in t_low or "general series" in t_low or "power series" in t_low:
@@ -3488,14 +3489,14 @@ def _gen_decoupled_subtopic(
         sup = 180 - deg
         return {
             "prompt_text": "Use geometric notation and the linear pair diagram to find m angle DBC.",
-            "equation_typst": f"$ angle A B D \" and \" angle D B C \" form a linear pair with \" m angle A B D = {deg}^circle $",
-            "answer_typst": f"$ m angle D B C = {sup}^circle $",
+            "equation_typst": f"$ angle A B D \" and \" angle D B C \" form a linear pair with \" m angle A B D = {deg}° $",
+            "answer_typst": f"$ m angle D B C = {sup}° $",
             "steps_typst": [
-                "Angles in a linear pair are supplementary (sum to $180^circle$).",
-                f"Set up $m angle A B D + m angle D B C = 180^circle arrow.r.double {deg}^circle + m angle D B C = 180^circle$.",
-                f"Subtract ${deg}^circle$: $m angle D B C = {sup}^circle$.",
+                "Angles in a linear pair are supplementary (sum to $180°$).",
+                f"Set up $m angle A B D + m angle D B C = 180° arrow.r.double {deg}° + m angle D B C = 180°$.",
+                f"Subtract ${deg}°$: $m angle D B C = {sup}°$.",
             ],
-            "distractors": [f"$ {90 - deg if deg < 90 else deg - 45}^circle $", f"$ {deg}^circle $", f"$ {sup + 10}^circle $"],
+            "distractors": [f"$ {90 - deg if deg < 90 else deg - 45}° $", f"$ {deg}° $", f"$ {sup + 10}° $"],
             "diagram_svg": svg_angle_diagram(angle_degrees=deg, mode="linear_pair", angle_label=f"{deg}°", interior_angle_label="?"),
             "answer_svg": svg_angle_diagram(angle_degrees=deg, mode="linear_pair", angle_label=f"{deg}°", interior_angle_label=f"{sup}°", shade=True, bottom_label=f"m∠DBC = {sup}°"),
         }
@@ -3814,6 +3815,7 @@ class CurriculumTopicGenerator(BaseGenerator):
 
         return problems
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,

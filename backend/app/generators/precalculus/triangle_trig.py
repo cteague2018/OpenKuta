@@ -5,6 +5,7 @@ import random
 from typing import List
 
 from backend.app.core.base import BaseGenerator, BaseProblem, ProblemDifficulty
+from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
 def ensure_distractors(distractors: List[str], correct: str, fallbacks: List[str]) -> List[str]:
@@ -27,6 +28,7 @@ class TriangleTrigGenerator(BaseGenerator):
     category = "Precalculus"
     standards = ["CCSS.MATH.CONTENT.HSG.SRT.D.10", "CCSS.MATH.CONTENT.HSG.SRT.D.11"]
 
+    @verify_mathematical_truth()
     def generate_single(
         self,
         rng: random.Random,
@@ -59,14 +61,14 @@ class TriangleTrigGenerator(BaseGenerator):
         b_raw = (a * sin_B) / sin_A
         b_rounded = round(b_raw, 1)
 
-        eq_typst = f"$ \"In \" triangle A B C: A = {A}^circle, quad B = {B}^circle, quad a = {a} $"
+        eq_typst = f"$ \"In \" triangle A B C: A = {A}°, quad B = {B}°, quad a = {a} $"
         ans_typst = f"$ b = {b_rounded:.1f} $"
 
         steps = [
             "State the Law of Sines: $ a / sin(A) = b / sin(B) $",
-            f"Substitute the given values: $ {a} / sin({A}^circle) = b / sin({B}^circle) $",
-            f"Solve for $b$: $ b = ({a} dot sin({B}^circle)) / sin({A}^circle) $",
-            f"Calculate the sine values: $ sin({A}^circle) approx {sin_A:.4f}, quad sin({B}^circle) approx {sin_B:.4f} $",
+            f"Substitute the given values: $ {a} / sin({A}°) = b / sin({B}°) $",
+            f"Solve for $b$: $ b = ({a} dot sin({B}°)) / sin({A}°) $",
+            f"Calculate the sine values: $ sin({A}°) approx {sin_A:.4f}, quad sin({B}°) approx {sin_B:.4f} $",
             f"Compute the side length: $ b approx ({a} dot {sin_B:.4f}) / {sin_A:.4f} approx {b_raw:.3f} $",
             f"Round to the nearest tenth: {ans_typst}"
         ]
@@ -115,14 +117,14 @@ class TriangleTrigGenerator(BaseGenerator):
         c_raw = math.sqrt(max(0.01, c_sq))
         c_rounded = round(c_raw, 1)
 
-        eq_typst = f"$ \"In \" triangle A B C: a = {a}, quad b = {b}, quad C = {C}^circle $"
+        eq_typst = f"$ \"In \" triangle A B C: a = {a}, quad b = {b}, quad C = {C}° $"
         ans_typst = f"$ c = {c_rounded:.1f} $"
 
         steps = [
             "State the Law of Cosines: $ c^2 = a^2 + b^2 - 2 a b cos(C) $",
-            f"Substitute the given values: $ c^2 = {a}^2 + {b}^2 - 2({a})({b}) cos({C}^circle) $",
-            f"Calculate the squares and product: $ c^2 = {a**2} + {b**2} - {2 * a * b} dot cos({C}^circle) $",
-            f"Evaluate the cosine: $ cos({C}^circle) approx {cos_C:.4f} $",
+            f"Substitute the given values: $ c^2 = {a}^2 + {b}^2 - 2({a})({b}) cos({C}°) $",
+            f"Calculate the squares and product: $ c^2 = {a**2} + {b**2} - {2 * a * b} dot cos({C}°) $",
+            f"Evaluate the cosine: $ cos({C}°) approx {cos_C:.4f} $",
             f"Compute $ c^2 $: $ c^2 = {a**2 + b**2} - {2 * a * b}({cos_C:.4f}) approx {c_sq:.3f} $",
             f"Take the principal square root: $ c = sqrt({c_sq:.3f}) approx {c_raw:.3f} $",
             f"Round to the nearest tenth: {ans_typst}"
@@ -171,7 +173,7 @@ class TriangleTrigGenerator(BaseGenerator):
             C_rounded = round(C_deg, 1)
 
             eq_typst = f"$ \"In \" triangle A B C: a = {a}, quad b = {b}, quad c = {c} $"
-            ans_typst = f"$ C = {C_rounded:.1f}^circle $"
+            ans_typst = f"$ C = {C_rounded:.1f}° $"
 
             num = a**2 + b**2 - c**2
             den = 2 * a * b
@@ -181,24 +183,24 @@ class TriangleTrigGenerator(BaseGenerator):
                 f"Substitute the side lengths: $ cos(C) = ({a}^2 + {b}^2 - {c}^2) / (2 dot {a} dot {b}) $",
                 f"Calculate squares and products: $ cos(C) = ({a**2} + {b**2} - {round(c**2, 2)}) / {den} $",
                 f"Simplify the fraction: $ cos(C) = {num:.2f} / {den} approx {cos_C:.4f} $",
-                f"Take the inverse cosine: $ C = arccos({cos_C:.4f}) approx {C_deg:.3f}^circle $",
+                f"Take the inverse cosine: $ C = arccos({cos_C:.4f}) approx {C_deg:.3f}° $",
                 f"Round to the nearest tenth: {ans_typst}"
             ]
 
-            d1 = f"$ C = {round(180.0 - C_rounded, 1):.1f}^circle $"
+            d1 = f"$ C = {round(180.0 - C_rounded, 1):.1f}° $"
             try:
                 inv_cos = max(-1.0, min(1.0, -cos_C))
-                d2 = f"$ C = {round(math.degrees(math.acos(inv_cos)), 1):.1f}^circle $"
+                d2 = f"$ C = {round(math.degrees(math.acos(inv_cos)), 1):.1f}° $"
             except Exception:
-                d2 = f"$ C = {round(C_rounded + 15.0, 1):.1f}^circle $"
-            d3 = f"$ C = {round(C_rounded + 12.4, 1):.1f}^circle $"
-            d4 = f"$ C = {round(max(10.0, C_rounded - 14.2), 1):.1f}^circle $"
-            d5 = f"$ C = {round(C_rounded + 25.0, 1):.1f}^circle $"
+                d2 = f"$ C = {round(C_rounded + 15.0, 1):.1f}° $"
+            d3 = f"$ C = {round(C_rounded + 12.4, 1):.1f}° $"
+            d4 = f"$ C = {round(max(10.0, C_rounded - 14.2), 1):.1f}° $"
+            d5 = f"$ C = {round(C_rounded + 25.0, 1):.1f}° $"
 
             distractors = ensure_distractors(
                 [d1, d2, d3, d4],
                 ans_typst,
-                [d5, "$ C = 90.0^circle $", "$ C = 45.0^circle $", "$ C = 60.0^circle $"]
+                [d5, "$ C = 90.0° $", "$ C = 45.0° $", "$ C = 60.0° $"]
             )
 
             return BaseProblem(
@@ -239,11 +241,11 @@ class TriangleTrigGenerator(BaseGenerator):
                 ans_typst = "$ \"1 triangle\" $"
                 case_explanation = f"Since $ a = {a} >= b = {b} $, exactly one triangle can be formed."
 
-            eq_typst = f"$ A = {A}^circle, quad a = {a}, quad b = {b} $"
+            eq_typst = f"$ A = {A}°, quad a = {a}, quad b = {b} $"
 
             steps = [
                 "For the SSA case with acute angle $ A $, compare side $ a $ to altitude $ h = b sin(A) $ and side $ b $.",
-                f"Calculate the altitude: $ h = {b} dot sin({A}^circle) approx {b} dot ({sin_A:.4f}) approx {h:.2f} $",
+                f"Calculate the altitude: $ h = {b} dot sin({A}°) approx {b} dot ({sin_A:.4f}) approx {h:.2f} $",
                 f"Compare side lengths: $ a = {a}, quad b = {b}, quad h approx {h:.2f} $",
                 case_explanation,
                 f"Result: {ans_typst}"
