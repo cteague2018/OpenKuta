@@ -1425,8 +1425,8 @@ def gen_alg_geo_problem(
                 f"$ x = {xv + 3}, quad m angle = {a1}° $",
                 f"$ x = {xv - 2}, quad m angle = {a1}° $",
             ],
-            "diagram_svg": svg_parallel_transversal(mode="parallel", angle1_label="3x + 10", angle2_label=f"{a1} deg"),
-            "answer_svg": svg_parallel_transversal(mode="parallel", angle1_label=f"x = {xv}", angle2_label=f"{a1} deg"),
+            "diagram_svg": svg_parallel_transversal(mode="parallel", angle1_label="3x + 10", angle2_label=f"{a1}°"),
+            "answer_svg": svg_parallel_transversal(mode="parallel", angle1_label=f"x = {xv}", angle2_label=f"{a1}°"),
         }
 
     if c_low == "properties of triangles" or c_low == "congruent triangles" or c_low == "similarity":
@@ -1610,8 +1610,8 @@ def gen_alg_geo_problem(
                     f"$ m angle A = {vertex_ang}° $",
                     f"$ m angle A = {base_ang + 10}° $",
                 ],
-                "diagram_svg": svg_general_triangle(angle_b=f"{vertex_ang} deg", angle_a="x", angle_c="x", side_c="AB=BC"),
-                "answer_svg": svg_general_triangle(angle_b=f"{vertex_ang} deg", angle_a=f"{base_ang} deg", angle_c=f"{base_ang} deg"),
+                "diagram_svg": svg_general_triangle(angle_b=f"{vertex_ang}°", angle_a="x", angle_c="x", side_c="AB=BC"),
+                "answer_svg": svg_general_triangle(angle_b=f"{vertex_ang}°", angle_a=f"{base_ang}°", angle_c=f"{base_ang}°"),
             }
 
     if c_low in ("quadrilaterals and polygons", "polygons") or "parallelogram" in t_low or "trapezoid" in t_low or "rhombus" in t_low or "kite" in t_low or "regular polygon" in t_low:
@@ -1721,7 +1721,7 @@ def gen_alg_geo_problem(
                         f"$ \"Each exterior angle\" = {each_ext + 5:g}°, quad \"Sum\" = 720° $",
                     ],
                     "diagram_svg": svg_polygon_diagram("regular", dim1=f"n = {n}", dim2="Exterior angles = ?"),
-                    "answer_svg": svg_polygon_diagram("regular", dim1=f"Each = {each_ext:g} deg", dim2="Sum = 360 deg"),
+                    "answer_svg": svg_polygon_diagram("regular", dim1=f"Each = {each_ext:g}°", dim2="Sum = 360°"),
                 }
             elif poly_mode == "reverse_sum":
                 return {
@@ -1753,7 +1753,7 @@ def gen_alg_geo_problem(
                         f"$ \"Sum\" = {(n - 1) * 180}°, quad \"Each angle\" = {each_int + 10:g}° $",
                     ],
                     "diagram_svg": svg_polygon_diagram("regular", dim1=f"n = {n}", dim2="Interior angles = ?"),
-                    "answer_svg": svg_polygon_diagram("regular", dim1=f"Sum = {sum_int}", dim2=f"Each = {each_int:g} deg"),
+                    "answer_svg": svg_polygon_diagram("regular", dim1=f"Sum = {sum_int}", dim2=f"Each = {each_int:g}°"),
                 }
         # Parallelogram / triangle area
         b = rng.randint(6, 16)

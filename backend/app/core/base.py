@@ -66,9 +66,11 @@ class BaseProblem(BaseModel):
                 s = re.sub(r'\barrow\.l\.r\b', '<->', s)
                 # Replace legacy ^circle or ^\circle with standard degree symbol °
                 s = re.sub(r'\^\\?circle\b', '°', s)
+                s = re.sub(r'(\d|\)|theta|\b[a-zA-Z])\s*(?:deg|degrees)\b', r'\1°', s, flags=re.IGNORECASE)
+                s = s.replace('&deg;', '°').replace('&#176;', '°')
                 return s
 
-            for key in ["equation_typst", "answer_typst", "prompt_text"]:
+            for key in ["equation_typst", "answer_typst", "prompt_text", "diagram_svg", "answer_svg"]:
                 if key in data and isinstance(data[key], str):
                     data[key] = clean_str(data[key])
             if "steps_typst" in data and isinstance(data["steps_typst"], list):

@@ -936,7 +936,7 @@ def _gen_decoupled_subtopic(
                 f"$ theta approx {round(abs(deg - 15.0), 1)}° $",
             ],
             "diagram_svg": svg_right_triangle(a_label=diag_a, b_label=diag_b, c_label=diag_c, theta_label="theta=?"),
-            "answer_svg": svg_right_triangle(a_label=diag_a, b_label=diag_b, c_label=diag_c, theta_label=f"{deg} deg"),
+            "answer_svg": svg_right_triangle(a_label=diag_a, b_label=diag_b, c_label=diag_c, theta_label=f"{deg}°"),
         }
 
     if "missing sides" in t_low or "solving right triangles" in t_low or "finding angles and sides" in t_low or ("trig" in t_low and "solve" in t_low):
@@ -989,7 +989,7 @@ def _gen_decoupled_subtopic(
             "answer_typst": f"$ x approx {val} $",
             "steps_typst": steps,
             "distractors": [f"$ x approx {round(val + 3.2, 1)} $", f"$ x approx {round(abs(val - 4.1), 1)} $", f"$ x approx {round(val * 1.5, 1)} $"],
-            "diagram_svg": svg_right_triangle(a_label=d_a, b_label=d_b, c_label=d_c, theta_label=f"{ang} deg"),
+            "diagram_svg": svg_right_triangle(a_label=d_a, b_label=d_b, c_label=d_c, theta_label=f"{ang}°"),
             "answer_svg": svg_right_triangle(a_label=d_a, b_label=d_b, c_label=d_c, theta_label=f"x={val}"),
         }
 
@@ -1011,8 +1011,8 @@ def _gen_decoupled_subtopic(
                 f"$ b approx {round(b + 3.5, 1)} $",
                 f"$ b approx {a + (B - A)} $",
             ],
-            "diagram_svg": svg_general_triangle(angle_a=f"{A} deg", angle_b=f"{B} deg", side_a=str(a), side_b="b=?"),
-            "answer_svg": svg_general_triangle(angle_a=f"{A} deg", angle_b=f"{B} deg", side_a=str(a), side_b=f"b={b}"),
+            "diagram_svg": svg_general_triangle(angle_a=f"{A}°", angle_b=f"{B}°", side_a=str(a), side_b="b=?"),
+            "answer_svg": svg_general_triangle(angle_a=f"{A}°", angle_b=f"{B}°", side_a=str(a), side_b=f"b={b}"),
         }
 
     if "law of cosines" in t_low and "law of sines" not in t_low:
@@ -1034,8 +1034,8 @@ def _gen_decoupled_subtopic(
                 f"$ c = {c_sq} $",
                 f"$ c = sqrt({a * a + b * b + a * b}) $",
             ],
-            "diagram_svg": svg_general_triangle(side_a=str(a), side_b=str(b), side_c="c=?", angle_c="60 deg"),
-            "answer_svg": svg_general_triangle(side_a=str(a), side_b=str(b), side_c=f"c={c_side}", angle_c="60 deg"),
+            "diagram_svg": svg_general_triangle(side_a=str(a), side_b=str(b), side_c="c=?", angle_c="60°"),
+            "answer_svg": svg_general_triangle(side_a=str(a), side_b=str(b), side_c=f"c={c_side}", angle_c="60°"),
         }
 
     # ------------------------------------------------------------------
@@ -1465,8 +1465,8 @@ def _gen_decoupled_subtopic(
                 f"$ \"{ang_type} {'isosceles' if side_type != 'Isosceles' else 'scalene'} triangle\" $",
                 "$ \"Right equilateral triangle\" $",
             ],
-            "diagram_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=f"{c} deg"),
-            "answer_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=f"{c} deg", side_b=f"{ang_type} {side_type}"),
+            "diagram_svg": svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", angle_c=f"{c}°"),
+            "answer_svg": svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", angle_c=f"{c}°", side_b=f"{ang_type} {side_type}"),
         }
 
     if "triangle angle sum" in t_low:
@@ -1488,8 +1488,8 @@ def _gen_decoupled_subtopic(
                     f"Therefore, $m angle C = {c}°$.",
                 ],
                 "distractors": [f"$ x = {xv + 2}, quad m angle C = {c}° $", f"$ x = {c}, quad m angle C = {xv}° $", f"$ x = {xv - 2}, quad m angle C = {180 - a}° $"],
-                "diagram_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=c_expr),
-                "answer_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=f"x={xv}, {c} deg"),
+                "diagram_svg": svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", angle_c=c_expr),
+                "answer_svg": svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", angle_c=f"x={xv}, {c}°"),
             }
         return {
             "prompt_text": "Find the measure of the third angle C in triangle ABC.",
@@ -1501,8 +1501,8 @@ def _gen_decoupled_subtopic(
                 f"Subtract from $180°$: $m angle C = 180° - {a + b}° = {c}°$.",
             ],
             "distractors": [f"$ m angle C = {a + b}° $", f"$ m angle C = {abs(90 - a)}° $", f"$ m angle C = {c + 10}° $"],
-            "diagram_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c="?"),
-            "answer_svg": svg_general_triangle(angle_a=f"{a} deg", angle_b=f"{b} deg", angle_c=f"{c} deg"),
+            "diagram_svg": svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", angle_c="?"),
+            "answer_svg": svg_general_triangle(angle_a=f"{a}°", angle_b=f"{b}°", angle_c=f"{c}°"),
         }
 
     if "exterior angle theorem" in t_low:
@@ -1601,7 +1601,7 @@ def _gen_decoupled_subtopic(
                 f"$ s = {2 * r} pi, quad A = {r * r} pi $",
                 f"$ s = {_fmt_frac(arc_f * 2)} pi, quad A = {_fmt_frac(sec_f * 2)} pi $",
             ],
-            "diagram_svg": svg_circle_diagram(radius_label=f"r = {r}", angle_label=f"{theta} deg", shade_sector=True),
+            "diagram_svg": svg_circle_diagram(radius_label=f"r = {r}", angle_label=f"{theta}°", shade_sector=True),
             "answer_svg": svg_circle_diagram(radius_label=f"s = {arc_f}pi", angle_label=f"A = {sec_f}pi", shade_sector=True),
         }
     # ------------------------------------------------------------------
@@ -1771,8 +1771,8 @@ def _gen_decoupled_subtopic(
                     f"Hypotenuse: $c = {leg_val}sqrt(2)$.",
                 ],
                 "distractors": [f"$ c = {2 * leg_val} $", f"$ c = {leg_val}sqrt(3) $", f"$ c = {leg_val} $"],
-                "diagram_svg": svg_right_triangle(a_label=str(leg_val), b_label=str(leg_val), c_label="c=?", theta_label="45 deg"),
-                "answer_svg": svg_right_triangle(a_label=str(leg_val), b_label=str(leg_val), c_label=f"{leg_val}sqrt(2)", theta_label="45 deg"),
+                "diagram_svg": svg_right_triangle(a_label=str(leg_val), b_label=str(leg_val), c_label="c=?", theta_label="45°"),
+                "answer_svg": svg_right_triangle(a_label=str(leg_val), b_label=str(leg_val), c_label=f"{leg_val}sqrt(2)", theta_label="45°"),
             }
         elif sub_type == "45_45_90_hyp":
             hyp_even = leg_val * 2
@@ -1786,8 +1786,8 @@ def _gen_decoupled_subtopic(
                     f"Leg length: $a = {leg_val}sqrt(2)$.",
                 ],
                 "distractors": [f"$ a = {hyp_even}sqrt(2) $", f"$ a = {leg_val} $", f"$ a = {leg_val}sqrt(3) $"],
-                "diagram_svg": svg_right_triangle(a_label="a=?", b_label="a=?", c_label=str(hyp_even), theta_label="45 deg"),
-                "answer_svg": svg_right_triangle(a_label=f"{leg_val}sqrt(2)", b_label=f"{leg_val}sqrt(2)", c_label=str(hyp_even), theta_label="45 deg"),
+                "diagram_svg": svg_right_triangle(a_label="a=?", b_label="a=?", c_label=str(hyp_even), theta_label="45°"),
+                "answer_svg": svg_right_triangle(a_label=f"{leg_val}sqrt(2)", b_label=f"{leg_val}sqrt(2)", c_label=str(hyp_even), theta_label="45°"),
             }
         elif sub_type == "30_60_90_long":
             b_val = leg_val
@@ -1801,8 +1801,8 @@ def _gen_decoupled_subtopic(
                     f"Hypotenuse $c = 2a = 2({b_val}sqrt(3)) = {2 * b_val}sqrt(3)$.",
                 ],
                 "distractors": [f"$ a = {b_val}, c = {2 * b_val} $", f"$ a = {3 * b_val}sqrt(3), c = {6 * b_val} $", f"$ a = {b_val}sqrt(2), c = {2 * b_val} $"],
-                "diagram_svg": svg_right_triangle(a_label="a=?", b_label=str(3 * b_val), c_label="c=?", theta_label="60 deg"),
-                "answer_svg": svg_right_triangle(a_label=f"{b_val}sqrt(3)", b_label=str(3 * b_val), c_label=f"{2 * b_val}sqrt(3)", theta_label="60 deg"),
+                "diagram_svg": svg_right_triangle(a_label="a=?", b_label=str(3 * b_val), c_label="c=?", theta_label="60°"),
+                "answer_svg": svg_right_triangle(a_label=f"{b_val}sqrt(3)", b_label=str(3 * b_val), c_label=f"{2 * b_val}sqrt(3)", theta_label="60°"),
             }
         elif sub_type == "30_60_90_hyp":
             hyp_val = leg_val * 2
@@ -1816,8 +1816,8 @@ def _gen_decoupled_subtopic(
                     f"Result: $a = {leg_val}, b = {leg_val}sqrt(3)$.",
                 ],
                 "distractors": [f"$ a = {leg_val}sqrt(3), b = {leg_val} $", f"$ a = {hyp_val}, b = {hyp_val}sqrt(3) $", f"$ a = {leg_val}, b = {leg_val}sqrt(2) $"],
-                "diagram_svg": svg_right_triangle(a_label="a=?", b_label="b=?", c_label=str(hyp_val), theta_label="60 deg"),
-                "answer_svg": svg_right_triangle(a_label=str(leg_val), b_label=f"{leg_val}sqrt(3)", c_label=str(hyp_val), theta_label="60 deg"),
+                "diagram_svg": svg_right_triangle(a_label="a=?", b_label="b=?", c_label=str(hyp_val), theta_label="60°"),
+                "answer_svg": svg_right_triangle(a_label=str(leg_val), b_label=f"{leg_val}sqrt(3)", c_label=str(hyp_val), theta_label="60°"),
             }
         else:
             return {
@@ -1830,8 +1830,8 @@ def _gen_decoupled_subtopic(
                     f"Hypotenuse $c = 2a = {2 * leg_val}$.",
                 ],
                 "distractors": [f"$ b = {leg_val}sqrt(2), quad c = {2 * leg_val} $", f"$ b = {2 * leg_val}, quad c = {leg_val}sqrt(3) $", f"$ b = {3 * leg_val}, quad c = {2 * leg_val} $"],
-                "diagram_svg": svg_right_triangle(a_label=str(leg_val), b_label="b=?", c_label="c=?", theta_label="60 deg"),
-                "answer_svg": svg_right_triangle(a_label=str(leg_val), b_label=f"{leg_val}sqrt(3)", c_label=str(2 * leg_val), theta_label="60 deg"),
+                "diagram_svg": svg_right_triangle(a_label=str(leg_val), b_label="b=?", c_label="c=?", theta_label="60°"),
+                "answer_svg": svg_right_triangle(a_label=str(leg_val), b_label=f"{leg_val}sqrt(3)", c_label=str(2 * leg_val), theta_label="60°"),
             }
 
     # ------------------------------------------------------------------
@@ -2678,8 +2678,8 @@ def _gen_decoupled_subtopic(
                     f"$ A = {_fmt_frac(area)} sqrt(3) $",
                     f"$ A = {a * b} $",
                 ],
-                "diagram_svg": svg_general_triangle(side_a=str(a), side_b=str(b), angle_c="30 deg"),
-                "answer_svg": svg_general_triangle(side_a=str(a), side_b=str(b), angle_c="30 deg", side_c=f"Area={area}"),
+                "diagram_svg": svg_general_triangle(side_a=str(a), side_b=str(b), angle_c="30°"),
+                "answer_svg": svg_general_triangle(side_a=str(a), side_b=str(b), angle_c="30°", side_c=f"Area={area}"),
             }
         if "degrees-minutes-seconds" in t_low:
             deg = rng.randint(15, 75) + scale
@@ -2862,7 +2862,7 @@ def _gen_decoupled_subtopic(
 
             prefix = f"{k_mult} " if k_mult > 1 else ""
             return {
-                "prompt_text": f"Use the sum or difference identity to find the exact value of {prefix}{fn_t}({ang_name} deg).",
+                "prompt_text": f"Use the sum or difference identity to find the exact value of {prefix}{fn_t}({ang_name}°).",
                 "equation_typst": f"$ {prefix}{fn_t}({ang_name}°) = {prefix}{fn_t}({ang1}° {sign_op} {ang2}°) $",
                 "answer_typst": ans_str,
                 "steps_typst": [
@@ -3024,8 +3024,8 @@ def _gen_decoupled_subtopic(
                     f"$ {round(h * math.sqrt(3), 1)} $",
                     f"$ {round(h * (math.sqrt(3) - 1), 1)} $",
                 ],
-                "diagram_svg": svg_right_triangle(a_label="x", b_label=str(h), theta_label="30/45 deg"),
-                "answer_svg": svg_right_triangle(a_label=f"x={round(h * (math.sqrt(3) + 1), 1)}", b_label=str(h), theta_label="30/45 deg"),
+                "diagram_svg": svg_right_triangle(a_label="x", b_label=str(h), theta_label="30°/45°"),
+                "answer_svg": svg_right_triangle(a_label=f"x={round(h * (math.sqrt(3) + 1), 1)}", b_label=str(h), theta_label="30°/45°"),
             }
 
     # ------------------------------------------------------------------
@@ -3183,7 +3183,7 @@ def _gen_decoupled_subtopic(
         rot_case = rng.choice(["45_deg", "30_deg", "60_deg", "general"])
         if rot_case == "30_deg":
             return {
-                "prompt_text": "Find the acute angle of rotation theta (0 < theta < 90 deg) that eliminates the xy-term.",
+                "prompt_text": "Find the acute angle of rotation theta (0° < theta < 90°) that eliminates the xy-term.",
                 "equation_typst": "$ x^2 + 2 sqrt(3) x y + 3 y^2 - 12 = 0 $",
                 "answer_typst": "$ theta = 30° $",
                 "steps_typst": [
@@ -3195,7 +3195,7 @@ def _gen_decoupled_subtopic(
             }
         elif rot_case == "60_deg":
             return {
-                "prompt_text": "Find the acute angle of rotation theta (0 < theta < 90 deg) that eliminates the xy-term.",
+                "prompt_text": "Find the acute angle of rotation theta (0° < theta < 90°) that eliminates the xy-term.",
                 "equation_typst": "$ 3 x^2 + 2 sqrt(3) x y + y^2 - 16 = 0 $",
                 "answer_typst": "$ theta = 30° $",
                 "steps_typst": [
@@ -3209,7 +3209,7 @@ def _gen_decoupled_subtopic(
             b_coef = rng.randint(2, 20)
             const_k = rng.randint(4, 30)
             return {
-                "prompt_text": "Find the acute angle of rotation theta (0 < theta < 90 deg) that eliminates the xy-term.",
+                "prompt_text": "Find the acute angle of rotation theta (0° < theta < 90°) that eliminates the xy-term.",
                 "equation_typst": f"$ x^2 + {b_coef}x y + y^2 - {const_k} = 0 $",
                 "answer_typst": "$ theta = 45° $",
                 "steps_typst": [

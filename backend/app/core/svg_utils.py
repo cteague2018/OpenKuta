@@ -5,13 +5,23 @@ import math
 import re
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from backend.app.generators.svg_layout_engine import BBox, SVGCollisionSolver
+from backend.app.core.svg_layout import BBox, SVGCollisionSolver
 
 _SVG_STYLE = 'style="max-width:100%;height:auto;display:block;margin:0 auto;"'
 
 
+def _clean_svg_math_label(text: Any) -> str:
+    if text is None:
+        return ""
+    s = str(text)
+    s = re.sub(r'(\d|\)|theta|\b[a-zA-Z])\s*(?:deg|degrees)\b', r'\1°', s, flags=re.IGNORECASE)
+    s = re.sub(r'\^\\?circle\b', '°', s)
+    s = s.replace('&deg;', '°').replace('&#176;', '°')
+    return s
+
+
 def _esc(text: Any) -> str:
-    return html.escape(str(text), quote=True)
+    return html.escape(_clean_svg_math_label(text), quote=True)
 
 
 def svg_coordinate_plane(
@@ -1054,14 +1064,17 @@ def svg_right_triangle(
     theta_label: str = "",
 ) -> str:
     """Render a labeled right triangle diagram with wide side padding so labels never clip."""
-    side_a = side_a or a_label
-    side_b = side_b or b_label
-    side_c = side_c or c_label
-    angle_b = angle_b or theta_label
+    side_a = _clean_svg_math_label(side_a or a_label)
+    side_b = _clean_svg_math_label(side_b or b_label)
+    side_c = _clean_svg_math_label(side_c or c_label)
+    angle_b = _clean_svg_math_label(angle_b or theta_label)
+    angle_a = _clean_svg_math_label(angle_a)
     width, height = 225, 118
     x1, y1 = 58, 92   # Right angle C
     x2, y2 = 166, 92  # Vertex B
     x3, y3 = 58, 22   # Vertex A
+    rt_halo = 'paint-order="stroke fill" stroke="#eff6ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"'
+
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<polygon points="{x1},{y1} {x2},{y2} {x3},{y3}" fill="#eff6ff" stroke="#1e40af" stroke-width="1.8"/>',
@@ -1071,15 +1084,15 @@ def svg_right_triangle(
         f'<text x="{x3 - 10}" y="{y3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">A</text>',
     ]
     if side_a:
-        parts.append(f'<text x="{(x1 + x2) / 2}" y="{y1 + 14}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(side_a)}</text>')
+        parts.append(f'<text x="{(x1 + x2) / 2}" y="{y1 + 14}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" text-anchor="middle" {rt_halo}>{_esc(side_a)}</text>')
     if side_b:
-        parts.append(f'<text x="{x1 - 6}" y="{(y1 + y3) / 2 + 3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" text-anchor="end">{_esc(side_b)}</text>')
+        parts.append(f'<text x="{x1 - 6}" y="{(y1 + y3) / 2 + 3}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" text-anchor="end" {rt_halo}>{_esc(side_b)}</text>')
     if side_c:
-        parts.append(f'<text x="{(x2 + x3) / 2 + 6}" y="{(y2 + y3) / 2 - 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626">{_esc(side_c)}</text>')
+        parts.append(f'<text x="{(x2 + x3) / 2 + 6}" y="{(y2 + y3) / 2 - 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#dc2626" {rt_halo}>{_esc(side_c)}</text>')
     if angle_b:
-        parts.append(f'<text x="{x2 - 28}" y="{y2 - 5}" font-family="sans-serif" font-size="7.5" fill="#0f172a" text-anchor="middle">{_esc(angle_b)}</text>')
+        parts.append(f'<text x="{x2 - 14}" y="{y2 - 6}" font-family="sans-serif" font-size="7.5" fill="#0f172a" text-anchor="end" {rt_halo}>{_esc(angle_b)}</text>')
     if angle_a:
-        parts.append(f'<text x="{x3 + 5}" y="{y3 + 22}" font-family="sans-serif" font-size="7.5" fill="#0f172a">{_esc(angle_a)}</text>')
+        parts.append(f'<text x="{x3 + 8}" y="{y3 + 22}" font-family="sans-serif" font-size="7.5" fill="#0f172a" {rt_halo}>{_esc(angle_a)}</text>')
     parts.append("</svg>")
     return "".join(parts)
 
@@ -1102,39 +1115,63 @@ def svg_general_triangle(
     side_b: str = "",
     side_c: str = "",
 ) -> str:
-    """Render a labeled general triangle with ample horizontal padding so labels never clip."""
-    ang_a = ang_a or angle_a
-    ang_b = ang_b or angle_b
-    ang_c = ang_c or angle_c
-    side_bc = side_bc or side_a
-    side_ac = side_ac or side_b
-    side_ab = side_ab or side_c
-    width, height = 235, 118
-    xa, ya = 52, 92
-    xc, yc = 158, 92
-    xb, yb = 102, 22
+    """Render a labeled general triangle with ample padding so labels never clip or overlap edges."""
+    ang_a = _clean_svg_math_label(ang_a or angle_a)
+    ang_b = _clean_svg_math_label(ang_b or angle_b)
+    ang_c = _clean_svg_math_label(ang_c or angle_c)
+    side_bc = _clean_svg_math_label(side_bc or side_a)
+    side_ac = _clean_svg_math_label(side_ac or side_b)
+    side_ab = _clean_svg_math_label(side_ab or side_c)
+    ext_c = _clean_svg_math_label(ext_c)
+
+    width, height = 235, 120
+    if ext_c:
+        xa, ya = 44, 92
+        xc, yc = 152, 92
+        xb, yb = 98, 22
+    else:
+        # Give the triangle full width and height breathing room when no exterior ray exists
+        xa, ya = 42, 94
+        xc, yc = 186, 94
+        xb, yb = 114, 20
+
+    halo = 'paint-order="stroke fill" stroke="#f0fdf4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"'
+
     parts = [
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         f'<polygon points="{xa},{ya} {xc},{yc} {xb},{yb}" fill="#f0fdf4" stroke="#15803d" stroke-width="1.8"/>',
-        f'<text x="{xa - 9}" y="{ya + 4}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">{_esc(label_a)}</text>',
-        f'<text x="{xb}" y="{yb - 6}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(label_b)}</text>',
-        f'<text x="{xc + 4}" y="{yc + 11}" font-family="sans-serif" font-size="8" font-weight="bold" fill="#1e293b">{_esc(label_c)}</text>',
+        f'<text x="{xa - 10}" y="{ya + 5}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b">{_esc(label_a)}</text>',
+        f'<text x="{xb}" y="{yb - 7}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b" text-anchor="middle">{_esc(label_b)}</text>',
+        f'<text x="{xc + 5}" y="{yc + 10}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e293b">{_esc(label_c)}</text>',
     ]
     if ext_c:
-        parts.append(f'<line x1="{xc}" y1="{yc}" x2="215" y2="{yc}" stroke="#15803d" stroke-width="1.8"/>')
-        parts.append(f'<text x="{xc + 12}" y="{yc - 6}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626">{_esc(ext_c)}</text>')
+        parts.append(f'<line x1="{xc}" y1="{yc}" x2="224" y2="{yc}" stroke="#15803d" stroke-width="1.8"/>')
+        parts.append(f'<text x="{xc + 12}" y="{yc - 6}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" paint-order="stroke fill" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">{_esc(ext_c)}</text>')
+
     if ang_a:
-        parts.append(f'<text x="{xa + 14}" y="{ya - 5}" font-family="sans-serif" font-size="7.5" fill="#1e293b">{_esc(ang_a)}</text>')
+        parts.append(f'<text x="{xa + 13}" y="{ya - 6}" font-family="sans-serif" font-size="7.5" fill="#1e293b" text-anchor="start" {halo}>{_esc(ang_a)}</text>')
+
     if ang_b:
-        parts.append(f'<text x="{xb}" y="{yb + 18}" font-family="sans-serif" font-size="7.5" fill="#1e293b" text-anchor="middle">{_esc(ang_b)}</text>')
+        # Squeeze-aware vertical offset down into wider interior
+        b_y = (yb + 26) if len(ang_b) > 4 else (yb + 22)
+        parts.append(f'<text x="{xb}" y="{b_y}" font-family="sans-serif" font-size="7.5" fill="#1e293b" text-anchor="middle" {halo}>{_esc(ang_b)}</text>')
+
     if ang_c:
-        parts.append(f'<text x="{xc - 20}" y="{yc - 5}" font-family="sans-serif" font-size="7.5" fill="#1e293b" text-anchor="middle">{_esc(ang_c)}</text>')
+        # Right-aligned inside vertex C so text extends into wide interior without crossing edge BC
+        c_anchor_x = xc - 14
+        c_y = yc - 6
+        # If both ang_a and ang_c are present and wide, elevate ang_c slightly so they never overlap horizontally
+        if ang_a and (len(ang_a) + len(ang_c)) > 14:
+            c_y = yc - 15
+        parts.append(f'<text x="{c_anchor_x}" y="{c_y}" font-family="sans-serif" font-size="7.5" fill="#1e293b" text-anchor="end" {halo}>{_esc(ang_c)}</text>')
+
     if side_ac:
-        parts.append(f'<text x="{(xa + xc) / 2}" y="{ya + 14}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1d4ed8" text-anchor="middle">{_esc(side_ac)}</text>')
+        parts.append(f'<text x="{(xa + xc) / 2}" y="{ya + 14}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1d4ed8" text-anchor="middle" {halo}>{_esc(side_ac)}</text>')
     if side_ab:
-        parts.append(f'<text x="{(xa + xb) / 2 - 6}" y="{(ya + yb) / 2}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1d4ed8" text-anchor="end">{_esc(side_ab)}</text>')
+        parts.append(f'<text x="{(xa + xb) / 2 - 6}" y="{(ya + yb) / 2}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1d4ed8" text-anchor="end" {halo}>{_esc(side_ab)}</text>')
     if side_bc:
-        parts.append(f'<text x="{(xb + xc) / 2 + 6}" y="{(yb + yc) / 2}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1d4ed8">{_esc(side_bc)}</text>')
+        parts.append(f'<text x="{(xb + xc) / 2 + 6}" y="{(yb + yc) / 2}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#1d4ed8" {halo}>{_esc(side_bc)}</text>')
+
     parts.append("</svg>")
     return "".join(parts)
 
@@ -1240,7 +1277,7 @@ def svg_angle_diagram(
 
         lbl1 = angle_label if angle_label else f"{int(theta)}°"
         lx1, ly1 = collision_solver.place_label(bx, by, lbl1, preferred_angle_deg=theta / 2.0)
-        parts.append(f'<text x="{lx1}" y="{ly1}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{lbl1}</text>')
+        parts.append(f'<text x="{lx1}" y="{ly1}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{_esc(lbl1)}</text>')
 
         if interior_angle_label:
             r_arc2 = 24.0
@@ -1387,7 +1424,7 @@ def svg_angle_diagram(
 
         lbl_text = angle_label if angle_label else f"{int(theta) if theta.is_integer() else theta}°"
         lx, ly = collision_solver.place_label(bx, by, lbl_text, preferred_angle_deg=theta / 2.0)
-        parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{lbl_text}</text>')
+        parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#1e40af" text-anchor="middle">{_esc(lbl_text)}</text>')
 
     if bottom_label:
         bl_x, bl_y = collision_solver.place_label(105.0, 122.0, bottom_label, preferred_angle_deg=270.0)
