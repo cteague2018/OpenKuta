@@ -64,4 +64,3 @@ def test_fuzz_generator_mathematical_and_visual_truth(
         assert_svg_zero_defects(problem.diagram_svg)
     if problem.answer_svg:
         assert_svg_zero_defects(problem.answer_svg)
-

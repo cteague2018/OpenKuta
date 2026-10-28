@@ -516,6 +516,7 @@ def svg_coordinate_plane(
     parts.append("</svg>")
     return "".join(parts)
 
+
 def svg_coordinate_plane_pair(
     *,
     x_min: int = -8,
@@ -590,7 +591,6 @@ def svg_coordinate_plane_pair(
         **kwargs,
     )
     return diagram, answer
-
 
 
 def _half_plane_polygon(

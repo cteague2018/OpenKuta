@@ -92,4 +92,3 @@ class SVGCollisionSolver:
         fb_box = self.estimate_text_bbox(anchor_x, anchor_y, text)
         self.placed_boxes.append(fb_box)
         return (anchor_x, anchor_y)
-
