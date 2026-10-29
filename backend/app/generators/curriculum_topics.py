@@ -613,7 +613,7 @@ def _gen_decoupled_subtopic(
                 val_right = m2 * c_pt + b2
                 return {
                     "prompt_text": "Determine if the piecewise function is continuous at x = c; if not, classify the discontinuity.",
-                    "equation_typst": f"$ f(x) = cases({m1}x {('+' if b1>=0 else '-')} {abs(b1)} &\"if \" x <= {c_pt}, {m2}x {('+' if b2>=0 else '-')} {abs(b2)} &\"if \" x > {c_pt}) $",
+                    "equation_typst": f"$ f(x) = cases({m1}x {('+' if b1 >= 0 else '-')} {abs(b1)} &\"if \" x <= {c_pt}, {m2}x {('+' if b2 >= 0 else '-')} {abs(b2)} &\"if \" x > {c_pt}) $",
                     "answer_typst": f"$ \"Jump discontinuity at \" x = {c_pt} $",
                     "steps_typst": [
                         f"Evaluate left-hand limit: $lim_(x ==> {c_pt}^-) f(x) = {m1}({c_pt}) + {b1} = {val_left}$.",
@@ -3591,7 +3591,7 @@ def _gen_decoupled_subtopic(
             denom = b * b + c * c
             re_f = Fraction(a * b, denom)
             im_f = Fraction(-a * c, denom)
-            im_s = f"- {_fmt_frac( abs(im_f) )}i" if im_f < 0 else f"+ {_fmt_frac(im_f)}i"
+            im_s = f"- {_fmt_frac(abs(im_f))}i" if im_f < 0 else f"+ {_fmt_frac(im_f)}i"
             return {
                 "prompt_text": "Divide the complex numbers by multiplying numerator and denominator by the complex conjugate.",
                 "equation_typst": f"$ ({a})/({b} + {c}i) $",
