@@ -102,9 +102,9 @@ class TypstCompiler:
         if total_rows == 1:
             box_height_pt = 490
         elif total_rows == 2:
-            box_height_pt = 260
+            box_height_pt = 238
         elif total_rows == 3:
-            box_height_pt = 175
+            box_height_pt = 160
         elif total_rows == 4:
             box_height_pt = 130
         else:

@@ -945,7 +945,14 @@ export default function OpenMathForgeApp() {
         show_answers: showAnswers,
         topics: buildTopicsPayload(),
       });
-      triggerBlobDownload(blob, `${worksheetTitle.replace(/\s+/g, "_")}_Form_A${suffix}.pdf`);
+      const clean = (v: string) => v.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+      const ids = Array.from(new Set(buildTopicsPayload().map((t: any) => String(t.generator_id || ""))));
+      const topicParts = ids.map((g) => {
+        const segs = g.split(".");
+        return segs.length >= 3 ? `${clean(segs[1])}_${clean(segs[segs.length - 1])}` : clean(segs.join("_"));
+      }).filter(Boolean).slice(0, 2).join("_");
+      const wsId = `WS-${String(baseSeed % 10000).padStart(4, "0")}`;
+      triggerBlobDownload(blob, `${clean(worksheetTitle)}_${topicParts}_${wsId}_Form_A${suffix}.pdf`);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       const usePrint = window.confirm(

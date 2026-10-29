@@ -82,7 +82,7 @@
       height: {{ box_height_pt }}pt,
       stroke: 0.6pt + luma(190),
       radius: 4pt,
-      inset: (x: 8pt, y: 7pt)
+      inset: (x: 6pt, y: 4pt)
     )[
       #grid(
         columns: (1fr, auto),
@@ -90,7 +90,7 @@
         [
           #text(weight: "bold", size: 10pt)[{{ loop.index }}.]
           #h(4pt)
-          #text(size: 8.5pt, fill: luma(90))[{{ prob.prompt_text }}]
+          #text(size: 7.5pt, fill: luma(90))[{{ prob.prompt_text }}]
         ],
         [
           {% if prob.difficulty == 'mild' %}
@@ -140,14 +140,14 @@
       ]
 
       {% if show_answers and answer_svg_files and loop.index in answer_svg_files %}
-      #v(3pt)
+      #v(1pt)
       #align(center)[
-        #image("{{ answer_svg_files[loop.index] }}", height: {{ ((box_height_pt * 0.45) | int) if (box_height_pt * 0.45) < 110 else 110 }}pt, width: 92%, fit: "contain")
+        #image("{{ answer_svg_files[loop.index] }}", height: {{ ((box_height_pt * 0.58) | int) if (box_height_pt * 0.58) < 170 else 170 }}pt, width: 100%, fit: "contain")
       ]
       {% elif diagram_files and loop.index in diagram_files %}
-      #v(3pt)
+      #v(1pt)
       #align(center)[
-        #image("{{ diagram_files[loop.index] }}", height: {{ ((box_height_pt * 0.45) | int) if (box_height_pt * 0.45) < 110 else 110 }}pt, width: 92%, fit: "contain")
+        #image("{{ diagram_files[loop.index] }}", height: {{ ((box_height_pt * 0.58) | int) if (box_height_pt * 0.58) < 170 else 170 }}pt, width: 100%, fit: "contain")
       ]
       {% endif %}
 
