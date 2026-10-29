@@ -78,8 +78,8 @@
   {% for prob in problems %}
   [
     #rect(
-      width: 100%,
-      height: {{ box_height_pt }}pt,
+      width: {{ "3in" if prob.graphing else "100%" }},
+      height: {{ graphing_box_height_pt if prob.graphing else box_height_pt }}pt,
       stroke: 0.6pt + luma(190),
       radius: 4pt,
       inset: (x: 6pt, y: 4pt)
@@ -129,7 +129,15 @@
           {% if show_answers and answer_svg_files and loop.index in answer_svg_files %}
           #image("{{ answer_svg_files[loop.index] }}", height: {{ ((box_height_pt * 0.75) | int) if (box_height_pt * 0.75) < 135 else 135 }}pt, fit: "contain")
           {% elif diagram_files and loop.index in diagram_files %}
-          #image("{{ diagram_files[loop.index] }}", height: {{ ((box_height_pt * 0.75) | int) if (box_height_pt * 0.75) < 135 else 135 }}pt, fit: "contain")
+          #image(
+            "{{ diagram_files[loop.index] }}",
+            {% if prob.graphing %}width: 3in, height: 3in{% else %}height: {{ ((box_height_pt * 0.75) | int) if (box_height_pt * 0.75) < 135 else 135 }}pt{% endif %},
+            fit: "contain"
+          )
+          {% if prob.graphing %}
+          #v(4pt)
+          #text(size: 8pt, fill: blue.darken(20%))[Grid Scale: 1 square = #underline[#h(0.6in)] units]
+          {% endif %}
           {% endif %}
         ]
       )
@@ -147,8 +155,16 @@
       {% elif diagram_files and loop.index in diagram_files %}
       #v(1pt)
       #align(center)[
-        #image("{{ diagram_files[loop.index] }}", height: {{ ((box_height_pt * 0.58) | int) if (box_height_pt * 0.58) < 170 else 170 }}pt, width: 100%, fit: "contain")
+        #image(
+          "{{ diagram_files[loop.index] }}",
+          {% if prob.graphing %}width: 3in, height: 3in{% else %}height: {{ ((box_height_pt * 0.58) | int) if (box_height_pt * 0.58) < 170 else 170 }}pt, width: 100%{% endif %},
+          fit: "contain"
+        )
       ]
+      {% if prob.graphing %}
+      #v(4pt)
+      #text(size: 8pt, fill: blue.darken(20%))[Grid Scale: 1 square = #underline[#h(0.6in)] units]
+      {% endif %}
       {% endif %}
 
       {% if prob.choices and prob.choices|length >= 4 %}

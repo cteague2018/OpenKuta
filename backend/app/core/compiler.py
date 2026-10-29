@@ -110,6 +110,13 @@ class TypstCompiler:
         else:
             box_height_pt = max(90, min(120, int(540 / total_rows)))
 
+        # Graphing topics use a dedicated spacious 3.0 x 3.0 inch (216 pt)
+        # bounding box per problem card and a 2-column x 2-row card grid.
+        any_graphing = any(getattr(p, "graphing", False) for p in problems)
+        graphing_box_height_pt = 216  # 3.0 in * 72 pt/in
+        if any_graphing:
+            columns = 2
+
         context = {
             "title": title,
             "form_id": form_id,
@@ -125,6 +132,7 @@ class TypstCompiler:
             "marker_bottom_left": marker_filenames[3],
             "qr_path": qr_filename,
             "box_height_pt": box_height_pt,
+            "graphing_box_height_pt": graphing_box_height_pt,
             "columns": columns,
             "student_name": student_name,
             "student_id": student_id,

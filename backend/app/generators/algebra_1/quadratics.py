@@ -708,6 +708,7 @@ class GraphingQuadraticsGenerator(BaseGenerator):
             id=f"graph_quad_{difficulty.value}_{problem_idx}",
             prompt_text="Sketch the graph of each quadratic function. Identify the vertex and axis of symmetry.",
             equation_typst=f"$ {eq} $",
+            graphing=True,
             answer_typst=f"$ {ans} $",
             steps_typst=steps,
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],

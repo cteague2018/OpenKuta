@@ -178,6 +178,7 @@ class SystemsGraphingGenerator(BaseGenerator):
             id=f"sys_graph_{difficulty.value}_{problem_idx}",
             prompt_text="Solve each system of equations by graphing.",
             equation_typst=f"$ {system_typst} $",
+            graphing=True,
             answer_typst=f"$ {ans_typst} $",
             steps_typst=steps,
             distractors=[f"$ {d} $" for d in [d1, d2, d3]],

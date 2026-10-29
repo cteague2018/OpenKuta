@@ -40,6 +40,7 @@ class BaseProblem(BaseModel):
     diagram_svg: Optional[str] = Field(default=None, description="Optional SVG diagram/graph/table rendered in the problem prompt area")
     answer_svg: Optional[str] = Field(default=None, description="Optional SVG diagram/graph/plot rendered in the answer key")
     generator_id: Optional[str] = Field(default=None, description="Generator ID that produced this problem")
+    graphing: bool = Field(default=False, description="True for graphing topics (systems, parabolas, conics) that render a numberless coordinate plane and need a student scale entry")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Arbitrary generator metadata")
 
     @model_validator(mode="before")

@@ -26,10 +26,10 @@ def _esc(text: Any) -> str:
 
 def svg_coordinate_plane(
     *,
-    x_min: int = -8,
-    x_max: int = 8,
-    y_min: int = -8,
-    y_max: int = 8,
+    x_min: int = -10,
+    x_max: int = 10,
+    y_min: int = -10,
+    y_max: int = 10,
     width: int = 220,
     height: int = 220,
     lines: Optional[List[Dict[str, Any]]] = None,
@@ -50,7 +50,14 @@ def svg_coordinate_plane(
     auto_expand: bool = True,
     symmetric: bool = True,
 ) -> str:
-    """Render a clean vector coordinate plane with auto-expanding bounds so no plotted elements clip."""
+    """Render a clean, numberless vector coordinate plane.
+
+    Axis tick marks and minor grid lines are retained so students can align
+    rulers and plot points, but no numeric tick labels are rendered so the
+    grid stays clutter-free for student-written scales (up to +/- 20).
+    The `show_numbers` parameter is accepted for backward compatibility but
+    no longer renders anything: coordinate planes are always numberless.
+    """
     if circles and not circles_ellipses:
         circles_ellipses = circles
     if vertical_lines:
@@ -190,6 +197,10 @@ def svg_coordinate_plane(
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
         "<defs>",
         f'<clipPath id="plot-clip"><rect x="{pad}" y="{pad}" width="{plot_w}" height="{plot_h}"/></clipPath>',
+        # Professional arrowheads for the terminal ends of the X and Y axes.
+        '<marker id="axis-arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" '
+        'orient="auto-start-reverse" markerUnits="userSpaceOnUse">'
+        '<path d="M 0,0 7,3.5 0,7 Z" fill="#0f172a" stroke="none"/></marker>',
     ]
 
     # Add clip paths for shaded half planes if multiple (intersection)
@@ -283,32 +294,26 @@ def svg_coordinate_plane(
     ox, oy = to_px(0, 0)
     ox_clamped = min(max(ox, pad), width - pad)
     oy_clamped = min(max(oy, pad), height - pad)
-    parts.append(f'<line x1="{pad}" y1="{oy_clamped}" x2="{width - pad}" y2="{oy_clamped}" stroke="#0f172a" stroke-width="2.0"/>')
-    parts.append(f'<line x1="{ox_clamped}" y1="{pad}" x2="{ox_clamped}" y2="{height - pad}" stroke="#0f172a" stroke-width="2.0"/>')
+    parts.append(
+        f'<line x1="{pad}" y1="{oy_clamped}" x2="{width - pad}" y2="{oy_clamped}" '
+        f'stroke="#0f172a" stroke-width="2.0" marker-start="url(#axis-arrow)" marker-end="url(#axis-arrow)"/>'
+    )
+    parts.append(
+        f'<line x1="{ox_clamped}" y1="{pad}" x2="{ox_clamped}" y2="{height - pad}" '
+        f'stroke="#0f172a" stroke-width="2.0" marker-start="url(#axis-arrow)" marker-end="url(#axis-arrow)"/>'
+    )
 
-    # Tick marks & optional numbers
-    label_step_x = grid_step_x * 2 if dx >= 10 else grid_step_x
-    label_step_y = grid_step_y * 2 if dy >= 10 else grid_step_y
+    # Tick marks (numeric axis labels intentionally omitted: numberless grid)
     for gx in range(int(math.ceil(x_min)), int(math.floor(x_max)) + 1):
         if gx == 0:
             continue
         px, _ = to_px(gx, 0)
         parts.append(f'<line x1="{px}" y1="{oy_clamped - 2.5}" x2="{px}" y2="{oy_clamped + 2.5}" stroke="#0f172a" stroke-width="1.2"/>')
-        if show_numbers and gx % label_step_x == 0 and pad + 8 <= px <= width - pad - 8:
-            tx = px
-            ty = min(oy_clamped + 11, height - 5)
-            collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(tx, ty, str(gx), 10.5))
-            parts.append(f'<text x="{tx}" y="{ty}" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#0f172a" text-anchor="middle">{gx}</text>')
     for gy in range(int(math.ceil(y_min)), int(math.floor(y_max)) + 1):
         if gy == 0:
             continue
         _, py = to_px(0, gy)
         parts.append(f'<line x1="{ox_clamped - 2.5}" y1="{py}" x2="{ox_clamped + 2.5}" y2="{py}" stroke="#0f172a" stroke-width="1.2"/>')
-        if show_numbers and gy % label_step_y == 0 and pad + 6 <= py <= height - pad - 6:
-            tx = max(ox_clamped - 4, pad + 10)
-            ty = py + 3
-            collision_solver.placed_boxes.append(SVGCollisionSolver.estimate_text_bbox(tx, ty, str(gy), 10.5))
-            parts.append(f'<text x="{tx}" y="{ty}" font-family="sans-serif" font-size="10.5" font-weight="700" fill="#0f172a" text-anchor="end">{gy}</text>')
 
     # Axis names
     x_ax_x = width - pad + 5
