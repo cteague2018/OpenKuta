@@ -1000,17 +1000,17 @@ def gen_adv_problem(
         cz = u1 * v2 - u2 * v1
         return {
             "prompt_text": "Find the cross product u x v of the two three-dimensional vectors.",
-            "equation_typst": f"$ bold(u) = angle.l {u1}, {u2}, {u3} angle.r, quad bold(v) = angle.l {v1}, {v2}, {v3} angle.r $",
-            "answer_typst": f"$ bold(u) times bold(v) = angle.l {cx}, {cy}, {cz} angle.r $",
+            "equation_typst": f"$ bold(u) = chevron.l {u1}, {u2}, {u3} chevron.r, quad bold(v) = chevron.l {v1}, {v2}, {v3} chevron.r $",
+            "answer_typst": f"$ bold(u) times bold(v) = chevron.l {cx}, {cy}, {cz} chevron.r $",
             "steps_typst": [
                 f"Compute the $bold(i)$-component: $({u2})({v3}) - ({u3})({v2}) = {cx}$.",
                 f"Compute the $bold(j)$-component: $({u3})({v1}) - ({u1})({v3}) = {cy}$.",
-                f"Compute the $bold(k)$-component: $({u1})({v2}) - ({u2})({v1}) = {cz}$, giving $angle.l {cx}, {cy}, {cz} angle.r$.",
+                f"Compute the $bold(k)$-component: $({u1})({v2}) - ({u2})({v1}) = {cz}$, giving $chevron.l {cx}, {cy}, {cz} chevron.r$.",
             ],
             "distractors": [
-                f"$ angle.l {cx}, {-cy}, {cz} angle.r $",
-                f"$ angle.l {-cx}, {-cy}, {-cz} angle.r $",
-                f"$ angle.l {u1 * v1}, {u2 * v2}, {u3 * v3} angle.r $",
+                f"$ chevron.l {cx}, {-cy}, {cz} chevron.r $",
+                f"$ chevron.l {-cx}, {-cy}, {-cz} chevron.r $",
+                f"$ chevron.l {u1 * v1}, {u2 * v2}, {u3 * v3} chevron.r $",
             ],
         }
 
@@ -1020,17 +1020,17 @@ def gen_adv_problem(
         rx, ry = ux + vx, uy + vy
         return {
             "prompt_text": "Use the vector diagram on the coordinate plane to find the resultant vector u + v.",
-            "equation_typst": f"$ bold(u) = angle.l {ux}, {uy} angle.r, quad bold(v) = angle.l {vx}, {vy} angle.r $",
-            "answer_typst": f"$ bold(u) + bold(v) = angle.l {rx}, {ry} angle.r $",
+            "equation_typst": f"$ bold(u) = chevron.l {ux}, {uy} chevron.r, quad bold(v) = chevron.l {vx}, {vy} chevron.r $",
+            "answer_typst": f"$ bold(u) + bold(v) = chevron.l {rx}, {ry} chevron.r $",
             "steps_typst": [
                 f"Place the tail of $bold(v)$ at the head of $bold(u)$ at $({ux}, {uy})$.",
                 f"Add horizontal components: ${ux} + ({vx}) = {rx}$.",
-                f"Add vertical components: ${uy} + ({vy}) = {ry}$, giving $angle.l {rx}, {ry} angle.r$.",
+                f"Add vertical components: ${uy} + ({vy}) = {ry}$, giving $chevron.l {rx}, {ry} chevron.r$.",
             ],
             "distractors": [
-                f"$ angle.l {ux - vx}, {uy - vy} angle.r $",
-                f"$ angle.l {ry}, {rx} angle.r $",
-                f"$ angle.l {ux * vx}, {uy * vy} angle.r $",
+                f"$ chevron.l {ux - vx}, {uy - vy} chevron.r $",
+                f"$ chevron.l {ry}, {rx} chevron.r $",
+                f"$ chevron.l {ux * vx}, {uy * vy} chevron.r $",
             ],
             "diagram_svg": svg_coordinate_plane(
                 vectors=[
@@ -1487,17 +1487,21 @@ def gen_adv_problem(
 
     if "curve sketching" in t_low or "graphical comparison of f" in t_low:
         a = rng.choice([-3, -2, -1, 1, 2, 3])
-        k = rng.randint(1, 12)
+        # k drives the critical points (+/-k). Keep it small enough that both
+        # critical points land inside the +/-10 default plane, then divide the
+        # cubic by k^2 below so the extrema stay on-grid - with the previous
+        # k up to 12 the plotted arms saturated into two near-vertical lines.
+        k = rng.randint(2, 4)
         c_shift = rng.randint(-15, 15)
         k2 = k * k
         c3 = 3 * k2
         f_expr = f"{'' if a == 1 else ('-' if a == -1 else a)}(x^3 - {c3}x)" + (f" {'+' if c_shift > 0 else '-'} {abs(c_shift)}" if c_shift != 0 else "")
 
-        def fn_f(x, _a=a, _k=k, _c=c_shift):
-            return _a * (0.15 * (x ** 3) - 0.45 * (_k ** 2) * x) + _c * 0.1
+        def fn_f(x, _a=a, _k=k, _k2=k2, _c=c_shift):
+            return _a * (0.15 * (x ** 3) / _k2 - 0.45 * x) + _c * 0.1
 
-        def fn_fp(x, _a=a, _k=k):
-            return _a * (0.45 * (x ** 2) - 0.45 * (_k ** 2))
+        def fn_fp(x, _a=a, _k2=k2):
+            return _a * (0.45 * (x ** 2) / _k2 - 0.45)
 
         return {
             "prompt_text": "Find the critical points, inflection point, and sketch f(x) and f'(x).",

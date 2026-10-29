@@ -65,7 +65,7 @@ class PrecalcVectorsGenerator(BaseGenerator):
         if rng.choice([True, False]):
             b = -b
 
-        eq_typst = f"bold(v) = angle.l {a}, {b} angle.r"
+        eq_typst = f"bold(v) = chevron.l {a}, {b} chevron.r"
         mag_sq = a * a + b * b
         k, p = simplify_radical(mag_sq)
         ans_val = format_radical(k, p)
@@ -147,7 +147,7 @@ class PrecalcVectorsGenerator(BaseGenerator):
         mag_u_str = format_radical(ku, pu)
         mag_v_str = format_radical(kv, pv)
 
-        eq_typst = f"bold(u) = angle.l {u1}, {u2} angle.r, quad bold(v) = angle.l {v1}, {v2} angle.r"
+        eq_typst = f"bold(u) = chevron.l {u1}, {u2} chevron.r, quad bold(v) = chevron.l {v1}, {v2} chevron.r"
         ans_typst = f"bold(u) dot bold(v) = {dot_val}, quad theta = {angle_str}"
 
         steps = [
@@ -192,20 +192,20 @@ class PrecalcVectorsGenerator(BaseGenerator):
             k, p = simplify_radical(sq)
             mag_str = format_radical(k, p)
 
-            eq_typst = f"bold(v) = angle.l {vx}, {vy} angle.r"
-            ans_typst = f"bold(u) = 1/({mag_str}) angle.l {vx}, {vy} angle.r"
+            eq_typst = f"bold(v) = chevron.l {vx}, {vy} chevron.r"
+            ans_typst = f"bold(u) = 1/({mag_str}) chevron.l {vx}, {vy} chevron.r"
 
             steps = [
                 "Recall unit vector formula: $ bold(u) = bold(v) / (norm(bold(v))) $",
                 f"Calculate magnitude: $ norm(bold(v)) = sqrt(({vx})^2 + ({vy})^2) = sqrt({sq}) = {mag_str} $",
-                f"Divide each component by magnitude: $ bold(u) = 1/({mag_str}) angle.l {vx}, {vy} angle.r $",
+                f"Divide each component by magnitude: $ bold(u) = 1/({mag_str}) chevron.l {vx}, {vy} chevron.r $",
                 f"Result: $ {ans_typst} $"
             ]
 
             distractors = [
-                f"bold(u) = 1/({sq}) angle.l {vx}, {vy} angle.r",
-                f"bold(u) = angle.l {vx}, {vy} angle.r",
-                f"bold(u) = 1/({mag_str}) angle.l {-vx}, {vy} angle.r"
+                f"bold(u) = 1/({sq}) chevron.l {vx}, {vy} chevron.r",
+                f"bold(u) = chevron.l {vx}, {vy} chevron.r",
+                f"bold(u) = 1/({mag_str}) chevron.l {-vx}, {vy} chevron.r"
             ]
 
             prompt = "Find a unit vector bold(u) in the direction of the given vector bold(v)."
@@ -219,20 +219,20 @@ class PrecalcVectorsGenerator(BaseGenerator):
             ans_x = c * u1 + d * v1
             ans_y = c * u2 + d * v2
 
-            eq_typst = f"bold(u) = angle.l {u1}, {u2} angle.r, quad bold(v) = angle.l {v1}, {v2} angle.r; quad \"Find \" {c} bold(u) + ({d}) bold(v)" if d < 0 else f"bold(u) = angle.l {u1}, {u2} angle.r, quad bold(v) = angle.l {v1}, {v2} angle.r; quad \"Find \" {c} bold(u) + {d} bold(v)"
-            ans_typst = f"angle.l {ans_x}, {ans_y} angle.r"
+            eq_typst = f"bold(u) = chevron.l {u1}, {u2} chevron.r, quad bold(v) = chevron.l {v1}, {v2} chevron.r; quad \"Find \" {c} bold(u) + ({d}) bold(v)" if d < 0 else f"bold(u) = chevron.l {u1}, {u2} chevron.r, quad bold(v) = chevron.l {v1}, {v2} chevron.r; quad \"Find \" {c} bold(u) + {d} bold(v)"
+            ans_typst = f"chevron.l {ans_x}, {ans_y} chevron.r"
 
             steps = [
-                f"Write out the linear combination: $ {c} angle.l {u1}, {u2} angle.r + ({d}) angle.l {v1}, {v2} angle.r $" if d < 0 else f"Write out the linear combination: $ {c} angle.l {u1}, {u2} angle.r + {d} angle.l {v1}, {v2} angle.r $",
-                f"Multiply each vector by its scalar: $ angle.l {c*u1}, {c*u2} angle.r + angle.l {d*v1}, {d*v2} angle.r $",
-                f"Add corresponding components: $ angle.l ({c*u1}) + ({d*v1}), ({c*u2}) + ({d*v2}) angle.r $",
+                f"Write out the linear combination: $ {c} chevron.l {u1}, {u2} chevron.r + ({d}) chevron.l {v1}, {v2} chevron.r $" if d < 0 else f"Write out the linear combination: $ {c} chevron.l {u1}, {u2} chevron.r + {d} chevron.l {v1}, {v2} chevron.r $",
+                f"Multiply each vector by its scalar: $ chevron.l {c*u1}, {c*u2} chevron.r + chevron.l {d*v1}, {d*v2} chevron.r $",
+                f"Add corresponding components: $ chevron.l ({c*u1}) + ({d*v1}), ({c*u2}) + ({d*v2}) chevron.r $",
                 f"Result: $ {ans_typst} $"
             ]
 
             distractors = [
-                f"angle.l {c*u1 + v1}, {c*u2 + v2} angle.r",
-                f"angle.l {ans_x + 2}, {ans_y - 2} angle.r",
-                f"angle.l {c*u1 - d*v1}, {c*u2 - d*v2} angle.r"
+                f"chevron.l {c*u1 + v1}, {c*u2 + v2} chevron.r",
+                f"chevron.l {ans_x + 2}, {ans_y - 2} chevron.r",
+                f"chevron.l {c*u1 - d*v1}, {c*u2 - d*v2} chevron.r"
             ]
 
             prompt = "Find the specified linear combination of vectors."

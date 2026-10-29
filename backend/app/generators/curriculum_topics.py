@@ -1130,7 +1130,7 @@ def _gen_decoupled_subtopic(
             dp = ux * vx + uy * vy
             return {
                 "prompt_text": "Find the dot product u . v of the two vectors.",
-                "equation_typst": f"$ bold(u) = angle.l {ux}, {uy} angle.r, quad bold(v) = angle.l {vx}, {vy} angle.r $",
+                "equation_typst": f"$ bold(u) = chevron.l {ux}, {uy} chevron.r, quad bold(v) = chevron.l {vx}, {vy} chevron.r $",
                 "answer_typst": f"$ bold(u) dot bold(v) = {dp} $",
                 "steps_typst": [
                     "Use the dot product formula $bold(u) dot bold(v) = u_1 v_1 + u_2 v_2$.",
@@ -1138,7 +1138,7 @@ def _gen_decoupled_subtopic(
                     f"Sum: ${dp}$.",
                 ],
                 "distractors": [
-                    f"$ angle.l {ux * vx}, {uy * vy} angle.r $",
+                    f"$ chevron.l {ux * vx}, {uy * vy} chevron.r $",
                     f"$ {ux * vy - uy * vx} $",
                     f"$ {dp + ux} $",
                 ],
@@ -1147,17 +1147,17 @@ def _gen_decoupled_subtopic(
             rx, ry = scale * ux + vx, scale * uy + vy
             return {
                 "prompt_text": "Perform the vector operation and write the result in component form.",
-                "equation_typst": f"$ {scale}bold(u) + bold(v) quad \"for\" bold(u) = angle.l {ux}, {uy} angle.r, bold(v) = angle.l {vx}, {vy} angle.r $",
-                "answer_typst": f"$ angle.l {rx}, {ry} angle.r $",
+                "equation_typst": f"$ {scale}bold(u) + bold(v) quad \"for\" bold(u) = chevron.l {ux}, {uy} chevron.r, bold(v) = chevron.l {vx}, {vy} chevron.r $",
+                "answer_typst": f"$ chevron.l {rx}, {ry} chevron.r $",
                 "steps_typst": [
-                    f"Scale vector $bold(u)$: ${scale}bold(u) = angle.l {scale * ux}, {scale * uy} angle.r$.",
-                    f"Add components of $bold(v)$: $angle.l {scale * ux} + ({vx}), {scale * uy} + ({vy}) angle.r$.",
-                    f"Result: $angle.l {rx}, {ry} angle.r$.",
+                    f"Scale vector $bold(u)$: ${scale}bold(u) = chevron.l {scale * ux}, {scale * uy} chevron.r$.",
+                    f"Add components of $bold(v)$: $chevron.l {scale * ux} + ({vx}), {scale * uy} + ({vy}) chevron.r$.",
+                    f"Result: $chevron.l {rx}, {ry} chevron.r$.",
                 ],
                 "distractors": [
-                    f"$ angle.l {ux + vx}, {uy + vy} angle.r $",
-                    f"$ angle.l {scale * ux - vx}, {scale * uy - vy} angle.r $",
-                    f"$ angle.l {ry}, {rx} angle.r $",
+                    f"$ chevron.l {ux + vx}, {uy + vy} chevron.r $",
+                    f"$ chevron.l {scale * ux - vx}, {scale * uy - vy} chevron.r $",
+                    f"$ chevron.l {ry}, {rx} chevron.r $",
                 ],
             }
 
@@ -3347,7 +3347,7 @@ def _gen_decoupled_subtopic(
             mag_3d_s = str(mag_3d_int) if mag_3d_int * mag_3d_int == mag_sq else f"sqrt({mag_sq})"
             return {
                 "prompt_text": "Find the magnitude ||v|| of the 3D vector v.",
-                "equation_typst": f"$ bold(v) = angle.l {vx}, {vy}, {vz} angle.r $",
+                "equation_typst": f"$ bold(v) = chevron.l {vx}, {vy}, {vz} chevron.r $",
                 "answer_typst": f"$ ||bold(v)|| = {mag_3d_s} $",
                 "steps_typst": [
                     "Use 3D magnitude formula $||bold(v)|| = sqrt(v_x^2 + v_y^2 + v_z^2)$.",
@@ -3358,7 +3358,7 @@ def _gen_decoupled_subtopic(
             }
         return {
             "prompt_text": "Find the magnitude ||v|| of the 2D vector.",
-            "equation_typst": f"$ bold(v) = angle.l {vx}, {vy} angle.r $",
+            "equation_typst": f"$ bold(v) = chevron.l {vx}, {vy} chevron.r $",
             "answer_typst": f"$ ||bold(v)|| = {mag_2d_s} $",
             "steps_typst": [
                 "Use magnitude formula $||bold(v)|| = sqrt(v_x^2 + v_y^2)$.",
