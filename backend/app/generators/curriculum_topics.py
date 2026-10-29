@@ -672,13 +672,13 @@ def _gen_decoupled_subtopic(
             method = rng.choice(["LRAM", "RRAM"])
             if method == "LRAM":
                 pts = list(range(0, n))
-                f_vals = [float(x * x + c_val ) for x in pts]
+                f_vals = [float(x * x + c_val) for x in pts]
                 approx_sum = sum(f_vals)
                 m_label = f"L_{n}"
                 step_pts = f"left endpoints $x = {', '.join(str(p) for p in pts)}$"
             else:
                 pts = list(range(1, n + 1))
-                f_vals = [float(x * x + c_val ) for x in pts]
+                f_vals = [float(x * x + c_val) for x in pts]
                 approx_sum = sum(f_vals)
                 m_label = f"R_{n}"
                 step_pts = f"right endpoints $x = {', '.join(str(p) for p in pts)}$"

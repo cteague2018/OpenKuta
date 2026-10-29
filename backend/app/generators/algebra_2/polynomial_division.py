@@ -132,7 +132,7 @@ class PolynomialDivisionGenerator(BaseGenerator):
             m2 = r * q1
             q2 = c2 + m2
             m3 = r * q2
-            c3 + m3
+            remainder = c3 + m3
 
             steps = [
                 f"Identify divisor root: $ {d_str} = 0 ==> x = {r} $",
@@ -141,7 +141,7 @@ class PolynomialDivisionGenerator(BaseGenerator):
                 f"  - Bring down $ {q0} $",
                 f"  - Multiply $ {r} dot {q0} = {m1} $, add: $ {c1} + ({m1}) = {q1} $",
                 f"  - Multiply $ {r} dot {q1} = {m2} $, add: $ {c2} + ({m2}) = {q2} $",
-                f"  - Multiply $ {r} dot {q2} = {m3} $, add: $ {c3} + ({m3}) = 0 $ (remainder)",
+                f"  - Multiply $ {r} dot {q2} = {m3} $, add: $ {c3} + ({m3}) = {remainder} $ (remainder)",
                 f"Quotient polynomial: $ {ans_typst} $",
                 f"Final answer: $ {ans_typst} $"
             ]

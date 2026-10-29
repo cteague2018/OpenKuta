@@ -56,6 +56,7 @@ def test_classroom_store_and_batch_pdf():
     store.add_students_to_class(cls_obj.id, students)
 
     updated = store.get_class(cls_obj.id)
+    assert updated is not None
     assert len(updated.students) == 2
 
     # Test batch class PDF compilation with personalized student QR codes

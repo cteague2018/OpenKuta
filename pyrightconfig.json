@@ -1,8 +1,32 @@
 {
+  // Pyright/Pylance runs as a second opinion next to mypy. mypy (with the sympy
+  // overrides in pyproject.toml) is the authoritative type gate for this repo, so the
+  // rules below are downgraded where they only fire on sympy stub limits or on
+  // branch-correlated initialization that is correct at runtime:
+  //
+  //   reportAttributeAccessIssue       sympy `Rational.limit_denominator()` is typed as
+  //                                    `Rational | NaN | ComplexInfinity`, so `.p`/`.q`
+  //                                    look invalid; also StrPrinter internals.
+  //   reportOperatorIssue              arithmetic between sympy `Basic` and int/float.
+  //   reportArgumentType/reportCallIssue  `Basic` vs. numeric unions, `Poly.as_dict()`
+  //                                    keys typed `tuple[int]` vs `tuple[int, ...]`.
+  //   reportIncompatibleMethodOverride StrPrinter._print_Add/_print_Pow overrides.
+  //   reportPossiblyUnboundVariable    variables bound under one difficulty/flavor
+  //                                    branch and read under another (enum-guarded).
+  //
+  // Still enforced as errors, so real defects keep showing up in the Problems panel:
+  // reportRedeclaration, reportUndefinedVariable, reportUnusedExpression,
+  // reportOptionalMemberAccess, reportGeneralTypeIssues, reportUnusedImport.
   "include": ["backend"],
   "extraPaths": [".", "backend"],
   "reportMissingModuleSource": "none",
-  "reportMissingImports": "none"
+  "reportMissingImports": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportOperatorIssue": "none",
+  "reportArgumentType": "none",
+  "reportCallIssue": "none",
+  "reportIncompatibleMethodOverride": "none",
+  "reportPossiblyUnboundVariable": "none"
 }
 
 

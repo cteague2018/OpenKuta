@@ -8,8 +8,7 @@ from sympy.printing.str import StrPrinter
 
 def sympy_to_typst(expr: sp.Expr | int | float | str) -> str:
     """Convert a SymPy expression or number into clean Typst math format."""
-    if isinstance(expr, (int, float, str)):
-        expr = sp.sympify(expr)
+    parsed: sp.Basic = sp.sympify(expr) if isinstance(expr, (int, float, str)) else expr
 
     # Convert to standard string and adjust operators for Typst math
     # Typst math syntax uses:
@@ -17,7 +16,7 @@ def sympy_to_typst(expr: sp.Expr | int | float | str) -> str:
     # - / for fractions: (a)/(b)
     # - sqrt(x)
     # - standard symbols
-    s = StrPrinter().doprint(expr)
+    s = StrPrinter().doprint(parsed)
 
     # SymPy formats powers as ** -> convert to ^
     s = s.replace("**", "^")
@@ -31,10 +30,10 @@ def sympy_to_typst(expr: sp.Expr | int | float | str) -> str:
     s = re.sub(r'([a-zA-Z\)])\*([a-zA-Z\(])', r'\1 \2', s)
 
     # Fractions: if it's a Rational, format as a/b
-    if isinstance(expr, sp.Rational) and expr.q != 1:
-        if expr.p < 0:
-            return f"-({abs(expr.p)}/{expr.q})"
-        return f"{expr.p}/{expr.q}"
+    if isinstance(parsed, sp.Rational) and parsed.q != 1:
+        if parsed.p < 0:
+            return f"-({abs(parsed.p)}/{parsed.q})"
+        return f"{parsed.p}/{parsed.q}"
 
     return str(s)
 

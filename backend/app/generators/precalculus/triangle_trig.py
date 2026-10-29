@@ -49,7 +49,6 @@ class TriangleTrigGenerator(BaseGenerator):
         B = rng.randint(30, 80)
         while A + B >= 165:
             B = rng.randint(25, 70)
-        180 - A - B
 
         a = rng.randint(8, 30)
 

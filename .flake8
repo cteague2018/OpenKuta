@@ -11,5 +11,6 @@ exclude =
     frontend,
     node_modules,
     build,
-    dist
+    dist,
+    qa_out
 

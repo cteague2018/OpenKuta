@@ -22,22 +22,26 @@ def sample_function_singularity_aware(
     poles: List[float] = []
     if denom != 1:
         try:
-            poles = [
-                float(p.evalf())
-                for p in sp.solveset(denom, var, domain=sp.S.Reals)
-                if x_min <= float(p.evalf()) <= x_max
-            ]
+            pole_set = sp.solveset(denom, var, domain=sp.S.Reals)
+            if isinstance(pole_set, sp.FiniteSet):
+                poles = [
+                    float(p.evalf())
+                    for p in pole_set
+                    if x_min <= float(p.evalf()) <= x_max
+                ]
         except Exception:
             pass
 
     critical_points: List[float] = []
     try:
         deriv = sp.diff(expr, var)
-        critical_points = [
-            float(cp.evalf())
-            for cp in sp.solveset(deriv, var, domain=sp.S.Reals)
-            if x_min <= float(cp.evalf()) <= x_max
-        ]
+        cp_set = sp.solveset(deriv, var, domain=sp.S.Reals)
+        if isinstance(cp_set, sp.FiniteSet):
+            critical_points = [
+                float(cp.evalf())
+                for cp in cp_set
+                if x_min <= float(cp.evalf()) <= x_max
+            ]
     except Exception:
         pass
 
