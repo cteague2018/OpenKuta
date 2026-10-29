@@ -315,6 +315,8 @@ def svg_coordinate_plane(
         f'<line x1="{ox_clamped}" y1="{pad}" x2="{ox_clamped}" y2="{height - pad}" '
         f'stroke="#0f172a" stroke-width="2.0" marker-start="url(#axis-arrow)" marker-end="url(#axis-arrow)"/>'
     )
+    collision_solver.add_segment(pad, oy_clamped, width - pad, oy_clamped, soft=True)
+    collision_solver.add_segment(ox_clamped, pad, ox_clamped, height - pad, soft=True)
 
     # Tick marks (numeric axis labels intentionally omitted: numberless grid)
     for gx in range(int(math.ceil(x_min)), int(math.floor(x_max)) + 1):
@@ -366,15 +368,18 @@ def svg_coordinate_plane(
             if asym.get("x") is not None:
                 px, _ = to_px(float(asym["x"]), 0)
                 parts.append(f'<line x1="{px}" y1="{pad}" x2="{px}" y2="{height - pad}" stroke="{color}" stroke-width="1.6" stroke-dasharray="5,3" clip-path="url(#plot-clip)"/>')
+                collision_solver.add_segment(px, pad, px, height - pad)
             if asym.get("y") is not None:
                 _, py = to_px(0, float(asym["y"]))
                 parts.append(f'<line x1="{pad}" y1="{py}" x2="{width - pad}" y2="{py}" stroke="{color}" stroke-width="1.6" stroke-dasharray="5,3" clip-path="url(#plot-clip)"/>')
+                collision_solver.add_segment(pad, py, width - pad, py)
             if asym.get("m") is not None and asym.get("b") is not None:
                 m_a = float(asym["m"])
                 b_a = float(asym["b"])
                 x1, y1 = to_px(x_min, m_a * x_min + b_a)
                 x2, y2 = to_px(x_max, m_a * x_max + b_a)
                 parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="1.6" stroke-dasharray="5,3" clip-path="url(#plot-clip)"/>')
+                collision_solver.add_segment(x1, y1, x2, y2)
 
     # Polygons
     if polygons:
@@ -394,12 +399,13 @@ def svg_coordinate_plane(
             parts.append(
                 f'<polygon points="{pts_str}" fill="{fill}" fill-opacity="0.18" stroke="{color}" stroke-width="1.6"{dash} clip-path="url(#plot-clip)"/>'
             )
+            collision_solver.add_polyline(px_verts + px_verts[:1])
             labels = poly.get("labels", [])
             for idx, (px, py) in enumerate(px_verts):
                 if poly.get("stroke") not in ("none", "transparent"):
                     parts.append(f'<circle cx="{px}" cy="{py}" r="2.5" fill="{color}"/>')
                 if idx < len(labels) and labels[idx]:
-                    lx, ly = collision_solver.place_label(px, py, labels[idx], preferred_angle_deg=45.0)
+                    lx, ly = collision_solver.place_label(px, py, labels[idx], preferred_angle_deg=45.0, font_size=7.5)
                     parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="{color}" text-anchor="middle">{_esc(labels[idx])}</text>')
 
     # Circles / Ellipses
@@ -413,6 +419,7 @@ def svg_coordinate_plane(
             parts.append(
                 f'<ellipse cx="{cx}" cy="{cy}" rx="{round(rx, 2)}" ry="{round(ry, 2)}" fill="transparent" stroke="{color}" stroke-width="1.8"{dash} clip-path="url(#plot-clip)"/>'
             )
+            collision_solver.add_ellipse(cx, cy, rx, ry)
 
     # Lines
     if lines:
@@ -431,6 +438,7 @@ def svg_coordinate_plane(
             parts.append(
                 f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>'
             )
+            collision_solver.add_segment(x1, y1, x2, y2)
 
     # Continuous functions
     if functions:
@@ -445,31 +453,35 @@ def svg_coordinate_plane(
             for r_start, r_end in ranges:
                 samples = 140
                 segment: List[str] = []
+                seg_pts: List[Tuple[float, float]] = []
+
+                def _flush_curve(curve_color: str = color, curve_dash: str = dash) -> None:
+                    nonlocal segment, seg_pts
+                    if len(segment) >= 2:
+                        parts.append(f'<polyline points="{" ".join(segment)}" fill="transparent" stroke="{curve_color}" stroke-width="2.4"{curve_dash} clip-path="url(#plot-clip)"/>')
+                        collision_solver.add_polyline(seg_pts)
+                    segment = []
+                    seg_pts = []
+
                 prev_y: Optional[float] = None
                 for i in range(samples + 1):
                     xv = r_start + (r_end - r_start) * i / samples
                     try:
                         yv = fn(xv)
                         if yv is None or isinstance(yv, complex) or math.isnan(yv) or math.isinf(yv):
-                            if len(segment) >= 2:
-                                parts.append(f'<polyline points="{" ".join(segment)}" fill="transparent" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
-                            segment = []
+                            _flush_curve()
                             prev_y = None
                             continue
                         if abs(yv) > max(abs(y_min), abs(y_max)) * 6 or (prev_y is not None and abs(yv - prev_y) > dy * 1.5):
-                            if len(segment) >= 2:
-                                parts.append(f'<polyline points="{" ".join(segment)}" fill="transparent" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
-                            segment = []
+                            _flush_curve()
                         px, py = to_px(xv, yv)
                         segment.append(f"{px},{py}")
+                        seg_pts.append((px, py))
                         prev_y = yv
                     except Exception:
-                        if len(segment) >= 2:
-                            parts.append(f'<polyline points="{" ".join(segment)}" fill="transparent" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
-                        segment = []
+                        _flush_curve()
                         prev_y = None
-                if len(segment) >= 2:
-                    parts.append(f'<polyline points="{" ".join(segment)}" fill="transparent" stroke="{color}" stroke-width="2.4"{dash} clip-path="url(#plot-clip)"/>')
+                _flush_curve()
 
     # Vectors
     if vectors:
@@ -488,6 +500,7 @@ def svg_coordinate_plane(
             x1, y1 = to_px(x0, y0)
             x2, y2 = to_px(x0 + vx, y0 + vy)
             parts.append(f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" stroke-width="2" clip-path="url(#plot-clip)"/>')
+            collision_solver.add_segment(x1, y1, x2, y2)
             ang = math.atan2(y2 - y1, x2 - x1)
             ah = 6.0
             ax1 = round(x2 - ah * math.cos(ang - 0.45), 2)
@@ -499,7 +512,7 @@ def svg_coordinate_plane(
                 mx = round((x1 + x2) / 2, 2)
                 my = round((y1 + y2) / 2, 2)
                 v_ang_deg = math.degrees(math.atan2(-(y2 - y1), x2 - x1)) + 90.0
-                lx, ly = collision_solver.place_label(mx, my, vec["label"], preferred_angle_deg=v_ang_deg)
+                lx, ly = collision_solver.place_label(mx, my, vec["label"], preferred_angle_deg=v_ang_deg, font_size=8.0)
                 parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="8" font-weight="bold" fill="{color}" text-anchor="middle">{_esc(vec["label"])}</text>')
 
     # Points
@@ -527,8 +540,10 @@ def svg_coordinate_plane(
             py_c = round(max(r_pt + 0.5, min(height - r_pt - 0.5, py)), 2)
             fill = "#ffffff" if is_open else color
             parts.append(f'<circle cx="{px_c}" cy="{py_c}" r="{r_pt}" fill="{fill}" stroke="{color}" stroke-width="1.8"/>')
+            # Reserve the dot's footprint first so its own label never covers it.
+            collision_solver.add_marker(px_c, py_c, r_pt + 1.0)
             if lbl:
-                lx_c, ly_c = collision_solver.place_label(px_c, py_c, lbl, preferred_angle_deg=45.0)
+                lx_c, ly_c = collision_solver.place_label(px_c, py_c, lbl, preferred_angle_deg=45.0, font_size=9.0)
                 parts.append(f'<text x="{lx_c}" y="{ly_c}" font-family="sans-serif" font-size="9" font-weight="bold" fill="{color}" text-anchor="middle">{_esc(lbl)}</text>')
 
     parts.append("</svg>")
@@ -804,12 +819,16 @@ def svg_polar_grid(
     for r in range(1, max_r + 1):
         rad = round(r / max_r * max_px, 2)
         parts.append(f'<circle cx="{cx}" cy="{cy}" r="{rad}" fill="transparent" stroke="#cbd5e1" stroke-width="0.8"/>')
+        # Concentric circles are reference geometry: a scale label may rest on its own
+        # circle, but must never sit on the plotted polar curve.
+        collision_solver.add_ellipse(cx, cy, rad, rad, soft=True)
         if r % r_step == 0:
             r_ang = math.radians(45)
             rx_pos = round(cx + rad * math.cos(r_ang) + 2, 1)
             ry_pos = round(cy - rad * math.sin(r_ang) - 2, 1)
-            r_box = SVGCollisionSolver.estimate_text_bbox(rx_pos, ry_pos, str(r), 6.5)
-            collision_solver.placed_boxes.append(r_box)
+            rx_pos, ry_pos = collision_solver.place_label(
+                rx_pos, ry_pos, str(r), preferred_angle_deg=45.0, font_size=6.5
+            )
             parts.append(f'<text x="{rx_pos}" y="{ry_pos}" font-family="sans-serif" font-size="6.5" fill="#64748b">{r}</text>')
 
     for deg in range(0, 360, 30):
@@ -824,6 +843,7 @@ def svg_polar_grid(
 
     if curve_fn is not None:
         pts: List[str] = []
+        curve_pts: List[Tuple[float, float]] = []
         steps = 180
         for i in range(steps + 1):
             th = 2 * math.pi * i / steps
@@ -831,26 +851,41 @@ def svg_polar_grid(
             px = round(cx + (rv / max_r * max_px) * math.cos(th), 2)
             py = round(cy - (rv / max_r * max_px) * math.sin(th), 2)
             pts.append(f"{px},{py}")
+            curve_pts.append((px, py))
         parts.append(f'<polyline points="{" ".join(pts)}" fill="transparent" stroke="#dc2626" stroke-width="1.8"/>')
+        collision_solver.add_polyline(curve_pts)
 
     if curve_points:
         pts_c: List[str] = []
+        curve_pts = []
         for rv, deg_val in curve_points:
             th = math.radians(deg_val)
             px = round(cx + (rv / max_r * max_px) * math.cos(th), 2)
             py = round(cy - (rv / max_r * max_px) * math.sin(th), 2)
             pts_c.append(f"{px},{py}")
+            curve_pts.append((px, py))
         parts.append(f'<polyline points="{" ".join(pts_c)}" fill="transparent" stroke="#dc2626" stroke-width="1.8"/>')
+        collision_solver.add_polyline(curve_pts)
 
     if points:
+        # Register every radius ray before placing any label, so a label never lands on
+        # a neighbouring ray; draw rays + markers first, labels last.
+        plotted: List[Tuple[float, float, str]] = []
         for rv, th_val, lbl in points:
             th_rad = math.radians(th_val) if abs(th_val) > 2 * math.pi + 0.1 else th_val
             px = round(cx + (rv / max_r * max_px) * math.cos(th_rad), 2)
             py = round(cy - (rv / max_r * max_px) * math.sin(th_rad), 2)
+            plotted.append((px, py, lbl))
+            collision_solver.add_segment(cx, cy, px, py)
+
+        for px, py, _lbl in plotted:
             parts.append(f'<line x1="{cx}" y1="{cy}" x2="{px}" y2="{py}" stroke="#2563eb" stroke-width="1.4"/>')
             parts.append(f'<circle cx="{px}" cy="{py}" r="3.5" fill="#dc2626"/>')
+            collision_solver.add_marker(px, py, 4.5)
+
+        for px, py, lbl in plotted:
             if lbl:
-                lx, ly = collision_solver.place_label(px, py, lbl, preferred_angle_deg=45.0)
+                lx, ly = collision_solver.place_label(px, py, lbl, preferred_angle_deg=45.0, font_size=7.5)
                 parts.append(f'<text x="{lx}" y="{ly}" font-family="sans-serif" font-size="7.5" font-weight="bold" fill="#dc2626" text-anchor="middle">{_esc(lbl)}</text>')
 
     parts.append("</svg>")
