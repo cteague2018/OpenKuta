@@ -594,7 +594,7 @@ def gen_adv_problem(
             "steps_typst": [
                 f"Find the critical boundary values: $x = {r1}$ and $x = {r2}$.",
                 f"Test signs on the intervals $(-infinity, {r1})$, $({r1}, {r2})$, and $({r2}, infinity)$: the expression is negative on $({r1}, {r2})$.",
-                f"Include endpoints where defined: {ans.strip('$ ')}.",
+                f"Include endpoints where defined: {ans}.",
             ],
             "distractors": [
                 f"$ (-infinity, {r1}] union [{r2}, infinity) $",

@@ -127,11 +127,19 @@ class ScientificNotationGenerator(BaseGenerator):
                     f"Combined scientific notation: $ {ans_str} $."
                 ]
 
+        if difficulty == ProblemDifficulty.SPICY:
+            # ``*`` is strong-emphasis in Typst markup, so the scientific-notation
+            # answer/distractors are emitted as math with ``times`` instead.
+            answer_typst_field = f"$ {ans_str.replace('*', 'times')} $"
+            distractors = [f"$ {d.replace('*', 'times')} $" for d in distractors]
+        else:
+            answer_typst_field = ans_str
+
         return BaseProblem(
             id=f"sci_not_{difficulty.value}_{problem_idx}",
             prompt_text="Solve each problem involving scientific notation or number sets.",
             equation_typst=q_text,
-            answer_typst=ans_str,
+            answer_typst=answer_typst_field,
             steps_typst=steps,
             distractors=distractors,
             difficulty=difficulty,

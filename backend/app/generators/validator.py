@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from backend.app.core.base import BaseProblem
 
@@ -31,6 +31,87 @@ DOUBLE_SIGN_REGEX = re.compile(r"(?:[+\-]\s*-[0-9a-zA-Z]|[+\-]\s*\+[0-9a-zA-Z]|\
 
 # Undefined / NaN / null tokens
 FORBIDDEN_LITERALS = ["None", "[object Object]", "NaN", "null"]
+
+# Whitespace-free Typst math identifiers/symbols that may appear unquoted inside
+# $...$ content. worksheet.typ.j2 renders prompt_text/equation_typst/answer_typst
+# straight into a markup content block, so any *other* bare multi-letter word makes
+# Typst abort with "unknown variable: <word>".
+TYPST_MATH_WORDS = frozenset(
+    """
+    sin cos tan cot sec csc sinh cosh tanh coth sech csch
+    arcsin arccos arctan arccot arcsec arccsc
+    log ln lg exp lim liminf limsup max min sup inf gcd lcm det dim mod
+    quad space dot times div plus minus approx equiv leq geq neq lt gt le ge
+    in not subset supset union inter emptyset oo infinity
+    sum product int integral oint prod partial nabla forall exists therefore
+    and or if else cases mat vec attach frac sqrt root abs floor ceil round angle
+    left right arrow limits degree prime primes dif compose star circle square triangle
+    parallel perp prop dots upright bold italic serif display inline script chevron binom
+    bb cal scr frak op hat tilde vec overline underline text norm
+    alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron
+    pi rho sigma tau upsilon phi chi psi omega
+    Gamma Delta Theta Lambda Xi Pi Sigma Upsilon Phi Psi Omega
+    NN ZZ QQ RR CC
+    """.split()
+)
+
+# Bare multi-letter words inside math: not preceded by an escape, a '.' field
+# access (arrow.r, dot.c) or a '#' code marker.
+MATH_BARE_WORD_REGEX = re.compile(r"(?<![\\a-zA-Z.#])([a-zA-Z]{2,})(?![a-zA-Z])")
+
+# Quoted strings inside math are legitimate text (e.g. $ "Vertex": (1, 2) $).
+MATH_QUOTED_STRING_REGEX = re.compile(r'"(?:[^"\\]|\\.)*"')
+
+
+def _count_unescaped(text: str, char: str) -> int:
+    """Count occurrences of ``char`` that are not backslash-escaped."""
+    count = 0
+    i = 0
+    while i < len(text):
+        if text[i] == "\\":
+            i += 2
+            continue
+        if text[i] == char:
+            count += 1
+        i += 1
+    return count
+
+
+def _split_typst_math(text: str) -> Tuple[List[str], List[str], bool]:
+    """Split a field into (markup segments, math segments, math_terminated).
+
+    Tracks backslash escapes and, inside math, ``"..."`` string literals so a
+    quoted dollar sign is not mistaken for a delimiter.
+    """
+    markup: List[str] = []
+    math: List[str] = []
+    buf: List[str] = []
+    in_math = False
+    i = 0
+    length = len(text)
+    while i < length:
+        ch = text[i]
+        if ch == "\\" and i + 1 < length:
+            buf.append(text[i:i + 2])
+            i += 2
+            continue
+        if ch == "$":
+            (math if in_math else markup).append("".join(buf))
+            buf = []
+            in_math = not in_math
+            i += 1
+            continue
+        if in_math and ch == '"':
+            j = i + 1
+            while j < length and text[j] != '"':
+                j += 2 if text[j] == "\\" else 1
+            buf.append(text[i:j + 1])
+            i = j + 1
+            continue
+        buf.append(ch)
+        i += 1
+    (math if in_math else markup).append("".join(buf))
+    return markup, math, not in_math
 
 
 def _audit_text_field(text: str, field_name: str) -> List[str]:
@@ -64,13 +145,45 @@ def _audit_text_field(text: str, field_name: str) -> List[str]:
         if re.search(rf"\b{re.escape(lit)}\b", text):
             errors.append(f"Field '{field_name}' contains forbidden literal token '{lit}'")
 
-    # 5. Math Delimiter Parity (Typst '$' count must be balanced)
-    # Count unescaped '$'
-    # In Typst, dollar inside double quotes is a string literal, not a delimiter
-    text_no_quotes = re.sub(r'"[^"]*"', "", text)
-    unescaped_dollars = len(re.findall(r"(?<!\\)\$", text_no_quotes))
-    if unescaped_dollars % 2 != 0:
-        errors.append(f"Field '{field_name}' has unbalanced math delimiters: found {unescaped_dollars} unescaped '$' characters")
+    # 5. Math delimiter parity + markup safety.
+    # Typst toggles math with unescaped '$'; inside math, "$" only counts as a
+    # delimiter when it is not part of a "..." string literal.
+    markup_parts, math_parts, math_terminated = _split_typst_math(text)
+    if not math_terminated:
+        errors.append(f"Field '{field_name}' has unbalanced math delimiters: unterminated '$'")
+    for part in markup_parts:
+        # Everything outside $...$ lands inside the [ ... ] content block of
+        # worksheet.typ.j2, where '*' toggles strong emphasis, '[' opens a nested
+        # block and 'sub_(' starts a math-style subscript. Each of those aborts
+        # the whole document with "unclosed delimiter" when left unbalanced.
+        # (A lone '_' in prose such as "S_n" is tolerated by Typst and is not flagged.)
+        if _count_unescaped(part, "*") % 2:
+            errors.append(
+                f"Field '{field_name}' has an unbalanced strong-emphasis '*' outside math; "
+                f"Typst aborts with \"unclosed delimiter\" (use a $ ... $ math span instead)"
+            )
+        if _count_unescaped(part, "[") != _count_unescaped(part, "]"):
+            errors.append(
+                f"Field '{field_name}' has unbalanced '[' / ']' outside math; "
+                f"escape literal brackets as \\[ and \\] or wrap them in $ ... $"
+            )
+        if "_(" in part:
+            errors.append(
+                f"Field '{field_name}' uses math subscript syntax '_(' outside math; "
+                f"wrap that expression in $ ... $"
+            )
+    for part in math_parts:
+        if _count_unescaped(part, '"') % 2:
+            errors.append(f"Field '{field_name}' has an unterminated quote inside $ ... $ math")
+        # Bare multi-letter words are read as identifiers by Typst and abort the
+        # compile with "unknown variable: <word>"; prose must be quoted.
+        for word in MATH_BARE_WORD_REGEX.findall(MATH_QUOTED_STRING_REGEX.sub(" ", part)):
+            if word in TYPST_MATH_WORDS:
+                continue
+            errors.append(
+                f"Field '{field_name}' uses the bare word '{word}' inside $ ... $ math; "
+                f"quote it as \"{word}\" (Typst would report: unknown variable: {word})"
+            )
 
     # 6. Double signs (e.g., '+ -' or '- -')
     # Skip if inside text explanations or set definitions, but flag in math equations

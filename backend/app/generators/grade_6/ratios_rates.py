@@ -33,7 +33,7 @@ class Grade6RatiosRatesGenerator(BaseGenerator):
                 "Recall unit rate formula: $ \"Unit Rate\" = (\"Total Cost\") / (\"Total Items\") $",
                 f"Divide cost by number of items: $ ({total}) / ({n}) $",
                 f"Calculate quotient: $ {rate} $",
-                f"Result: $ {ans_typst} $"
+                f"Result: {ans_typst}"
             ]
 
             return BaseProblem(

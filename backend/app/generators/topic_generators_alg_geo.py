@@ -422,14 +422,14 @@ def gen_alg_geo_problem(
             }
         return {
             "prompt_text": "Find the unit rate.",
-            "equation_typst": f"\"$\"{dist} \" for \" {t} \" items\"",
-            "answer_typst": f"$ \"$\"{rate} \" per item\" $",
+            "equation_typst": f"\\${dist} for {t} items",
+            "answer_typst": f"\\${rate} per item",
             "steps_typst": [
                 f"Divide total cost by the number of items: $({dist})/({t})$.",
                 f"Simplify the quotient: ${dist} div {t} = {rate}$.",
-                f"Unit rate: $\\${rate}$ per item.",
+                f"Unit rate: $ \\${rate} $ per item.",
             ],
-            "distractors": [f"$ \"$\"{rate + 2} \" per item\" $", f"$ \"$\"{dist - t} \" per item\" $", f"$ \"$\"{t} \" per item\" $"],
+            "distractors": [f"\\${rate + 2} per item", f"\\${dist - t} per item", f"\\${t} per item"],
         }
 
     if "percent of change" in t_low:
@@ -1099,8 +1099,8 @@ def gen_alg_geo_problem(
             "equation_typst": f"$ ({ax} {sgn} {b})^2 $",
             "answer_typst": f"$ {'' if a == 1 else a * a}x^2 {sgn} {mid}x + {b * b} $",
             "steps_typst": [
-                f"Apply the square of a binomial pattern $(A {sgn} B)^2 = A^2 {sgn} 2AB + B^2$.",
-                f"Compute $A^2 = {'' if a == 1 else a * a}x^2$, $2AB = {mid}x$, and $B^2 = {b * b}$.",
+                f"Apply the square of a binomial pattern $(A {sgn} B)^2 = A^2 {sgn} 2 A B + B^2$.",
+                f"Compute $A^2 = {'' if a == 1 else a * a}x^2$, $2 A B = {mid}x$, and $B^2 = {b * b}$.",
                 f"Combine terms: ${'' if a == 1 else a * a}x^2 {sgn} {mid}x + {b * b}$.",
             ],
             "distractors": [

@@ -307,7 +307,7 @@ class QuadraticsFactoringGenerator(BaseGenerator):
             f2 = f"(x {'- ' if r2 >= 0 else '+ '}{abs(r2)})"
             steps = [
                 f"Given quadratic equation: $ {eq} $",
-                f"Rewrite in standard form $ ax^2 + bx + c = 0 $: $ x^2 {b_s} {'+ ' if c >= 0 else '- '}{abs(c)} = 0 $",
+                f"Rewrite in standard form $ a x^2 + b x + c = 0 $: $ x^2 {b_s} {'+ ' if c >= 0 else '- '}{abs(c)} = 0 $",
                 f"Factor: $ {f1}{f2} = 0 $",
                 f"Solve for $x$: $ x = {r1}, {r2} $",
                 f"Result: $ x = {r1}, {r2} $"
@@ -535,7 +535,7 @@ class QuadraticsDiscriminantGenerator(BaseGenerator):
         else:
             eq = f"{a_s} {b_s} {c_s} = 0".replace("+ -", "- ")
 
-        ans = f"{disc}; {sol_type}"
+        ans = f"{disc}; \"{sol_type}\""
         steps = [
             f"Given quadratic equation: $ {eq} $",
             f"Identify coefficients: $ a = {a}, b = {b}, c = {c} $",
@@ -545,9 +545,11 @@ class QuadraticsDiscriminantGenerator(BaseGenerator):
             f"Result: $ {ans} $"
         ]
 
-        d1 = f"{disc + 4}; {sol_type}"
-        d2 = f"{-disc}; {'two imaginary solutions' if disc > 0 else 'two real solutions'}"
-        d3 = f"{b*b}; one real solution"
+        alt_type = "two imaginary solutions" if disc > 0 else "two real solutions"
+
+        d1 = f"{disc + 4}; \"{sol_type}\""
+        d2 = f"{-disc}; \"{alt_type}\""
+        d3 = f"{b*b}; \"one real solution\""
 
         return BaseProblem(
             id=f"quad_disc_{difficulty.value}_{problem_idx}",
@@ -693,10 +695,10 @@ class GraphingQuadraticsGenerator(BaseGenerator):
                 "Test point $ (0, 0) $ to shade region."
             ]
 
-        ans = f"Vertex: ({h}, {k}); Axis: x = {h}"
-        d1 = f"Vertex: ({-h}, {k}); Axis: x = {-h}"
-        d2 = f"Vertex: ({k}, {h}); Axis: x = {k}"
-        d3 = f"Vertex: ({h}, {-k}); Axis: x = {h}"
+        ans = f"\"Vertex\": ({h}, {k}); \"Axis\": x = {h}"
+        d1 = f"\"Vertex\": ({-h}, {k}); \"Axis\": x = {-h}"
+        d2 = f"\"Vertex\": ({k}, {h}); \"Axis\": x = {k}"
+        d3 = f"\"Vertex\": ({h}, {-k}); \"Axis\": x = {h}"
 
         diagram_svg, ans_svg = svg_coordinate_plane_pair(
             functions=[{"fn": lambda xv, _a=a, _h=h, _k=k: _a * ((xv - _h) ** 2) + _k, "color": "#dc2626"}],

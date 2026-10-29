@@ -118,7 +118,7 @@
         gutter: 14pt,
         [
           #align(center)[
-            #text(size: 11pt)[{{ prob.equation_typst }}]
+            #text(size: 11pt)[{{ prob.equation_typst | inline_math }}]
           ]
           {% if prob.choices and prob.choices|length >= 4 %}
           #v(6pt)
@@ -197,7 +197,7 @@
       {% else %}
       #v({{ 2 if prob.graphing else 4 }}pt)
       #align(center)[
-        #text(size: 10.5pt)[{{ prob.equation_typst }}]
+        #text(size: 10.5pt)[{{ prob.equation_typst | inline_math }}]
       ]
 
       {% if show_answers and answer_svg_files and pidx in answer_svg_files %}

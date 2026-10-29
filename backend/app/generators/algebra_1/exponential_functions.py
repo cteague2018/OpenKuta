@@ -147,10 +147,10 @@ class GraphingExponentialGenerator(BaseGenerator):
             f"Plot points and draw a smooth curve approaching asymptote $ {asymptote} $."
         ]
 
-        ans = f"Asymptote: {asymptote}; y-int: (0, {y_int})"
-        d1 = f"Asymptote: y = {c + 1}; y-int: (0, {y_int})"
-        d2 = f"Asymptote: x = {c}; y-int: ({y_int}, 0)"
-        d3 = f"Asymptote: {asymptote}; y-int: (0, {y_int - 1})"
+        ans = f"\"Asymptote\": {asymptote}; \"y-int\": (0, {y_int})"
+        d1 = f"\"Asymptote\": y = {c + 1}; \"y-int\": (0, {y_int})"
+        d2 = f"\"Asymptote\": x = {c}; \"y-int\": ({y_int}, 0)"
+        d3 = f"\"Asymptote\": {asymptote}; \"y-int\": (0, {y_int - 1})"
 
         diagram_svg, ans_svg = svg_coordinate_plane_pair(
             functions=[{"fn": lambda xv, _a=a, _b=base, _c=c: _a * (_b ** xv) + _c, "color": "#dc2626"}],

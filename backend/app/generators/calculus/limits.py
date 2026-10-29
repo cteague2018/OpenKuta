@@ -27,7 +27,7 @@ class CalculusLimitsGenerator(BaseGenerator):
             b = rng.choice([-4, -2, 3, 5])
             d = rng.choice([-5, -1, 4, 7])
 
-            eq_typst = f"lim_(x -> {c}) ({a} x^2 + {b} x + {d})"
+            eq_typst = f"$ lim_(x -> {c}) ({a} x^2 + {b} x + {d}) $"
             val = a * (c**2) + b * c + d
             ans_typst = f"{val}"
 
@@ -53,7 +53,7 @@ class CalculusLimitsGenerator(BaseGenerator):
             # 0/0 Indeterminate form resolved by factoring: lim_{x -> a} (x^2 - a^2) / (x - a)
             a = rng.choice([2, 3, 4, 5, -2, -3])
             a_sq = a * a
-            eq_typst = f"lim_(x -> {a}) (x^2 - {a_sq}) / (x - {a})"
+            eq_typst = f"$ lim_(x -> {a}) (x^2 - {a_sq}) / (x - {a}) $"
             ans_val = 2 * a
             ans_typst = f"{ans_val}"
 
@@ -82,7 +82,7 @@ class CalculusLimitsGenerator(BaseGenerator):
             b = rng.choice([3, 5, -2])
             d = rng.choice([1, 7, -4])
 
-            eq_typst = f"lim_(x -> oo) ({a} x^2 + {b} x) / ({c} x^2 + {d})"
+            eq_typst = f"$ lim_(x -> oo) ({a} x^2 + {b} x) / ({c} x^2 + {d}) $"
             # Fraction simplification
             import math
             g = math.gcd(a, c)

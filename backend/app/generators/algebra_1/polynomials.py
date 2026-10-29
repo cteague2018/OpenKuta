@@ -356,7 +356,7 @@ class PolynomialMultiplyGenerator(BaseGenerator):
                 eq_typst = f"({a}x {b_s})^2"
                 ans_expr = sp.expand((a * x + b)**2)
                 steps = [
-                    "Use the binomial square pattern: $ (A + B)^2 = A^2 + 2AB + B^2 $",
+                    "Use the binomial square pattern: $ (A + B)^2 = A^2 + 2 A B + B^2 $",
                     f"$ ({a}x)^2 + 2({a}x)({b}) + ({b})^2 $",
                     f"Result: $ {format_polynomial_typst(ans_expr, x)} $"
                 ]

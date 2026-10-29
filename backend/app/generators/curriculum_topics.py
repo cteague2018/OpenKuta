@@ -92,7 +92,7 @@ def _gen_decoupled_subtopic(
             a = rng.randint(1, 3 * scale)
             b = rng.randint(1, 5)
             return {
-                "prompt_text": "Use the limit definition of the derivative f'(x) = lim_(h->0) (f(x+h) - f(x))/h to find f'(x).",
+                "prompt_text": "Use the limit definition of the derivative $f'(x) = lim_(h -> 0) (f(x+h) - f(x))/h$ to find $f'(x)$.",
                 "equation_typst": f"$ f(x) = {a}x^2 + {b}x $",
                 "answer_typst": f"$ f'(x) = {2 * a}x + {b} $",
                 "steps_typst": [
@@ -231,19 +231,19 @@ def _gen_decoupled_subtopic(
             if fn_choice == "arcsin":
                 eq_s = f"$ f(x) = arcsin({u_str}) $"
                 ans_s = f"$ f'(x) = ({du_str})/(sqrt(1 - {u_sq_str})) $"
-                step_rule = "Recall $d/dx[arcsin(u)] = (u') / sqrt(1 - u^2)$."
+                step_rule = "Recall $(d)/(d x)[arcsin(u)] = (u') / sqrt(1 - u^2)$."
             elif fn_choice == "arccos":
                 eq_s = f"$ f(x) = arccos({u_str}) $"
                 ans_s = f"$ f'(x) = -({du_str})/(sqrt(1 - {u_sq_str})) $"
-                step_rule = "Recall $d/dx[arccos(u)] = -(u') / sqrt(1 - u^2)$."
+                step_rule = "Recall $(d)/(d x)[arccos(u)] = -(u') / sqrt(1 - u^2)$."
             elif fn_choice == "arctan":
                 eq_s = f"$ f(x) = arctan({u_str}) $"
                 ans_s = f"$ f'(x) = ({du_str})/(1 + {u_sq_str}) $"
-                step_rule = "Recall $d/dx[arctan(u)] = (u') / (1 + u^2)$."
+                step_rule = "Recall $(d)/(d x)[arctan(u)] = (u') / (1 + u^2)$."
             else:
-                eq_s = f"$ f(x) = arcsec({u_str}) $"
+                eq_s = f"$ f(x) = \"arcsec\"({u_str}) $"
                 ans_s = f"$ f'(x) = ({du_str})/(|{u_str}| sqrt({u_sq_str} - 1)) $"
-                step_rule = "Recall $d/dx[arcsec(u)] = (u') / (|u| sqrt(u^2 - 1))$."
+                step_rule = "Recall $(d)/(d x)[\"arcsec\"(u)] = (u') / (|u| sqrt(u^2 - 1))$."
 
             return {
                 "prompt_text": "Differentiate the inverse trigonometric function with respect to x.",
@@ -266,22 +266,22 @@ def _gen_decoupled_subtopic(
             c = rng.choice([k for k in range(-15, 16) if k != 0])
             if fn_t == "sin":
                 ans_s = f"$ f'(x) = {c * a} cos({a}x) $"
-                rule_s = "$d/dx[sin(u)] = cos(u) u'$"
+                rule_s = "$(d)/(d x)[sin(u)] = cos(u) u'$"
             elif fn_t == "cos":
                 ans_s = f"$ f'(x) = {-c * a} sin({a}x) $"
-                rule_s = "$d/dx[cos(u)] = -sin(u) u'$"
+                rule_s = "$(d)/(d x)[cos(u)] = -sin(u) u'$"
             elif fn_t == "tan":
                 ans_s = f"$ f'(x) = {c * a} sec^2({a}x) $"
-                rule_s = "$d/dx[tan(u)] = sec^2(u) u'$"
+                rule_s = "$(d)/(d x)[tan(u)] = sec^2(u) u'$"
             elif fn_t == "sec":
                 ans_s = f"$ f'(x) = {c * a} sec({a}x) tan({a}x) $"
-                rule_s = "$d/dx[sec(u)] = sec(u) tan(u) u'$"
+                rule_s = "$(d)/(d x)[sec(u)] = sec(u) tan(u) u'$"
             elif fn_t == "csc":
                 ans_s = f"$ f'(x) = {-c * a} csc({a}x) cot({a}x) $"
-                rule_s = "$d/dx[csc(u)] = -csc(u) cot(u) u'$"
+                rule_s = "$(d)/(d x)[csc(u)] = -csc(u) cot(u) u'$"
             else:
                 ans_s = f"$ f'(x) = {-c * a} csc^2({a}x) $"
-                rule_s = "$d/dx[cot(u)] = -csc^2(u) u'$"
+                rule_s = "$(d)/(d x)[cot(u)] = -csc^2(u) u'$"
 
             return {
                 "prompt_text": "Differentiate the trigonometric function with respect to x.",
@@ -1682,7 +1682,7 @@ def _gen_decoupled_subtopic(
             amt = round(p_princ * ((1 + (r_pct / 100) / m_comp) ** (m_comp * t_yrs)), 2)
             return {
                 "prompt_text": f"Find the final account balance for an investment compounded {desc}.",
-                "equation_typst": f"$ P = \\${p_princ}, quad r = {r_pct}%, quad t = {t_yrs} \" years\", quad \"compounded \" {desc} $",
+                "equation_typst": f"$ P = \\${p_princ}, quad r = {r_pct}%, quad t = {t_yrs} \" years\", quad \"compounded {desc}\" $",
                 "answer_typst": rf"$ A = \${amt:,.2f} $",
                 "steps_typst": [
                     f"Use compound interest formula $A = P(1 + r/n)^(n t)$ with $n = {m_comp}$.",
@@ -2240,16 +2240,16 @@ def _gen_decoupled_subtopic(
                 return {
                     "prompt_text": "Evaluate the indefinite integral using inverse trigonometric forms.",
                     "equation_typst": f"$ integral ({c * a})/(x sqrt(x^2 - {a * a})) d x $",
-                    "answer_typst": f"$ {c} arcsec((|x|)/({a})) + C $" if c != 1 else f"$ arcsec((|x|)/({a})) + C $",
+                    "answer_typst": f"$ {c} \"arcsec\"((|x|)/({a})) + C $" if c != 1 else f"$ \"arcsec\"((|x|)/({a})) + C $",
                     "steps_typst": [
-                        f"Recall standard form $integral (1)/(x sqrt(x^2 - a^2)) d x = (1/a) arcsec(|x|/a) + C$ with $a = {a}$.",
-                        f"Multiply by numerator constant: ${c * a} times (1/{a}) arcsec(|x|/{a})$.",
-                        f"Result: ${c} arcsec(|x|/{a}) + C$.",
+                        f"Recall standard form $integral (1)/(x sqrt(x^2 - a^2)) d x = (1/a) \"arcsec\"(|x|/a) + C$ with $a = {a}$.",
+                        f"Multiply by numerator constant: ${c * a} times (1/{a}) \"arcsec\"(|x|/{a})$.",
+                        f"Result: ${c} \"arcsec\"(|x|/{a}) + C$.",
                     ],
                     "distractors": [
                         f"$ {c} arctan((x)/({a})) + C $",
-                        f"$ {c * a} arcsec(x) + C $",
-                        f"$ (1)/({a}) arcsec(x/{a}) + C $",
+                        f"$ {c * a} \"arcsec\"(x) + C $",
+                        f"$ (1)/({a}) \"arcsec\"(x/{a}) + C $",
                     ],
                 }
 
@@ -2962,7 +2962,7 @@ def _gen_decoupled_subtopic(
                 eq_s = f"{c_factor}({lhs}) = 0"
 
             return {
-                "prompt_text": "Solve the trigonometric equation on the interval [0, 2pi).",
+                "prompt_text": "Solve the trigonometric equation on the interval $[0, 2pi)$.",
                 "equation_typst": f"$ {eq_s} $",
                 "answer_typst": f"$ theta = {ans_str} $",
                 "steps_typst": [

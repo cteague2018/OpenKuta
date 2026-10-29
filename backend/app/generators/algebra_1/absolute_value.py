@@ -165,10 +165,10 @@ class GraphingAbsoluteValueGenerator(BaseGenerator):
             "Draw the two straight rays forming the V-graph."
         ]
 
-        ans = f"Vertex: ({h}, {k})"
-        d1 = f"Vertex: ({-h}, {k})"
-        d2 = f"Vertex: ({k}, {h})"
-        d3 = f"Vertex: ({h}, {-k})"
+        ans = f"\"Vertex\": ({h}, {k})"
+        d1 = f"\"Vertex\": ({-h}, {k})"
+        d2 = f"\"Vertex\": ({k}, {h})"
+        d3 = f"\"Vertex\": ({h}, {-k})"
 
         diagram_svg, ans_svg = svg_coordinate_plane_pair(
             functions=[{"fn": lambda xv, _a=a, _h=h, _k=k: _a * abs(xv - _h) + _k, "color": "#dc2626"}],

@@ -62,7 +62,7 @@ class PrecalcTrigGenerator(BaseGenerator):
 
         return BaseProblem(
             id=f"pcalc_trig_mild_{problem_idx}",
-            prompt_text="Find all solutions to each equation in the interval [0, 2 pi).",
+            prompt_text="Find all solutions to each equation in the interval $[0, 2 pi)$.",
             equation_typst=eq_typst,
             answer_typst=ans_typst,
             steps_typst=steps,
@@ -187,7 +187,7 @@ class PrecalcTrigGenerator(BaseGenerator):
         c = rng.choice(medium_cases)
         return BaseProblem(
             id=f"pcalc_trig_med_{problem_idx}",
-            prompt_text="Find all solutions to each equation in the interval [0, 2 pi).",
+            prompt_text="Find all solutions to each equation in the interval $[0, 2 pi)$.",
             equation_typst=str(c["eq"]),
             answer_typst=str(c["ans"]),
             steps_typst=list(c["steps"]),
@@ -289,7 +289,7 @@ class PrecalcTrigGenerator(BaseGenerator):
         c = rng.choice(spicy_cases)
         return BaseProblem(
             id=f"pcalc_trig_spicy_{problem_idx}",
-            prompt_text="Find all solutions to each equation in the interval [0, 2 pi).",
+            prompt_text="Find all solutions to each equation in the interval $[0, 2 pi)$.",
             equation_typst=str(c["eq"]),
             answer_typst=str(c["ans"]),
             steps_typst=list(c["steps"]),

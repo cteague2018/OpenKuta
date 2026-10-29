@@ -40,7 +40,7 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
             given = rng.choice([18, 25, 32, 41, 48, 54, 63, 72])
 
         missing = total - given
-        eq_typst = f"\"angle 1 and angle 2 are \" {type_name}, quad m angle 1 = {given}°, quad m angle 2 = ?"
+        eq_typst = f"\"angle 1 and angle 2 are {type_name}\", quad m angle 1 = {given}°, quad m angle 2 = ?"
         ans_typst = f"m angle 2 = {missing}°"
 
         steps = [
@@ -96,7 +96,7 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
         bc = c * x_val + d
         ac = ab + bc
 
-        eq_typst = f"B \" is between \" A \" and \" C. quad A B = {a}x + {b}, quad B C = {c}x + {d}, quad A C = {ac}"
+        eq_typst = f"A B = {a}x + {b}, quad B C = {c}x + {d}, quad A C = {ac}"
         ans_typst = f"x = {x_val}"
 
         sum_coef = a + c
@@ -123,7 +123,7 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
 
         return BaseProblem(
             id=f"geom_ang_med_{problem_idx}",
-            prompt_text="Solve for x using the Segment Addition Postulate.",
+            prompt_text="Point B is between A and C on segment AC. Solve for x using the Segment Addition Postulate.",
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
             steps_typst=steps,
@@ -151,7 +151,7 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
             sign_b = f"- {abs(b)}" if b < 0 else f"+ {b}"
             sign_d = f"- {abs(d)}" if d < 0 else f"+ {d}"
 
-            eq_typst = f"l_1 parallel l_2 \" cut by transversal.\" quad angle 1 \" and \" angle 2 \" are alternate interior:\" quad m angle 1 = ({a}x {sign_b})°, quad m angle 2 = ({c}x {sign_d})°"
+            eq_typst = f"l_1 parallel l_2, quad m angle 1 = ({a}x {sign_b})°, quad m angle 2 = ({c}x {sign_d})°"
             ans_typst = f"x = {x_val}, quad m angle 1 = {target_angle}°"
 
             steps = [
@@ -186,7 +186,7 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
             sign_b = f"- {abs(b)}" if b < 0 else f"+ {b}"
             sign_d = f"- {abs(d)}" if d < 0 else f"+ {d}"
 
-            eq_typst = f"l_1 parallel l_2 \" cut by transversal.\" quad angle 1 \" and \" angle 2 \" are consecutive interior:\" quad m angle 1 = ({a}x {sign_b})°, quad m angle 2 = ({c}x {sign_d})°"
+            eq_typst = f"l_1 parallel l_2, quad m angle 1 = ({a}x {sign_b})°, quad m angle 2 = ({c}x {sign_d})°"
             ans_typst = f"x = {x_val}, quad m angle 1 = {ang1}°, quad m angle 2 = {ang2}°"
 
             steps = [
@@ -209,7 +209,9 @@ class GeometryAnglesLinesGenerator(BaseGenerator):
 
         return BaseProblem(
             id=f"geom_ang_spicy_{problem_idx}",
-            prompt_text="Solve for x and find the indicated angle measures.",
+            prompt_text=(
+                "Parallel lines are cut by a transversal. Solve for x and find the indicated angle measures."
+            ),
             equation_typst=f"$ {eq_typst} $",
             answer_typst=f"$ {ans_typst} $",
             steps_typst=steps,

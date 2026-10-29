@@ -145,7 +145,7 @@ class SystemsGraphingGenerator(BaseGenerator):
             ans_typst = f"({x_sol}, {y_sol})"
 
             steps = [
-                "Convert both equations to slope-intercept form $ y = mx + b $ or find the intercepts.",
+                "Convert both equations to slope-intercept form $ y = m x + b $ or find the intercepts.",
                 "Graph both lines carefully on the coordinate plane.",
                 f"Determine coordinates of the intersection: $ ({x_sol}, {y_sol}) $.",
                 f"Solution: $ {ans_typst} $"
