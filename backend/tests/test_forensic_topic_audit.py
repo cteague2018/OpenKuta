@@ -61,7 +61,7 @@ def test_catalog_uniqueness_and_frontend_sync():
     assert len(set(gen_ids)) == 598, "Topics must not share generator_id!"
 
     # Verify frontend catalogData.ts contains all 598 topic IDs
-    fe_text = Path("frontend/app/catalogData.ts").read_text(encoding="utf-8")
+    fe_text = (Path(__file__).resolve().parents[2] / "frontend" / "app" / "catalogData.ts").read_text(encoding="utf-8")
     assert "diagram_svg?: string | null;" in fe_text
     assert "answer_svg?: string | null;" in fe_text
     for tid in topic_ids:
