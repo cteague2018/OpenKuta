@@ -493,11 +493,20 @@ export default function OpenMathForgeApp() {
   const [worksheetProblems, setWorksheetProblems] = useState<Problem[]>(DEFAULT_SAMPLE_PROBLEMS);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
+  // Graphing sheets pair a 3.0in numberless plane with a real scratch-work box, and a
+  // half-width (2-column) card has no room for both. Graphing topics therefore always
+  // render one full-width card per row, matching the PDF compiler's layout.
+  const isGraphingSheet = useMemo(
+    () => worksheetProblems.some((p) => p.graphing),
+    [worksheetProblems]
+  );
+
   // Intelligent Layout Engine: Content-Aware Column & Problem Budgeting
   const activeColumns = useMemo(() => {
+    if (isGraphingSheet) return 1;
     if (columns !== "auto") return columns;
     return 2;
-  }, [columns, worksheetProblems]);
+  }, [columns, worksheetProblems, isGraphingSheet]);
 
   const activePerPage = useMemo(() => {
     if (maxProblemsPerPage !== "auto") return maxProblemsPerPage;
@@ -1915,6 +1924,8 @@ export default function OpenMathForgeApp() {
                 {/* Answer Key Toggle */}
                 <button
                   onClick={() => setShowAnswerKey(!showAnswerKey)}
+                  data-testid="answer-key-toggle"
+                  aria-pressed={showAnswerKey}
                   className={`text-xs md:text-sm px-3 py-1.5 rounded-md font-bold border flex items-center space-x-1.5 transition ${
                     showAnswerKey
                       ? "bg-amber-100 border-amber-300 text-amber-900 shadow-xs"
@@ -2224,20 +2235,16 @@ export default function OpenMathForgeApp() {
                                 ? "[&>svg]:max-h-72 [&>svg]:h-64 [&>svg]:w-auto [&>svg]:max-w-[340px]"
                                 : "[&>svg]:max-h-60 [&>svg]:h-56 [&>svg]:w-auto [&>svg]:max-w-[300px]";
 
-                            // Numberless student-scaled grids: render as a fixed 3.0in square (275px @ ~91.5px/in,
-                            // matching this sheet's existing 2.35in = 215px convention) so the grid stays large
-                            // enough for students to hand-plot points and declare the scale.
+                            // Numberless student-scaled grids: 236pt (3.3in) in the PDF maps to a
+                            // 300px plane here (same ~1.27 preview scale used for every graph), so the
+                            // grid is identical on screen and on paper - and the Answer Key keeps the
+                            // full-size solved plane instead of shrinking it to fit the steps.
                             const graphingDiagramClasses =
-                              activeColumns === 3
-                                ? "[&>svg]:max-h-[195px] [&>svg]:h-[195px] [&>svg]:w-[195px] [&>svg]:max-w-[195px]"
-                                : showAnswerKey
-                                  ? "[&>svg]:max-h-[175px] [&>svg]:h-[175px] [&>svg]:w-[175px] [&>svg]:max-w-[175px]"
-                                  : "[&>svg]:max-h-[275px] [&>svg]:h-[275px] [&>svg]:w-[275px] [&>svg]:max-w-[275px]";
-
-                            const oneColGraphingSizeClasses =
                               pageRowCount <= 1
-                                ? "[&>svg]:max-h-[290px] [&>svg]:h-[290px] [&>svg]:w-[290px] [&>svg]:max-w-[290px]"
-                                : "[&>svg]:max-h-[275px] [&>svg]:h-[275px] [&>svg]:w-[275px] [&>svg]:max-w-[275px]";
+                                ? "[&>svg]:max-h-[320px] [&>svg]:h-[320px] [&>svg]:w-[320px] [&>svg]:max-w-[320px]"
+                                : "[&>svg]:max-h-[300px] [&>svg]:h-[300px] [&>svg]:w-[300px] [&>svg]:max-w-[300px]";
+
+                            const oneColGraphingSizeClasses = graphingDiagramClasses;
 
                             // Write-in line so students declare "1 square = ___ units" before plotting.
                             const gridScaleLine = prob.graphing ? (
@@ -2333,17 +2340,40 @@ export default function OpenMathForgeApp() {
                                             </div>
                                           </div>
                                         ) : (
-                                          <div className="mt-auto pt-2 flex justify-between items-end">
-                                            <span className="text-xs text-slate-400 font-medium italic">Workspace / Scratchwork</span>
-                                            <div className="text-right text-xs text-slate-500 font-semibold border border-slate-200 px-3 py-1 rounded">
-                                              Ans:
+                                          <>
+                                            {prob.graphing && (
+                                              /* Scratch-work box that mirrors the ruled "Show your work"
+                                                 panel printed beside the graph on the PDF worksheet. */
+                                              <div
+                                                data-testid="work-area"
+                                                className="mt-2 flex-1 min-h-0 rounded border border-slate-300 bg-white relative overflow-hidden"
+                                              >
+                                                <span className="absolute top-1 left-1.5 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                                                  Show your work
+                                                </span>
+                                                <div className="absolute inset-x-1 top-6 bottom-1 flex flex-col justify-evenly">
+                                                  {[0, 1, 2, 3, 4, 5].map((rule) => (
+                                                    <div key={rule} className="border-b border-slate-200/80" />
+                                                  ))}
+                                                </div>
+                                              </div>
+                                            )}
+                                            <div className="mt-auto pt-2 flex justify-between items-end">
+                                              {!prob.graphing && (
+                                                <span className="text-xs text-slate-400 font-medium italic">
+                                                  Workspace / Scratchwork
+                                                </span>
+                                              )}
+                                              <div className="ml-auto text-right text-xs text-slate-500 font-semibold border border-slate-200 px-3 py-1 rounded">
+                                                Ans:
+                                              </div>
                                             </div>
-                                          </div>
+                                          </>
                                         )}
                                       </div>
 
                                       {/* Right Column: High-Legibility Coordinate Plane Graph */}
-                                      <div className="w-[320px] shrink-0 border-l border-slate-200 pl-3 flex flex-col items-center justify-center">
+                                      <div className="w-[336px] shrink-0 border-l border-slate-200 pl-3 flex flex-col items-center justify-center">
                                         {showAnswerKey && prob.answer_svg ? (
                                           <div
                                             className={`flex justify-center items-center bg-white rounded p-1.5 border border-amber-200/80 shadow-xs ${

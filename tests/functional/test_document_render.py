@@ -8,7 +8,7 @@ import tempfile
 import typst
 
 from backend.app.core.base import GeneratorConfig
-from backend.app.core.compiler import TypstCompiler, generate_qr_code
+from backend.app.core.compiler import TypstCompiler, generate_qr_code, inline_math
 from backend.app.generators import get_generator
 
 
@@ -131,8 +131,9 @@ class TestDocumentRenderPipeline:
 
 
 class TestGraphingWorksheetLayout:
-    """Numberless student-scaled grids: 3.0in graph boxes, Grid Scale write-in,
-    and one-page-per-four-card pagination for graphing topics."""
+    """Numberless student-scaled grids: one full-width card per row with a 3.3in
+    graph, a ruled work box (student) / inline solution steps (answer key), a
+    Grid Scale write-in, and two cards per page."""
 
     GRAPHING_GEN = "algebra_1.systems_graphing"
 
@@ -192,40 +193,55 @@ class TestGraphingWorksheetLayout:
 
         return markup, list(pages)
 
-    def test_graphing_cards_use_3in_grid_and_scale_write_in(self) -> None:
-        """Cards carry a 216pt (3.0in) grid, fit their chrome, and prompt for scale."""
+    def test_graphing_cards_pair_big_grid_with_work_area(self) -> None:
+        """Cards carry a 3.3in grid, a Grid Scale write-in and ruled work space."""
         markup, pages = self._render_pages(problem_count=4)
 
-        # 3.0in grid inside a taller card so prompt/equation/scale/Ans all fit.
-        assert "width: 216pt, height: 216pt" in markup
-        assert "height: 310pt" in markup
+        # 3.3in grid inside a card tall enough for prompt/equation/scale/Ans/work box.
+        assert "width: 236pt, height: 236pt" in markup
+        assert "height: 296pt" in markup
         # Underground write-in blank must be a stroked box: an empty
         # `#underline[]` renders no line at all.
         assert markup.count("Grid Scale: 1 square =") == 4
         assert "stroke: (bottom: 0.5pt + luma(90))" in markup
         assert "underline[#h(0.6in)]" not in markup
-        # Graphing always lays out two columns of cards.
-        assert "columns: (1fr, 1fr)," in markup
-        # Four 3.0in cards fit on a single sheet.
-        assert len(pages) == 1
+        # Students get handwriting space beside the plane, not just a graph.
+        assert markup.count("Show your work") == 4
+        assert "height: 200pt" in markup
+        # One full-width card per row so the plane and the work box can coexist.
+        assert "columns: (1fr,)," in markup
+        # Two roomy cards per sheet: four problems need two pages.
+        assert len(pages) == 2
 
     def test_eight_graphing_problems_paginate_with_sequential_numbering(self) -> None:
-        """More than four graphing cards continue onto a second page, numbered 5-8."""
+        """More than two graphing cards continue onto later pages, numbered 1-8."""
         markup, pages = self._render_pages(problem_count=8)
 
-        assert len(pages) == 2, "8 graphing problems need two pages of 4 cards"
+        assert len(pages) == 4, "8 graphing problems need four pages of 2 roomy cards"
         assert "#pagebreak()" in markup
-        # Global numbering survives pagination (page 2 restarts the loop).
-        for expected in ("[5.]", "[6.]", "[7.]", "[8.]"):
+        # Global numbering survives pagination (later pages restart the loop).
+        for expected in ("[1.]", "[2.]", "[3.]", "[5.]", "[6.]", "[7.]", "[8.]"):
             assert expected in markup, f"missing problem number {expected}"
 
-    def test_answer_key_keeps_full_size_solved_grids(self) -> None:
-        """Answer keys show the solved 3.0in grid plus the scale write-in."""
+    def test_answer_key_keeps_full_size_solved_grids_and_uncut_steps(self) -> None:
+        """Answer keys show the same full-size solved grid plus complete steps."""
         markup, pages = self._render_pages(problem_count=4, show_answers=True)
 
-        assert len(pages) == 1
+        assert len(pages) == 2
         assert markup.count("Grid Scale: 1 square =") == 4
-        assert "width: 216pt, height: 216pt" in markup
+        # The solved plane is not shrunk to make room for the solution text.
+        assert "width: 236pt, height: 236pt" in markup
+        # Every problem prints its steps next to the graph, with the ruled work
+        # box swapped out for them.
+        assert markup.count("Solution Steps:") == 4
+        assert "Show your work" not in markup
+
+    def test_display_math_in_solution_steps_is_collapsed_inline(self) -> None:
+        """Padded `$ x $` delimiters become inline math so steps stay on one line."""
+        assert (
+            inline_math("Line 1: $ y = x - 1 $ has slope $ m = 1 $.")
+            == "Line 1: $y = x - 1$ has slope $m = 1$."
+        )
 
     def test_generated_grids_have_no_numeric_tick_labels(self) -> None:
         """Grids stay numberless so students choose their own scale."""

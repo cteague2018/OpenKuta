@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import shutil
 import tempfile
 from typing import Any, Dict, List, Optional
@@ -16,6 +17,18 @@ from backend.app.core.base import BaseProblem
 
 TEMPLATE_DIR = pathlib.Path(__file__).parent.parent / "templates"
 STATIC_ASSETS_DIR = pathlib.Path(__file__).parent.parent / "static" / "markers"
+
+_DISPLAY_MATH_RE = re.compile(r"\$\s*([^$]+?)\s*\$")
+
+
+def inline_math(text: str) -> str:
+    """Collapse Typst display math (`$ x = 1 $`) into inline math (`$x = 1$`).
+
+    Solution-step strings are written with padded delimiters, which Typst treats
+    as *block* math and renders on its own centered line - that fragments a
+    sentence into unreadable chunks on the answer key.
+    """
+    return _DISPLAY_MATH_RE.sub(lambda m: f"${m.group(1)}$", str(text))
 
 
 def ensure_aruco_markers() -> Dict[int, pathlib.Path]:
@@ -66,6 +79,7 @@ class TypstCompiler:
             trim_blocks=True,
             lstrip_blocks=True,
         )
+        self.jinja_env.filters["inline_math"] = inline_math
         self.marker_paths = ensure_aruco_markers()
 
     def render_worksheet_typ(
@@ -110,20 +124,21 @@ class TypstCompiler:
         else:
             box_height_pt = max(90, min(120, int(540 / total_rows)))
 
-        # Graphing topics use a dedicated spacious 3.0 x 3.0 inch (216 pt)
-        # numberless grid per problem. The card frame must additionally hold the
-        # prompt line, the equation, the "Grid Scale" write-in and the Ans box,
-        # which needs ~94 pt of chrome, hence a 310 pt tall card. Four of those
-        # cards (2 columns x 2 rows) fit inside the printable area of one page.
+        # Graphing topics need a dedicated spacious 3.3 x 3.3 inch (236 pt)
+        # numberless grid *and* real scratch space beside it for the algebra
+        # (slope/intercept work, substitution, ...). A half-width card cannot
+        # hold both, so graphing sheets run one full-width card per row: the
+        # prompt, equation and work box on the left, the plane on the right.
+        # Two of those roomy cards fit inside one printable page.
         any_graphing = any(getattr(p, "graphing", False) for p in problems)
-        graphing_box_height_pt = 216  # 3.0 in * 72 pt/in
-        graphing_card_height_pt = 310  # 216 pt grid + ~94 pt chrome
-        graphing_card_width_pt = graphing_box_height_pt + 12  # rect x-insets
+        graphing_box_height_pt = 236  # numberless grid, larger than the old 216pt card
+        graphing_work_height_pt = 200  # ruled "Show your work" box beside the grid
+        graphing_card_height_pt = 296  # grid + scale line + prompt/equation chrome
 
         per_page = len(problems)
         if any_graphing:
-            columns = 2
-            per_page = 4  # 2 columns x 2 rows keeps every 3.0in card on-page
+            columns = 1
+            per_page = 2  # one large graph + work area per row, two rows per page
 
         # Pre-compute page chunks so multi-page graphing worksheets paginate
         # instead of overflowing a single page.
@@ -153,8 +168,8 @@ class TypstCompiler:
             "box_height_pt": box_height_pt,
             "graphing_box_height_pt": graphing_box_height_pt,
             "graphing_card_height_pt": graphing_card_height_pt,
+            "graphing_work_height_pt": graphing_work_height_pt,
             "any_graphing": any_graphing,
-            "graphing_card_width_pt": graphing_card_width_pt,
             "columns": columns,
             "student_name": student_name,
             "student_id": student_id,
