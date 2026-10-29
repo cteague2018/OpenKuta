@@ -229,6 +229,26 @@ class BaseProblem(BaseModel):
             self.answer_latex = typst_to_clean_latex(self.answer_typst)
         return self
 
+    @model_validator(mode="after")
+    def derive_graphing_from_plane_svg(self) -> BaseProblem:
+        """Promote any coordinate-plane problem to the graphing layout.
+
+        Topics that draw a plane but never set ``graphing=True`` (calculus
+        curve sketching, Riemann sums, circles graphing, hand-written topic
+        branches) used to fall back to the cramped half-width card, squeezing
+        a ~2in graph and its solution steps into a corner. The plane SVG
+        carries a marker attribute, so detect it here once and let the PDF
+        template, the compiler's pagination and the live preview all agree.
+        """
+        if not self.graphing:
+            # Imported lazily: `backend.app.core.__init__` imports this module,
+            # so a module-level import of svg_utils would be circular.
+            from backend.app.core.svg_utils import is_graph_plane_svg
+
+            if is_graph_plane_svg(self.diagram_svg, self.answer_svg):
+                self.graphing = True
+        return self
+
 
 class GeneratorConfig(BaseModel):
     problem_count: int = Field(default=10, ge=1, le=50, description="Number of problems to generate")

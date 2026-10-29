@@ -509,6 +509,10 @@ export default function OpenMathForgeApp() {
   }, [columns, worksheetProblems, isGraphingSheet]);
 
   const activePerPage = useMemo(() => {
+    // The PDF compiler always paginates graphing sheets two cards per page, so
+    // honour that here too instead of letting a manual "per page" pick preview a
+    // density the printout can never match.
+    if (isGraphingSheet) return 2;
     if (maxProblemsPerPage !== "auto") return maxProblemsPerPage;
     const hasVisuals = worksheetProblems.some(
       (p) => Boolean(p.diagram_svg) || Boolean(p.answer_svg)
@@ -523,7 +527,7 @@ export default function OpenMathForgeApp() {
       return hasVisuals || hasLongSteps ? 4 : 6;
     }
     return 6;
-  }, [maxProblemsPerPage, activeColumns, worksheetProblems]);
+  }, [maxProblemsPerPage, activeColumns, worksheetProblems, isGraphingSheet]);
 
   // Dynamic Pagination & Page Workspace Bounds (guarantees standard 8.5x11 geometry and student handwriting/answer space)
   const paginatedPages = useMemo(() => {
@@ -2247,7 +2251,9 @@ export default function OpenMathForgeApp() {
                             const oneColGraphingSizeClasses = graphingDiagramClasses;
 
                             // Write-in line so students declare "1 square = ___ units" before plotting.
-                            const gridScaleLine = prob.graphing ? (
+                            // The solved key already shows the plotted curve, so the blank scale
+                            // write-in is suppressed there (it also collided with the answer box).
+                            const gridScaleLine = prob.graphing && !showAnswerKey ? (
                               <div
                                 data-testid="grid-scale-line"
                                 className="text-center text-[10.5px] font-medium text-indigo-800 mt-0.5 shrink-0"

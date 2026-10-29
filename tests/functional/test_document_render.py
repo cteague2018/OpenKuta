@@ -7,9 +7,67 @@ import tempfile
 
 import typst
 
-from backend.app.core.base import GeneratorConfig
+from backend.app.core.base import BaseProblem, GeneratorConfig
 from backend.app.core.compiler import TypstCompiler, generate_qr_code, inline_math
+from backend.app.core.svg_utils import GRAPH_PLANE_ATTR
 from backend.app.generators import get_generator
+
+
+def _render_markup(
+    problems: list[BaseProblem],
+    show_answers: bool,
+    title: str = "Solving Systems by Graphing",
+    columns: int = 2,
+) -> tuple[str, list[bytes]]:
+    """Render Typst markup for `problems` and rasterize it, returning (markup, pages)."""
+    compiler = TypstCompiler()
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = pathlib.Path(tmp_dir)
+
+        marker_filenames: dict[int, str] = {}
+        for m_id, m_path in compiler.marker_paths.items():
+            shutil.copyfile(m_path, tmp_path / f"aruco_{m_id}.png")
+            marker_filenames[m_id] = f"aruco_{m_id}.png"
+
+        qr_filename = "qr_test.png"
+        generate_qr_code(
+            {"w": "WS-TEST", "f": "A", "s": 42, "c": len(problems)},
+            tmp_path / qr_filename,
+        )
+
+        diagram_files: dict[int, str] = {}
+        answer_svg_files: dict[int, str] = {}
+        for p_idx, prob in enumerate(problems, start=1):
+            if prob.diagram_svg:
+                name = f"prob_{p_idx}_diagram.svg"
+                (tmp_path / name).write_text(str(prob.diagram_svg), encoding="utf-8")
+                diagram_files[p_idx] = name
+            if prob.answer_svg:
+                name = f"prob_{p_idx}_answer.svg"
+                (tmp_path / name).write_text(str(prob.answer_svg), encoding="utf-8")
+                answer_svg_files[p_idx] = name
+
+        markup = compiler.render_worksheet_typ(
+            title=title,
+            form_id="A",
+            worksheet_id="WS-TEST",
+            seed=42,
+            problems=problems,
+            marker_filenames=marker_filenames,
+            qr_filename=qr_filename,
+            columns=columns,
+            show_answers=show_answers,
+            diagram_files=diagram_files,
+            answer_svg_files=answer_svg_files,
+        )
+
+        source = tmp_path / "worksheet.typ"
+        source.write_text(markup, encoding="utf-8")
+        rendered = typst.compile(source, format="png", ppi=72)
+        pages = rendered if isinstance(rendered, list) else [rendered]
+
+    return markup, list(pages)
 
 
 class TestDocumentRenderPipeline:
@@ -138,60 +196,17 @@ class TestGraphingWorksheetLayout:
     GRAPHING_GEN = "algebra_1.systems_graphing"
 
     def _render_pages(
-        self, problem_count: int, show_answers: bool = False
+        self,
+        problem_count: int,
+        show_answers: bool = False,
+        generator_id: str | None = None,
+        title: str = "Solving Systems by Graphing",
     ) -> tuple[str, list[bytes]]:
         """Render markup and rasterize it, returning (markup, page PNG bytes)."""
-        compiler = TypstCompiler()
-        problems = get_generator(self.GRAPHING_GEN).generate(
+        problems = get_generator(generator_id or self.GRAPHING_GEN).generate(
             GeneratorConfig(problem_count=problem_count, seed=42)
         )
-
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            tmp_path = pathlib.Path(tmp_dir)
-
-            marker_filenames: dict[int, str] = {}
-            for m_id, m_path in compiler.marker_paths.items():
-                shutil.copyfile(m_path, tmp_path / f"aruco_{m_id}.png")
-                marker_filenames[m_id] = f"aruco_{m_id}.png"
-
-            qr_filename = "qr_test.png"
-            generate_qr_code(
-                {"w": "WS-TEST", "f": "A", "s": 42, "c": problem_count},
-                tmp_path / qr_filename,
-            )
-
-            diagram_files: dict[int, str] = {}
-            answer_svg_files: dict[int, str] = {}
-            for p_idx, prob in enumerate(problems, start=1):
-                if prob.diagram_svg:
-                    name = f"prob_{p_idx}_diagram.svg"
-                    (tmp_path / name).write_text(str(prob.diagram_svg), encoding="utf-8")
-                    diagram_files[p_idx] = name
-                if prob.answer_svg:
-                    name = f"prob_{p_idx}_answer.svg"
-                    (tmp_path / name).write_text(str(prob.answer_svg), encoding="utf-8")
-                    answer_svg_files[p_idx] = name
-
-            markup = compiler.render_worksheet_typ(
-                title="Solving Systems by Graphing",
-                form_id="A",
-                worksheet_id="WS-TEST",
-                seed=42,
-                problems=problems,
-                marker_filenames=marker_filenames,
-                qr_filename=qr_filename,
-                columns=2,
-                show_answers=show_answers,
-                diagram_files=diagram_files,
-                answer_svg_files=answer_svg_files,
-            )
-
-            source = tmp_path / "worksheet.typ"
-            source.write_text(markup, encoding="utf-8")
-            rendered = typst.compile(source, format="png", ppi=72)
-            pages = rendered if isinstance(rendered, list) else [rendered]
-
-        return markup, list(pages)
+        return _render_markup(problems, show_answers, title=title)
 
     def test_graphing_cards_pair_big_grid_with_work_area(self) -> None:
         """Cards carry a 3.3in grid, a Grid Scale write-in and ruled work space."""
@@ -228,7 +243,10 @@ class TestGraphingWorksheetLayout:
         markup, pages = self._render_pages(problem_count=4, show_answers=True)
 
         assert len(pages) == 2
-        assert markup.count("Grid Scale: 1 square =") == 4
+        # The "1 square = ___ units" write-in belongs to the blank student grid
+        # only: on a solved key it is meaningless *and* it used to collide with
+        # the answer box at the bottom of the card.
+        assert "Grid Scale: 1 square =" not in markup
         # The solved plane is not shrunk to make room for the solution text.
         assert "width: 236pt, height: 236pt" in markup
         # Every problem prints its steps next to the graph, with the ruled work
@@ -257,3 +275,76 @@ class TestGraphingWorksheetLayout:
             # Axes must still show direction arrows and tick marks.
             assert 'marker-end="url(#axis-arrow)"' in svg
             assert 'stroke-width="1.2"' in svg
+
+
+class TestPlaneGraphLayoutPromotion:
+    """Any problem carrying a coordinate plane gets the roomy graphing card.
+
+    Hand-written topic branches (calculus curve sketching, Riemann sums, conic
+    sections, ...) used to draw a plane without setting `graphing=True`, so the
+    grid was squeezed into a half-width card and the solution steps were
+    unreadable. The plane SVG now stamps `GRAPH_PLANE_ATTR` and the model
+    promotes the problem, so layout cannot drift out of sync again.
+    """
+
+    CURVE_GEN = "calculus.applications_of.curve_sketching"
+
+    def test_plane_problem_is_promoted_to_graphing_layout(self) -> None:
+        """A plane SVG promotes the problem even though the generator omits the flag."""
+        problems = get_generator(self.CURVE_GEN).generate(
+            GeneratorConfig(problem_count=3, seed=42)
+        )
+        for prob in problems:
+            assert prob.diagram_svg and prob.answer_svg
+            assert GRAPH_PLANE_ATTR in str(prob.diagram_svg)
+            assert prob.graphing, "coordinate-plane problem must use the graphing layout"
+
+    def test_explicit_flag_is_preserved(self) -> None:
+        """Generators may still opt in without an SVG (e.g. blank-plane handouts)."""
+        prob = BaseProblem(
+            id="t1",
+            prompt_text="Plot the point.",
+            equation_typst="$ (1, 2) $",
+            answer_typst="$ (1, 2) $",
+            graphing=True,
+        )
+        assert prob.graphing
+        assert prob.diagram_svg is None
+
+    def test_plain_diagrams_keep_the_compact_card(self) -> None:
+        """Triangles and number lines are diagrams, not planes - stay 2-up."""
+        for gen_id in ("geometry.triangles", "algebra_1.inequalities.graphing_single_variable_"):
+            problems = get_generator(gen_id).generate(
+                GeneratorConfig(problem_count=2, seed=42)
+            )
+            for prob in problems:
+                assert prob.diagram_svg
+                assert GRAPH_PLANE_ATTR not in str(prob.diagram_svg), gen_id
+                assert not prob.graphing, f"{gen_id} diagram must keep the compact card"
+
+    def test_curve_sketching_renders_full_width_graph_cards(self) -> None:
+        """The end-to-end sheet matches the algebra graphing layout."""
+        markup, pages = TestGraphingWorksheetLayout()._render_pages(
+            problem_count=4,
+            generator_id=self.CURVE_GEN,
+            title="Calculus",
+        )
+
+        assert "columns: (1fr,)," in markup
+        assert "width: 236pt, height: 236pt" in markup
+        assert markup.count("Show your work") == 4
+        assert len(pages) == 2
+
+    def test_answer_key_shows_solved_grid_without_scale_write_in(self) -> None:
+        """Keys keep the big solved plane, the steps, and no blank scale line."""
+        markup, pages = TestGraphingWorksheetLayout()._render_pages(
+            problem_count=4,
+            show_answers=True,
+            generator_id=self.CURVE_GEN,
+            title="Calculus",
+        )
+
+        assert len(pages) == 2
+        assert "width: 236pt, height: 236pt" in markup
+        assert markup.count("Solution Steps:") == 4
+        assert "Grid Scale: 1 square =" not in markup

@@ -47,3 +47,7 @@ aruco_*.png
 qr_*.png
 temp_*.png
 
+# Local QA scratch (rendered preview sheets, layout sweeps)
+qa_out/
+qa_*.py
+

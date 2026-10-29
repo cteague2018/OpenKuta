@@ -188,7 +188,7 @@
             fit: "contain"
           )
           {% endif %}
-          {% if prob.graphing and ((show_answers and answer_svg_files and pidx in answer_svg_files) or (diagram_files and pidx in diagram_files)) %}
+          {% if prob.graphing and not show_answers and diagram_files and pidx in diagram_files %}
           #v(4pt)
           #text(size: 8pt, fill: blue.darken(20%))[Grid Scale: 1 square = #box(width: 0.6in, height: 0.16in, stroke: (bottom: 0.5pt + luma(90)))[] units]
           {% endif %}
@@ -219,7 +219,7 @@
         )
       ]
       {% endif %}
-      {% if prob.graphing and ((show_answers and answer_svg_files and pidx in answer_svg_files) or (diagram_files and pidx in diagram_files)) %}
+      {% if prob.graphing and not show_answers and diagram_files and pidx in diagram_files %}
       #v(4pt)
       #align(center)[
         #text(size: 8pt, fill: blue.darken(20%))[Grid Scale: 1 square = #box(width: 0.6in, height: 0.16in, stroke: (bottom: 0.5pt + luma(90)))[] units]

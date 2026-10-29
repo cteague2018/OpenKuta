@@ -9,6 +9,19 @@ from backend.app.core.svg_layout import BBox, SVGCollisionSolver
 
 _SVG_STYLE = 'style="max-width:100%;height:auto;display:block;margin:0 auto;"'
 
+# Coordinate planes and polar grids stamp this attribute on their root <svg>.
+# The layout engine keys the roomy "graphing" card (large numberless grid +
+# scratch-work box) off this marker instead of a hand-set flag, so graphs
+# emitted by *any* generator - algebra graphing topics, geometry circle
+# graphs, calculus curve sketching, Riemann sums - automatically get a
+# readable grid. Plain diagrams (triangles, solids, tables) stay compact.
+GRAPH_PLANE_ATTR = 'data-graph-plane="xy"'
+
+
+def is_graph_plane_svg(*svgs: Any) -> bool:
+    """True when at least one of the given SVGs is a coordinate plane / polar grid."""
+    return any(isinstance(svg, str) and GRAPH_PLANE_ATTR in svg for svg in svgs)
+
 
 def _clean_svg_math_label(text: Any) -> str:
     if text is None:
@@ -194,7 +207,7 @@ def svg_coordinate_plane(
         return round(px, 2), round(py, 2)
 
     parts: List[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {GRAPH_PLANE_ATTR} {_SVG_STYLE}>',
         "<defs>",
         f'<clipPath id="plot-clip"><rect x="{pad}" y="{pad}" width="{plot_w}" height="{plot_h}"/></clipPath>',
         # Professional arrowheads for the terminal ends of the X and Y axes.
@@ -774,7 +787,7 @@ def svg_polar_grid(
     cx, cy = width / 2.0, height / 2.0
     max_px = min(width, height) / 2.0 - 22.0
     parts: List[str] = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {_SVG_STYLE}>',
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" {GRAPH_PLANE_ATTR} {_SVG_STYLE}>',
         f'<rect x="0" y="0" width="{width}" height="{height}" fill="#ffffff"/>',
     ]
     collision_solver = SVGCollisionSolver(width=width, height=height, margin=6.0)
