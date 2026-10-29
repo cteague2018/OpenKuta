@@ -6,6 +6,25 @@ from backend.app.core.compiler import TypstCompiler
 from backend.app.generators.algebra_1.two_step_equations import TwoStepEquationsGenerator
 
 
+def test_classroom_store_writes_to_injected_directory(tmp_path):
+    """Run-time state must be redirectable so tests never dirty the tracked data files."""
+    store = ClassroomStore(storage_dir=tmp_path)
+    store.create_class(name="Redirected Period 5", subject="Algebra 1", period="5")
+
+    assert (tmp_path / "classrooms.json").exists()
+    assert (tmp_path / "submissions.json").exists()
+    assert "Redirected Period 5" in (tmp_path / "classrooms.json").read_text(encoding="utf-8")
+
+
+def test_classroom_store_honours_data_dir_override(monkeypatch, tmp_path):
+    """``OPENKUTA_DATA_DIR`` points the store outside the source tree (see root conftest)."""
+    monkeypatch.setenv("OPENKUTA_DATA_DIR", str(tmp_path))
+    store = ClassroomStore()
+
+    assert store.storage_dir == tmp_path
+    assert store.classroom_file == tmp_path / "classrooms.json"
+
+
 def test_roster_parser_google_classroom():
     csv_text = """Student Name,Email Address,Student ID
 Alice Walker,alice.w@school.edu,S1001

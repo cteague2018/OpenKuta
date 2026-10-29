@@ -1,30 +1,47 @@
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import uuid
 from typing import Dict, List, Optional
 
 from backend.app.classroom.models import Classroom, Student, StudentSubmission
 
-STORAGE_DIR = pathlib.Path(__file__).parent.parent / "data"
+DEFAULT_STORAGE_DIR = pathlib.Path(__file__).parent.parent / "data"
+# Kept for backwards compatibility with any external tooling; the store itself resolves
+# its paths per instance so tests can redirect them to a temporary directory.
+STORAGE_DIR = DEFAULT_STORAGE_DIR
 CLASSROOM_FILE = STORAGE_DIR / "classrooms.json"
 SUBMISSIONS_FILE = STORAGE_DIR / "submissions.json"
+
+
+def resolve_storage_dir() -> pathlib.Path:
+    """Return the directory that holds the classroom/submission JSON stores.
+
+    ``OPENKUTA_DATA_DIR`` overrides the in-repo default, which is how the test suite and
+    any ephemeral deployment keep run-time state out of the source tree.
+    """
+    override = os.environ.get("OPENKUTA_DATA_DIR")
+    return pathlib.Path(override) if override else DEFAULT_STORAGE_DIR
 
 
 class ClassroomStore:
     """Manages persistence of classrooms, rosters, and individual student submissions."""
 
-    def __init__(self) -> None:
-        STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+    def __init__(self, storage_dir: Optional[pathlib.Path] = None) -> None:
+        self.storage_dir = pathlib.Path(storage_dir) if storage_dir else resolve_storage_dir()
+        self.classroom_file = self.storage_dir / "classrooms.json"
+        self.submissions_file = self.storage_dir / "submissions.json"
+        self.storage_dir.mkdir(parents=True, exist_ok=True)
         self.classrooms: Dict[str, Classroom] = {}
         self.submissions: Dict[str, StudentSubmission] = {}
         self._load()
 
     def _load(self) -> None:
-        if CLASSROOM_FILE.exists():
+        if self.classroom_file.exists():
             try:
-                data = json.loads(CLASSROOM_FILE.read_text(encoding="utf-8"))
+                data = json.loads(self.classroom_file.read_text(encoding="utf-8"))
                 for cid, cdata in data.items():
                     self.classrooms[cid] = Classroom.model_validate(cdata)
             except Exception:
@@ -32,20 +49,20 @@ class ClassroomStore:
         else:
             self._seed_default_classes()
 
-        if SUBMISSIONS_FILE.exists():
+        if self.submissions_file.exists():
             try:
-                data = json.loads(SUBMISSIONS_FILE.read_text(encoding="utf-8"))
+                data = json.loads(self.submissions_file.read_text(encoding="utf-8"))
                 for sid, sdata in data.items():
                     self.submissions[sid] = StudentSubmission.model_validate(sdata)
             except Exception:
                 pass
 
     def _save(self) -> None:
-        CLASSROOM_FILE.write_text(
+        self.classroom_file.write_text(
             json.dumps({k: v.model_dump() for k, v in self.classrooms.items()}, indent=2),
             encoding="utf-8",
         )
-        SUBMISSIONS_FILE.write_text(
+        self.submissions_file.write_text(
             json.dumps({k: v.model_dump() for k, v in self.submissions.items()}, indent=2),
             encoding="utf-8",
         )
