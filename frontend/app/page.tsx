@@ -881,66 +881,91 @@ export default function OpenMathForgeApp() {
       question_type: item.questionType,
     }));
 
-  // Multi-Topic PDF Download
-  const handleDownloadPDF = async () => {
+  // Multi-Topic PDF Download (resilient to Render free-tier cold starts)
+  const [pdfStatus, setPdfStatus] = useState<string | null>(null);
+
+  const fetchPdfWithRetry = async (payload: Record<string, unknown>): Promise<Blob> => {
+    const maxAttempts = 4;
+    let lastError = "Unknown error";
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const res = await fetch("/api/worksheet/pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          if (blob.size > 0) return blob;
+          lastError = "Empty PDF response";
+        } else {
+          let detail = "";
+          try {
+            const body = await res.json();
+            detail = body?.detail ? `: ${body.detail}` : "";
+          } catch {
+            /* non-JSON error body */
+          }
+          lastError = `HTTP ${res.status}${detail}`;
+          // Only retry on gateway / cold-start / rate-limit errors
+          if (![429, 502, 503, 504].includes(res.status)) break;
+        }
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : String(err);
+      }
+      if (attempt < maxAttempts) {
+        setPdfStatus(`Waking up PDF server... (attempt ${attempt + 1}/${maxAttempts})`);
+        await new Promise((r) => setTimeout(r, 4000 * attempt));
+      }
+    }
+    throw new Error(lastError);
+  };
+
+  const triggerBlobDownload = (blob: Blob, filename: string) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+  };
+
+  const downloadWorksheetPdf = async (showAnswers: boolean) => {
+    if (pdfStatus) return;
+    const suffix = showAnswers ? "_Answer_Key" : "";
+    setPdfStatus(showAnswers ? "Compiling answer key PDF..." : "Compiling PDF...");
     try {
-      const res = await fetch("/api/worksheet/pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: worksheetTitle,
-          form_id: "A",
-          seed: baseSeed,
-          columns: columns,
-          topics: buildTopicsPayload(),
-        }),
+      const blob = await fetchPdfWithRetry({
+        title: worksheetTitle,
+        form_id: "A",
+        seed: baseSeed,
+        columns: columns,
+        show_answers: showAnswers,
+        topics: buildTopicsPayload(),
       });
-
-      if (!res.ok) throw new Error("Backend unavailable");
-
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${worksheetTitle.replace(/\s+/g, "_")}_Form_A.pdf`;
-      a.click();
-    } catch {
-      alert(
-        "Typst PDF compilation requires the Python CAS backend to be running:\n\nRun in terminal: python -m uvicorn backend.app.main:app --port 8000\n\nOr connect a cloud BACKEND_URL in Vercel settings."
+      triggerBlobDownload(blob, `${worksheetTitle.replace(/\s+/g, "_")}_Form_A${suffix}.pdf`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const usePrint = window.confirm(
+        `The PDF server could not be reached (${msg}).\n\n` +
+          "Click OK to save this worksheet as a PDF using your browser's Print dialog instead " +
+          '(choose "Save as PDF" as the destination).'
       );
+      if (usePrint) {
+        if (showAnswers && !showAnswerKey) setShowAnswerKey(true);
+        setTimeout(() => window.print(), 300);
+      }
+    } finally {
+      setPdfStatus(null);
     }
   };
+
+  const handleDownloadPDF = () => downloadWorksheetPdf(false);
 
   // Export Answer Key PDF Download
-  const handleDownloadAnswerKey = async () => {
-    try {
-      const res = await fetch("/api/worksheet/pdf", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: worksheetTitle,
-          form_id: "A",
-          seed: baseSeed,
-          columns: columns,
-          show_answers: true,
-          topics: buildTopicsPayload(),
-        }),
-      });
-
-      if (!res.ok) throw new Error("Backend unavailable");
-
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${worksheetTitle.replace(/\s+/g, "_")}_Form_A_Answer_Key.pdf`;
-      a.click();
-    } catch {
-      alert(
-        "Answer key PDF compilation requires the Python CAS backend to be running."
-      );
-    }
-  };
+  const handleDownloadAnswerKey = () => downloadWorksheetPdf(true);
 
   // Scramble Form: clean 1 to N re-indexing
   const handleScrambleForm = () => {
@@ -1921,7 +1946,7 @@ export default function OpenMathForgeApp() {
                     title="Generate student printable PDF worksheet"
                   >
                     <Download className="w-4 h-4" />
-                    <span>Generate PDF</span>
+                    <span>{pdfStatus && !pdfStatus.includes("answer key") ? pdfStatus : "Generate PDF"}</span>
                   </button>
 
                   <button
@@ -1931,7 +1956,7 @@ export default function OpenMathForgeApp() {
                     title="Export printable answer key PDF"
                   >
                     <Download className="w-4 h-4" />
-                    <span>Export Answer Key</span>
+                    <span>{pdfStatus && pdfStatus.includes("answer key") ? pdfStatus : "Export Answer Key"}</span>
                   </button>
 
                   <button

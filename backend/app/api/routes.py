@@ -133,6 +133,12 @@ def _generate_problems_for_request(
     return problems
 
 
+@router.get("/health")
+def api_health() -> dict[str, str]:
+    """Health check endpoint for API route."""
+    return {"status": "ok"}
+
+
 @router.get("/catalog")
 def get_catalog() -> Any:
     """Return comprehensive 7-tier curriculum course catalog with categories
@@ -191,46 +197,56 @@ def generate_pdf(req: GeneratePDFRequest) -> Response:
     """Generate and stream a student printable PDF worksheet with corner
     ArUco markers and QR code.
     """
-    active_seed = req.seed if req.seed is not None else 42
-    problems = _generate_problems_for_request(
-        generator_id=req.generator_id,
-        problem_count=req.problem_count,
-        seed=active_seed,
-        topics=req.topics,
-        difficulty_distribution=req.difficulty_distribution,
-        allow_negatives=req.allow_negatives,
-        question_type=req.question_type,
-    )
+    try:
+        active_seed = req.seed if req.seed is not None else 42
+        problems = _generate_problems_for_request(
+            generator_id=req.generator_id,
+            problem_count=req.problem_count,
+            seed=active_seed,
+            topics=req.topics,
+            difficulty_distribution=req.difficulty_distribution,
+            allow_negatives=req.allow_negatives,
+            question_type=req.question_type,
+        )
 
-    worksheet_id = f"WS-{active_seed % 10000:04d}"
+        worksheet_id = f"WS-{active_seed % 10000:04d}"
 
-    pdf_bytes = compiler.compile_worksheet_pdf(
-        title=req.title,
-        form_id=req.form_id,
-        worksheet_id=worksheet_id,
-        seed=active_seed,
-        problems=problems,
-        columns=req.columns,
-        show_answers=req.show_answers,
-        student_name=req.student_name,
-        student_id=req.student_id,
-        student_period=req.student_period,
-    )
+        pdf_bytes = compiler.compile_worksheet_pdf(
+            title=req.title,
+            form_id=req.form_id,
+            worksheet_id=worksheet_id,
+            seed=active_seed,
+            problems=problems,
+            columns=req.columns,
+            show_answers=req.show_answers,
+            student_name=req.student_name,
+            student_id=req.student_id,
+            student_period=req.student_period,
+        )
 
-    suffix = "_Answer_Key" if req.show_answers else ""
-    disposition = f'inline; filename="{worksheet_id}_Form_{req.form_id}{suffix}.pdf"'
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={"Content-Disposition": disposition},
-    )
+        suffix = "_Answer_Key" if req.show_answers else ""
+        disposition = f'inline; filename="{worksheet_id}_Form_{req.form_id}{suffix}.pdf"'
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": disposition},
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"PDF compilation failed: {e}") from e
 
 
 @router.post("/worksheet/pdf")
 @router.post("/generate-pdf")
 @router.post("/compile-typst")
 def generate_pdf_endpoint(req: GeneratePDFRequest, request: Request) -> Response:
-    client_ip = request.client.host if request.client else "local"
+    forwarded = request.headers.get("x-forwarded-for", "")
+    client_ip = (
+        forwarded.split(",")[0].strip()
+        if forwarded
+        else (request.client.host if request.client else "local")
+    )
     if not pdf_limiter.check_rate_limit(client_ip):
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
     return generate_pdf(req)
