@@ -170,5 +170,6 @@ class GraphingExponentialGenerator(BaseGenerator):
             standards=self.standards,
             diagram_svg=diagram_svg,
             answer_svg=ans_svg,
+            graphing=True,
             metadata={"asymptote": asymptote, "y_intercept": y_int}
         )

@@ -504,6 +504,7 @@ class SystemsInequalitiesGenerator(BaseGenerator):
             standards=self.standards,
             diagram_svg=svg_coordinate_plane(),
             answer_svg=ans_svg,
+            graphing=True,
             metadata={"ineq1": ineq1, "ineq2": ineq2}
         )
 

@@ -37,6 +37,8 @@ export interface Problem {
   standards: string[];
   diagram_svg?: string | null;
   answer_svg?: string | null;
+  /** True when the diagram is a student-scaled, numberless coordinate grid. */
+  graphing?: boolean;
   generator_id?: string | null;
   metadata?: Record<string, any>;
 }

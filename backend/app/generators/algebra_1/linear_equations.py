@@ -441,6 +441,7 @@ class GraphingLinesGenerator(BaseGenerator):
             standards=self.standards,
             diagram_svg=diagram_svg,
             answer_svg=ans_svg,
+            graphing=True,
             metadata={"equation": eq}
         )
 
@@ -643,5 +644,6 @@ class GraphingLinearInequalitiesGenerator(BaseGenerator):
             standards=self.standards,
             diagram_svg=diagram_svg,
             answer_svg=ans_svg,
+            graphing=True,
             metadata={"inequality": eq}
         )

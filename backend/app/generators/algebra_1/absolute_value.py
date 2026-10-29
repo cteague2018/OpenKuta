@@ -186,5 +186,6 @@ class GraphingAbsoluteValueGenerator(BaseGenerator):
             standards=self.standards,
             diagram_svg=diagram_svg,
             answer_svg=ans_svg,
+            graphing=True,
             metadata={"vertex": (h, k)}
         )

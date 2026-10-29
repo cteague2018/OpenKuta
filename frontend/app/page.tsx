@@ -2224,6 +2224,36 @@ export default function OpenMathForgeApp() {
                                 ? "[&>svg]:max-h-72 [&>svg]:h-64 [&>svg]:w-auto [&>svg]:max-w-[340px]"
                                 : "[&>svg]:max-h-60 [&>svg]:h-56 [&>svg]:w-auto [&>svg]:max-w-[300px]";
 
+                            // Numberless student-scaled grids: render as a fixed 3.0in square (275px @ ~91.5px/in,
+                            // matching this sheet's existing 2.35in = 215px convention) so the grid stays large
+                            // enough for students to hand-plot points and declare the scale.
+                            const graphingDiagramClasses =
+                              activeColumns === 3
+                                ? "[&>svg]:max-h-[195px] [&>svg]:h-[195px] [&>svg]:w-[195px] [&>svg]:max-w-[195px]"
+                                : showAnswerKey
+                                  ? "[&>svg]:max-h-[175px] [&>svg]:h-[175px] [&>svg]:w-[175px] [&>svg]:max-w-[175px]"
+                                  : "[&>svg]:max-h-[275px] [&>svg]:h-[275px] [&>svg]:w-[275px] [&>svg]:max-w-[275px]";
+
+                            const oneColGraphingSizeClasses =
+                              pageRowCount <= 1
+                                ? "[&>svg]:max-h-[290px] [&>svg]:h-[290px] [&>svg]:w-[290px] [&>svg]:max-w-[290px]"
+                                : "[&>svg]:max-h-[275px] [&>svg]:h-[275px] [&>svg]:w-[275px] [&>svg]:max-w-[275px]";
+
+                            // Write-in line so students declare "1 square = ___ units" before plotting.
+                            const gridScaleLine = prob.graphing ? (
+                              <div
+                                data-testid="grid-scale-line"
+                                className="text-center text-[10.5px] font-medium text-indigo-800 mt-0.5 shrink-0"
+                              >
+                                Grid Scale: 1 square ={" "}
+                                <span className="inline-block w-14 border-b border-slate-500 align-middle">
+                                  &nbsp;
+                                </span>{" "}
+                                units
+                              </div>
+                            ) : null;
+
+
                             return (
                               <div
                                 key={`${prob.id}_${displayIdx}`}
@@ -2313,18 +2343,23 @@ export default function OpenMathForgeApp() {
                                       </div>
 
                                       {/* Right Column: High-Legibility Coordinate Plane Graph */}
-                                      <div className="w-[320px] shrink-0 border-l border-slate-200 pl-3 flex items-center justify-center">
+                                      <div className="w-[320px] shrink-0 border-l border-slate-200 pl-3 flex flex-col items-center justify-center">
                                         {showAnswerKey && prob.answer_svg ? (
                                           <div
-                                            className={`flex justify-center items-center bg-white rounded p-1.5 border border-amber-200/80 shadow-xs ${oneColGraphSizeClasses}`}
+                                            className={`flex justify-center items-center bg-white rounded p-1.5 border border-amber-200/80 shadow-xs ${
+                                              prob.graphing ? oneColGraphingSizeClasses : oneColGraphSizeClasses
+                                            }`}
                                             dangerouslySetInnerHTML={{ __html: prob.answer_svg }}
                                           />
                                         ) : prob.diagram_svg ? (
                                           <div
-                                            className={`flex justify-center items-center bg-white rounded p-1.5 border border-slate-200/80 shadow-xs ${oneColGraphSizeClasses}`}
+                                            className={`flex justify-center items-center bg-white rounded p-1.5 border border-slate-200/80 shadow-xs ${
+                                              prob.graphing ? oneColGraphingSizeClasses : oneColGraphSizeClasses
+                                            }`}
                                             dangerouslySetInnerHTML={{ __html: prob.diagram_svg }}
                                           />
                                         ) : null}
+                                        {gridScaleLine}
                                       </div>
                                     </div>
                                   </div>
@@ -2353,14 +2388,19 @@ export default function OpenMathForgeApp() {
 
                                        {/* Primary Diagram Slot: 1:1 Teacher/Student Alignment. Shows blank diagram in student mode, or solved diagram with plotted lines in Answer Key mode */}
                                        {(prob.diagram_svg || (showAnswerKey && prob.answer_svg)) && (
-                                         <div
-                                           className={`my-1 flex justify-center items-center ${getDiagramSizeClasses()}`}
-                                           dangerouslySetInnerHTML={{
-                                             __html: showAnswerKey && prob.answer_svg
-                                               ? prob.answer_svg
-                                               : (prob.diagram_svg || prob.answer_svg || "")
-                                           }}
-                                         />
+                                         <div className="flex flex-col items-center min-h-0">
+                                           <div
+                                             className={`my-1 flex justify-center items-center ${
+                                               prob.graphing ? graphingDiagramClasses : getDiagramSizeClasses()
+                                             }`}
+                                             dangerouslySetInnerHTML={{
+                                               __html: showAnswerKey && prob.answer_svg
+                                                 ? prob.answer_svg
+                                                 : (prob.diagram_svg || prob.answer_svg || "")
+                                             }}
+                                           />
+                                           {gridScaleLine}
+                                         </div>
                                        )}
 
                                        {/* Multiple Choice Options Grid */}

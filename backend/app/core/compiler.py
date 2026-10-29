@@ -111,11 +111,29 @@ class TypstCompiler:
             box_height_pt = max(90, min(120, int(540 / total_rows)))
 
         # Graphing topics use a dedicated spacious 3.0 x 3.0 inch (216 pt)
-        # bounding box per problem card and a 2-column x 2-row card grid.
+        # numberless grid per problem. The card frame must additionally hold the
+        # prompt line, the equation, the "Grid Scale" write-in and the Ans box,
+        # which needs ~94 pt of chrome, hence a 310 pt tall card. Four of those
+        # cards (2 columns x 2 rows) fit inside the printable area of one page.
         any_graphing = any(getattr(p, "graphing", False) for p in problems)
         graphing_box_height_pt = 216  # 3.0 in * 72 pt/in
+        graphing_card_height_pt = 310  # 216 pt grid + ~94 pt chrome
+        graphing_card_width_pt = graphing_box_height_pt + 12  # rect x-insets
+
+        per_page = len(problems)
         if any_graphing:
             columns = 2
+            per_page = 4  # 2 columns x 2 rows keeps every 3.0in card on-page
+
+        # Pre-compute page chunks so multi-page graphing worksheets paginate
+        # instead of overflowing a single page.
+        pages = [
+            [
+                {"idx": start + offset + 1, "prob": prob}
+                for offset, prob in enumerate(problems[start : start + max(per_page, 1)])
+            ]
+            for start in range(0, max(len(problems), 1), max(per_page, 1))
+        ]
 
         context = {
             "title": title,
@@ -123,6 +141,7 @@ class TypstCompiler:
             "worksheet_id": worksheet_id,
             "seed": seed,
             "problems": problems,
+            "pages": pages,
             "mild_problems": mild_problems,
             "medium_problems": medium_problems,
             "spicy_problems": spicy_problems,
@@ -133,6 +152,9 @@ class TypstCompiler:
             "qr_path": qr_filename,
             "box_height_pt": box_height_pt,
             "graphing_box_height_pt": graphing_box_height_pt,
+            "graphing_card_height_pt": graphing_card_height_pt,
+            "any_graphing": any_graphing,
+            "graphing_card_width_pt": graphing_card_width_pt,
             "columns": columns,
             "student_name": student_name,
             "student_id": student_id,

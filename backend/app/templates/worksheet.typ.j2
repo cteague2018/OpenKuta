@@ -7,6 +7,11 @@
 
 #set text(font: "Liberation Sans", size: 10pt)
 
+{% for page in pages %}
+{% if not loop.first %}
+#pagebreak()
+{% endif %}
+
 // ArUco Corner Fiducials for Perspective Correction (4x4 Markers 0, 1, 2, 3)
 #place(top + left, dx: -0.15in, dy: -0.15in, image("{{ marker_top_left }}", width: 0.45in, height: 0.45in))
 #place(top + right, dx: 0.15in, dy: -0.15in, image("{{ marker_top_right }}", width: 0.45in, height: 0.45in))
@@ -32,7 +37,7 @@
       {% else %}
       Name: #underline[#h(1.8in)] #h(0.2in)
       Date: #underline[#h(0.9in)] #h(0.2in)
-      Period: #underline[#h(0.6in)]
+      Period: #box(width: 0.6in, height: 0.16in, stroke: (bottom: 0.5pt + luma(90)))[]
       {% endif %}
     ]
   ],
@@ -74,12 +79,14 @@
   columns: (1fr, 1fr),
   {% endif %}
   column-gutter: 14pt,
-  row-gutter: 10pt,
-  {% for prob in problems %}
+  row-gutter: {{ 6 if any_graphing else 10 }}pt,
+  {% for item in page %}
+  {% set prob = item.prob %}
+  {% set pidx = item.idx %}
   [
     #rect(
-      width: {{ "3in" if prob.graphing else "100%" }},
-      height: {{ graphing_box_height_pt if prob.graphing else box_height_pt }}pt,
+      width: {{ (graphing_card_width_pt ~ "pt") if prob.graphing else "100%" }},
+      height: {{ graphing_card_height_pt if prob.graphing else box_height_pt }}pt,
       stroke: 0.6pt + luma(190),
       radius: 4pt,
       inset: (x: 6pt, y: 4pt)
@@ -88,7 +95,7 @@
         columns: (1fr, auto),
         align: (left, right),
         [
-          #text(weight: "bold", size: 10pt)[{{ loop.index }}.]
+          #text(weight: "bold", size: 10pt)[{{ pidx }}.]
           #h(4pt)
           #text(size: 7.5pt, fill: luma(90))[{{ prob.prompt_text }}]
         ],
@@ -103,7 +110,7 @@
         ]
       )
 
-      {% if columns == 1 and ((show_answers and answer_svg_files and loop.index in answer_svg_files) or (diagram_files and loop.index in diagram_files)) %}
+      {% if columns == 1 and ((show_answers and answer_svg_files and pidx in answer_svg_files) or (diagram_files and pidx in diagram_files)) %}
       #v(2pt)
       #grid(
         columns: (1fr, auto),
@@ -126,45 +133,55 @@
           {% endif %}
         ],
         [
-          {% if show_answers and answer_svg_files and loop.index in answer_svg_files %}
-          #image("{{ answer_svg_files[loop.index] }}", height: {{ ((box_height_pt * 0.75) | int) if (box_height_pt * 0.75) < 135 else 135 }}pt, fit: "contain")
-          {% elif diagram_files and loop.index in diagram_files %}
+          {% if show_answers and answer_svg_files and pidx in answer_svg_files %}
           #image(
-            "{{ diagram_files[loop.index] }}",
-            {% if prob.graphing %}width: 3in, height: 3in{% else %}height: {{ ((box_height_pt * 0.75) | int) if (box_height_pt * 0.75) < 135 else 135 }}pt{% endif %},
+            "{{ answer_svg_files[pidx] }}",
+            {% if prob.graphing %}width: {{ graphing_box_height_pt }}pt, height: {{ graphing_box_height_pt }}pt{% else %}height: {{ ((box_height_pt * 0.75) | int) if (box_height_pt * 0.75) < 135 else 135 }}pt{% endif %},
             fit: "contain"
           )
-          {% if prob.graphing %}
-          #v(4pt)
-          #text(size: 8pt, fill: blue.darken(20%))[Grid Scale: 1 square = #underline[#h(0.6in)] units]
+          {% elif diagram_files and pidx in diagram_files %}
+          #image(
+            "{{ diagram_files[pidx] }}",
+            {% if prob.graphing %}width: {{ graphing_box_height_pt }}pt, height: {{ graphing_box_height_pt }}pt{% else %}height: {{ ((box_height_pt * 0.75) | int) if (box_height_pt * 0.75) < 135 else 135 }}pt{% endif %},
+            fit: "contain"
+          )
           {% endif %}
+          {% if prob.graphing and ((show_answers and answer_svg_files and pidx in answer_svg_files) or (diagram_files and pidx in diagram_files)) %}
+          #v(4pt)
+          #text(size: 8pt, fill: blue.darken(20%))[Grid Scale: 1 square = #box(width: 0.6in, height: 0.16in, stroke: (bottom: 0.5pt + luma(90)))[] units]
           {% endif %}
         ]
       )
       {% else %}
-      #v(4pt)
+      #v({{ 2 if prob.graphing else 4 }}pt)
       #align(center)[
         #text(size: 10.5pt)[{{ prob.equation_typst }}]
       ]
 
-      {% if show_answers and answer_svg_files and loop.index in answer_svg_files %}
-      #v(1pt)
-      #align(center)[
-        #image("{{ answer_svg_files[loop.index] }}", height: {{ ((box_height_pt * 0.58) | int) if (box_height_pt * 0.58) < 170 else 170 }}pt, width: 100%, fit: "contain")
-      ]
-      {% elif diagram_files and loop.index in diagram_files %}
+      {% if show_answers and answer_svg_files and pidx in answer_svg_files %}
       #v(1pt)
       #align(center)[
         #image(
-          "{{ diagram_files[loop.index] }}",
-          {% if prob.graphing %}width: 3in, height: 3in{% else %}height: {{ ((box_height_pt * 0.58) | int) if (box_height_pt * 0.58) < 170 else 170 }}pt, width: 100%{% endif %},
+          "{{ answer_svg_files[pidx] }}",
+          {% if prob.graphing %}width: {{ graphing_box_height_pt }}pt, height: {{ graphing_box_height_pt }}pt{% else %}height: {{ ((box_height_pt * 0.58) | int) if (box_height_pt * 0.58) < 170 else 170 }}pt, width: 100%{% endif %},
           fit: "contain"
         )
       ]
-      {% if prob.graphing %}
-      #v(4pt)
-      #text(size: 8pt, fill: blue.darken(20%))[Grid Scale: 1 square = #underline[#h(0.6in)] units]
+      {% elif diagram_files and pidx in diagram_files %}
+      #v(1pt)
+      #align(center)[
+        #image(
+          "{{ diagram_files[pidx] }}",
+          {% if prob.graphing %}width: {{ graphing_box_height_pt }}pt, height: {{ graphing_box_height_pt }}pt{% else %}height: {{ ((box_height_pt * 0.58) | int) if (box_height_pt * 0.58) < 170 else 170 }}pt, width: 100%{% endif %},
+          fit: "contain"
+        )
+      ]
       {% endif %}
+      {% if prob.graphing and ((show_answers and answer_svg_files and pidx in answer_svg_files) or (diagram_files and pidx in diagram_files)) %}
+      #v(4pt)
+      #align(center)[
+        #text(size: 8pt, fill: blue.darken(20%))[Grid Scale: 1 square = #box(width: 0.6in, height: 0.16in, stroke: (bottom: 0.5pt + luma(90)))[] units]
+      ]
       {% endif %}
 
       {% if prob.choices and prob.choices|length >= 4 %}
@@ -189,4 +206,6 @@
   ],
   {% endfor %}
 )
+
+{% endfor %}
 
