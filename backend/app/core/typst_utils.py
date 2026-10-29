@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import re
+
 import sympy as sp
+from sympy.printing.str import StrPrinter
 
 
 def sympy_to_typst(expr: sp.Expr | int | float | str) -> str:
@@ -14,7 +17,7 @@ def sympy_to_typst(expr: sp.Expr | int | float | str) -> str:
     # - / for fractions: (a)/(b)
     # - sqrt(x)
     # - standard symbols
-    s = sp.printing.str.StrPrinter().doprint(expr)
+    s = StrPrinter().doprint(expr)
 
     # SymPy formats powers as ** -> convert to ^
     s = s.replace("**", "^")
@@ -22,9 +25,6 @@ def sympy_to_typst(expr: sp.Expr | int | float | str) -> str:
     # SymPy prints multiplication with *, Typst math supports implicit or explicit
     # Replace * with space or omit between digits and letters
     # E.g., 2*x -> 2x, but 2*3 -> 2 dot 3
-    # Let's do a reliable conversion using SymPy structure or regex:
-    import re
-
     # Replace integer * symbol: e.g. 5*x -> 5x, 5*(x + 1) -> 5(x + 1)
     s = re.sub(r'(\d+)\*([a-zA-Z\(])', r'\1\2', s)
     # Replace symbol * symbol: e.g. x*y -> x y
