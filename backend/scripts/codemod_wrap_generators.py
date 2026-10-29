@@ -90,4 +90,3 @@ def run_codemod() -> None:
 
 if __name__ == "__main__":
     run_codemod()
-

@@ -1379,6 +1379,7 @@ def _gen_decoupled_subtopic(
         n2 = p * rng.choice(n2_pool) * scale
         g_val = math.gcd(n1, n2)
         l_val = math.lcm(n1, n2)
+
         def _calc_pfactors(val: int) -> list[int]:
             res_facs = []
             cur_d = 2

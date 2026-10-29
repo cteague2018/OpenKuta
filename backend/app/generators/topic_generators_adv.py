@@ -1625,12 +1625,8 @@ def gen_adv_problem(
             c = a * b2
             area_f = Fraction(4 * a * (b ** 3), 3)
             quad_s = f"{c} - x^2" if a == 1 else f"{c} - {a}x^2"
-
-            def fn_top_math(x: float) -> float:
-                return float((c - a * x * x) * (6.0 / max(c, 1)))
-
-            def fn_bot_math(x: float) -> float:
-                return 0.0
+            fn_top_math = lambda x, _c=c, _a=a: float((_c - _a * x * x) * (6.0 / max(_c, 1)))
+            fn_bot_math = lambda x: 0.0
 
             x_a, x_b = -b, b
             eq_s = f"$ y = {quad_s} \" and \" y = 0 \" on \" [-{b}, {b}] $"
@@ -1642,12 +1638,8 @@ def gen_adv_problem(
         elif variant == "line_parabola":
             m = rng.randint(2, 7)
             area_f = Fraction(m ** 3, 6)
-
-            def fn_top_math(x: float) -> float:
-                return float(m * x * (6.0 / (m * m)))
-
-            def fn_bot_math(x: float) -> float:
-                return float((x * x) * (6.0 / (m * m)))
+            fn_top_math = lambda x, _m=m: float(_m * x * (6.0 / (_m * _m)))
+            fn_bot_math = lambda x, _m=m: float((x * x) * (6.0 / (_m * _m)))
 
             x_a, x_b = 0, m
             eq_s = f"$ y = {m}x \" and \" y = x^2 \" on \" [0, {m}] $"
@@ -1666,12 +1658,8 @@ def gen_adv_problem(
             m_str = f"{m_l}x" if m_l != 0 else ""
             c_str = f"+ {c_l}" if c_l > 0 else (f"- {abs(c_l)}" if c_l < 0 else "")
             line_expr = f"{m_str} {c_str}".strip() or "0"
-
-            def fn_top_math(x: float) -> float:
-                return float(m_l * x + c_l)
-
-            def fn_bot_math(x: float) -> float:
-                return float(x * x)
+            fn_top_math = lambda x, _m=m_l, _c=c_l: float(_m * x + _c)
+            fn_bot_math = lambda x: float(x * x)
 
             x_a, x_b = r1, r2
             eq_s = f"$ y = {line_expr} \" and \" y = x^2 \" on \" [{r1}, {r2}] $"
@@ -1684,12 +1672,8 @@ def gen_adv_problem(
             k = rng.randint(2, 5)
             k2 = k * k
             area_f = Fraction(k ** 4, 4)
-
-            def fn_top_math(x: float) -> float:
-                return float((k2 * x - x ** 3) * (6.0 / (k2 * 1.5)))
-
-            def fn_bot_math(x: float) -> float:
-                return 0.0
+            fn_top_math = lambda x, _k2=k2: float((_k2 * x - x ** 3) * (6.0 / (_k2 * 1.5)))
+            fn_bot_math = lambda x: 0.0
 
             x_a, x_b = 0, k
             eq_s = f"$ y = {k2}x - x^3 \" and \" y = 0 \" on \" [0, {k}] $"
@@ -1703,12 +1687,8 @@ def gen_adv_problem(
             c = rng.randint(-3, 3)
             c_top = c + k * k
             area_f = Fraction(4 * (k ** 3), 3)
-
-            def fn_top_math(x: float) -> float:
-                return float(c_top - x * x)
-
-            def fn_bot_math(x: float) -> float:
-                return float(c)
+            fn_top_math = lambda x, _ct=c_top: float(_ct - x * x)
+            fn_bot_math = lambda x, _c=c: float(_c)
 
             x_a, x_b = -k, k
             eq_s = f"$ y = {c_top} - x^2 \" and \" y = {c} \" on \" [-{k}, {k}] $"
@@ -1731,11 +1711,17 @@ def gen_adv_problem(
             "distractors": [d1, d2, d3],
             "diagram_svg": svg_coordinate_plane(
                 shaded_between={"fn_top": fn_top_math, "fn_bot": fn_bot_math, "a": x_a, "b": x_b, "color": "#3b82f6"},
-                functions=[{"fn": fn_top_math, "color": "#1d4ed8"}, {"fn": fn_bot_math, "color": "#64748b"}],
+                functions=[
+                    {"fn": fn_top_math, "color": "#1d4ed8", "x_start": x_a, "x_end": x_b},
+                    {"fn": fn_bot_math, "color": "#64748b", "x_start": x_a, "x_end": x_b},
+                ],
             ),
             "answer_svg": svg_coordinate_plane(
                 shaded_between={"fn_top": fn_top_math, "fn_bot": fn_bot_math, "a": x_a, "b": x_b, "color": "#22c55e"},
-                functions=[{"fn": fn_top_math, "color": "#15803d"}, {"fn": fn_bot_math, "color": "#64748b"}],
+                functions=[
+                    {"fn": fn_top_math, "color": "#15803d", "x_start": x_a, "x_end": x_b},
+                    {"fn": fn_bot_math, "color": "#64748b", "x_start": x_a, "x_end": x_b},
+                ],
             ),
         }
 
@@ -1841,10 +1827,8 @@ def gen_adv_problem(
                 "Separating variables: $y d y = -x d x ==> x^2 + y^2 = C$.",
                 "Field forms concentric circles centered at origin.",
             ]
-            def fn_sf(x: float, y: float) -> float:
-                return -x / y if abs(y) > 0.3 else 10.0
-            def fn_sol(x: float) -> float:
-                return float(math.sqrt(max(0.0, 16.0 - x * x)))
+            fn_sf = lambda x, y: -x / y if abs(y) > 0.3 else 10.0
+            fn_sol = lambda x: float(math.sqrt(max(0.0, 16.0 - x * x)))
         else:
             eq_typst = f"$ (d y)/(d x) = {a}x {'+' if b >= 0 else '-'} {abs(b)}y $"
             ans_typst = "$ \"Slopes depend on both \" x \" and \" y $"
@@ -1853,10 +1837,8 @@ def gen_adv_problem(
                 f"Isoclines occur along straight lines where ${a}x {'+' if b >= 0 else '-'} {abs(b)}y = c$.",
                 "Sketch directional field segments at each lattice point.",
             ]
-            def fn_sf(x: float, y: float) -> float:
-                return float((a * x + b * y) / 4.0)
-            def fn_sol(x: float) -> float:
-                return float(a * x * 0.3)
+            fn_sf = lambda x, y, _a=a, _b=b: float((_a * x + _b * y) / 4.0)
+            fn_sol = lambda x, _a=a: float(_a * x * 0.3)
 
         return {
             "prompt_text": "Match the differential equation with its slope field and identify key solution curve features.",

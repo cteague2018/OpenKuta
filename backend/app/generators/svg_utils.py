@@ -53,4 +53,3 @@ __all__ = [
     "svg_area_model",
     "svg_polygon_diagram",
 ]
-

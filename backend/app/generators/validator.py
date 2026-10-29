@@ -197,7 +197,6 @@ def validate_generated_problem(problem: Union[BaseProblem, Dict[str, Any]]) -> L
         if svg_content:
             errors.extend(_audit_svg(svg_content, svg_field))
 
-
     return errors
 
 
