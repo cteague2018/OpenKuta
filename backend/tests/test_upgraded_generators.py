@@ -80,7 +80,10 @@ def test_vectors_procedural():
     # Spicy: unit vector or linear combination
     probs_spicy = gen.generate(GeneratorConfig(problem_count=6, difficulty_distribution={ProblemDifficulty.SPICY: 1.0}, seed=62))
     for p in probs_spicy:
-        assert "angle.l" in p.answer_typst
+        # Chevrons, not angle.l/angle.r: current Typst rejects those with
+        # "unknown symbol modifier" and the whole worksheet fails to compile.
+        assert "chevron.l" in p.answer_typst
+        assert "angle.l" not in p.answer_typst
         assert len(p.steps_typst) >= 3
 
 
