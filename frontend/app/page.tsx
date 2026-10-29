@@ -85,6 +85,65 @@ interface ClassroomSummary {
   student_count: number;
 }
 
+function convertCasesToLatex(s: string): string {
+  let pos = 0;
+  while (true) {
+    const idx = s.indexOf("cases(", pos);
+    if (idx === -1) break;
+    const start = idx + "cases(".length;
+    let depth = 1;
+    let end = -1;
+    for (let i = start; i < s.length; i++) {
+      if (s[i] === "(") depth++;
+      else if (s[i] === ")") {
+        depth--;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    if (end === -1) {
+      pos = idx + 6;
+      continue;
+    }
+
+    const inner = s.substring(start, end);
+    const items: string[] = [];
+    let curr = "";
+    let d = 0;
+    let inQuote = false;
+    for (let i = 0; i < inner.length; i++) {
+      const ch = inner[i];
+      if (ch === '"') {
+        inQuote = !inQuote;
+        curr += ch;
+      } else if (inQuote) {
+        curr += ch;
+      } else if (ch === "(") {
+        d++;
+        curr += ch;
+      } else if (ch === ")") {
+        d--;
+        curr += ch;
+      } else if (ch === "," && d === 0) {
+        items.push(curr.trim());
+        curr = "";
+      } else {
+        curr += ch;
+      }
+    }
+    if (curr.trim().length > 0) {
+      items.push(curr.trim());
+    }
+
+    const latexCases = `\\begin{cases} ${items.join(" \\\\ ")} \\end{cases}`;
+    s = s.substring(0, idx) + latexCases + s.substring(end + 1);
+    pos = idx + latexCases.length;
+  }
+  return s;
+}
+
 function typstToLatex(raw: string): string {
   if (!raw) return "";
   let s = raw.trim();
@@ -103,11 +162,19 @@ function typstToLatex(raw: string): string {
   // Strip any remaining internal $ delimiters
   s = s.replace(/\$/g, "");
 
+  // Convert Typst systems of equations cases(...) into LaTeX \begin{cases} ... \end{cases}
+  s = convertCasesToLatex(s);
+
+  // Clean unsimplified unit coefficients like '+ 1y' -> '+ y', '- 1y' -> '- y', '2x + 1y' -> '2x + y'
+  s = s.replace(/([+\-=(,]\s*)1([a-zA-Z])\b/g, "$1$2");
+  s = s.replace(/(^|\s)1([a-zA-Z])\b/g, "$1$2");
+
   // Typst to LaTeX conversions
   s = s.replace(/plus\.minus/g, "\\pm ");
   s = s.replace(/sqrt\(([^)]+)\)/g, "\\sqrt{$1}");
+  s = s.replace(/root\(([^,]+),\s*([^)]+)\)/g, "\\sqrt[$1]{$2}");
+  s = s.replace(/frac\(([^,]+),\s*([^)]+)\)/g, "\\frac{$1}{$2}");
   s = s.replace(/\bquad\b/g, "\\quad ");
-  s = s.replace(/cases\(([^,]+),\s*([^)]+)\)/g, "\\begin{cases} $1 \\\\ $2 \\end{cases}");
   s = s.replace(/\barrow\.r\.double\b/g, "\\implies ");
   s = s.replace(/\barrow\.r\b/g, "\\to ");
   s = s.replace(/\barrow\.l\.double\b/g, "\\impliedby ");
@@ -223,6 +290,11 @@ function isProseProblem(raw: string): boolean {
 function KaTeXInline({ math, latex, className = "" }: { math?: string; latex?: string; className?: string }) {
   let latexStr = latex ?? (math ? typstToLatex(math) : "");
   if (!latexStr) return null;
+  if (latexStr.includes("cases(")) {
+    latexStr = convertCasesToLatex(latexStr);
+  }
+  latexStr = latexStr.replace(/([+\-=(,]\s*)1([a-zA-Z])\b/g, "$1$2");
+  latexStr = latexStr.replace(/(^|\s)1([a-zA-Z])\b/g, "$1$2");
   latexStr = latexStr.replace(/(?:\^\s*\\?circle\b|°)/g, "^{\\circ}");
   try {
     const html = katex.renderToString(latexStr, {
@@ -2087,29 +2159,32 @@ export default function OpenMathForgeApp() {
                               }
                               if (pageRowCount <= 1) {
                                 return showAnswerKey
-                                  ? "[&>svg]:max-h-[260px] [&>svg]:h-[240px] [&>svg]:w-auto [&>svg]:max-w-[270px]"
+                                  ? "[&>svg]:max-h-[250px] [&>svg]:h-[235px] [&>svg]:w-auto [&>svg]:max-w-[260px]"
                                   : "[&>svg]:max-h-[300px] [&>svg]:h-[280px] [&>svg]:w-auto [&>svg]:max-w-[310px]";
                               }
                               if (pageRowCount === 2) {
                                 if (!showAnswerKey) {
                                   // Student mode: prominent, textbook-standard coordinate plane (2.35 inches) for drawing/plotting
-                                  return "[&>svg]:max-h-[240px] [&>svg]:h-[225px] [&>svg]:w-auto [&>svg]:max-w-[250px]";
+                                  return "[&>svg]:max-h-[230px] [&>svg]:h-[215px] [&>svg]:w-auto [&>svg]:max-w-[240px]";
                                 }
                                 const hasChoices = Boolean(prob.choices && prob.choices.length >= 4);
-                                const hasManySteps = Boolean(prob.steps_typst && prob.steps_typst.length > 3);
-                                if (hasChoices || hasManySteps) {
-                                  // Generous clearance for 4-6 solution steps with larger 175px graph
-                                  return "[&>svg]:max-h-[185px] [&>svg]:h-[175px] [&>svg]:w-auto [&>svg]:max-w-[195px]";
+                                const hasSteps = Boolean(prob.steps_typst && prob.steps_typst.length > 0);
+                                if (hasChoices || (hasSteps && prob.steps_typst!.length >= 3)) {
+                                  // Generous clearance for 3-6 solution steps + Ans box without clipping
+                                  return "[&>svg]:max-h-[140px] [&>svg]:h-[130px] [&>svg]:w-auto [&>svg]:max-w-[150px]";
                                 }
-                                // Few steps or direct answer: graph expands to 190px
-                                return "[&>svg]:max-h-[200px] [&>svg]:h-[190px] [&>svg]:w-auto [&>svg]:max-w-[210px]";
+                                if (hasSteps) {
+                                  return "[&>svg]:max-h-[160px] [&>svg]:h-[150px] [&>svg]:w-auto [&>svg]:max-w-[170px]";
+                                }
+                                // Direct answer without steps: graph expands comfortably
+                                return "[&>svg]:max-h-[190px] [&>svg]:h-[180px] [&>svg]:w-auto [&>svg]:max-w-[200px]";
                               }
                               if (pageRowCount === 3) {
                                 return showAnswerKey
-                                  ? "[&>svg]:max-h-[145px] [&>svg]:h-[135px] [&>svg]:w-auto [&>svg]:max-w-[150px]"
-                                  : "[&>svg]:max-h-[165px] [&>svg]:h-[155px] [&>svg]:w-auto [&>svg]:max-w-[170px]";
+                                  ? "[&>svg]:max-h-[120px] [&>svg]:h-[110px] [&>svg]:w-auto [&>svg]:max-w-[125px]"
+                                  : "[&>svg]:max-h-[150px] [&>svg]:h-[140px] [&>svg]:w-auto [&>svg]:max-w-[155px]";
                               }
-                              return "[&>svg]:max-h-[120px] [&>svg]:h-[110px] [&>svg]:w-auto [&>svg]:max-w-[125px]";
+                              return "[&>svg]:max-h-[110px] [&>svg]:h-[100px] [&>svg]:w-auto [&>svg]:max-w-[115px]";
                             };
 
                             const oneColGraphSizeClasses =
@@ -2120,7 +2195,7 @@ export default function OpenMathForgeApp() {
                             return (
                               <div
                                 key={`${prob.id}_${displayIdx}`}
-                                className="border border-slate-300 rounded p-2.5 px-3 flex flex-col justify-between bg-white relative h-full transition-all duration-150 overflow-hidden"
+                                className={`border border-slate-300 rounded ${showAnswerKey && (prob.diagram_svg || prob.answer_svg) ? "p-2 px-2.5" : "p-2.5 px-3"} flex flex-col justify-between bg-white relative h-full transition-all duration-150 overflow-hidden`}
                               >
                                 {isOneColVisual ? (
                                   /* 1-Column Horizontal Split Layout: Maximizes 736px width for large graphs & scratchwork */
@@ -2276,13 +2351,13 @@ export default function OpenMathForgeApp() {
                                      {/* Answer Key Overlay: Expands to Fill Real Estate with Highlighted Answer & Full Solution Steps (Zero Clipping) */}
                                      {showAnswerKey ? (
                                        <div
-                                         className={`bg-amber-50/90 border border-amber-200 rounded mt-1.5 flex-1 flex flex-col min-h-0 ${
+                                         className={`bg-amber-50/90 border border-amber-200 rounded mt-1 flex-1 flex flex-col min-h-0 ${
                                            prob.diagram_svg || prob.answer_svg
-                                             ? "p-2 px-2.5 justify-start"
+                                             ? "p-1.5 px-2 justify-start"
                                              : "p-3.5 justify-between"
                                          }`}
                                        >
-                                         <div className="font-bold flex items-center gap-1.5 text-sm pb-1.5 border-b border-amber-200/80 shrink-0">
+                                         <div className={`font-bold flex items-center gap-1.5 ${prob.diagram_svg || prob.answer_svg ? "text-xs pb-1" : "text-sm pb-1.5"} border-b border-amber-200/80 shrink-0`}>
                                            <span className="text-amber-800 text-xs md:text-sm font-bold">Ans:</span>
                                            {prob.correct_choice && (
                                              <span className="font-bold text-indigo-800 mr-1.5 text-sm">
@@ -2297,11 +2372,11 @@ export default function OpenMathForgeApp() {
                                            <div
                                              className={`${
                                                prob.diagram_svg || prob.answer_svg
-                                                 ? "mt-1.5 space-y-1 text-xs md:text-[12.5px] leading-normal"
+                                                 ? "mt-1 space-y-0.5 text-xs leading-snug"
                                                  : "mt-2.5 space-y-2 text-xs md:text-sm leading-relaxed"
-                                             } text-amber-950 flex-1 flex flex-col justify-evenly font-medium`}
+                                             } text-amber-950 flex-1 flex flex-col justify-start font-medium`}
                                            >
-                                             <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider mb-0.5 shrink-0">
+                                             <div className="text-[10.5px] font-bold text-amber-800 uppercase tracking-wider mb-0.5 shrink-0">
                                                Solution Steps:
                                              </div>
                                              {prob.steps_typst.map((st, sIdx) => (

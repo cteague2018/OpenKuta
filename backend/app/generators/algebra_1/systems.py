@@ -7,6 +7,44 @@ from backend.app.core.svg_utils import svg_coordinate_plane, svg_coordinate_plan
 from backend.app.generators.verification_gate import verify_mathematical_truth
 
 
+def _format_linear_side(a: int, b: int, var_a: str = "x", var_b: str = "y") -> str:
+    """Format ax + by cleanly, omitting redundant 1s e.g. '2x + y', '-x - y'."""
+    parts = []
+    if a != 0:
+        if a == 1:
+            parts.append(var_a)
+        elif a == -1:
+            parts.append(f"-{var_a}")
+        else:
+            parts.append(f"{a}{var_a}")
+    if b != 0:
+        if not parts:
+            if b == 1:
+                parts.append(var_b)
+            elif b == -1:
+                parts.append(f"-{var_b}")
+            else:
+                parts.append(f"{b}{var_b}")
+        else:
+            sign = "+ " if b > 0 else "- "
+            coeff = "" if abs(b) == 1 else str(abs(b))
+            parts.append(f"{sign}{coeff}{var_b}")
+    return " ".join(parts) if parts else "0"
+
+
+def _format_term(coeff: int, var: str, leading: bool = False) -> str:
+    if coeff == 0:
+        return ""
+    abs_c = abs(coeff)
+    c_str = "" if abs_c == 1 else str(abs_c)
+    if leading:
+        sign = "-" if coeff < 0 else ""
+        return f"{sign}{c_str}{var}"
+    else:
+        sign = "+ " if coeff > 0 else "- "
+        return f"{sign}{c_str}{var}"
+
+
 class SystemsGraphingGenerator(BaseGenerator):
     generator_id = "algebra_1.systems_graphing"
     name = "Systems of Equations: Solving by Graphing"
@@ -73,9 +111,7 @@ class SystemsGraphingGenerator(BaseGenerator):
             if -A / B == m1:
                 A = -A
             C = A * x_sol + B * y_sol
-            b_sign = f"+ {B}y" if B > 0 else f"- {abs(B)}y"
-            a_str = f"{A}x" if A not in (1, -1) else ("x" if A == 1 else "-x")
-            eq2 = f"{a_str} {b_sign} = {C}".replace("+ -", "- ")
+            eq2 = f"{_format_linear_side(A, B)} = {C}"
 
             system_typst = f"cases({eq1}, {eq2})"
             ans_typst = f"({x_sol}, {y_sol})"
@@ -103,13 +139,8 @@ class SystemsGraphingGenerator(BaseGenerator):
             C1 = A1 * x_sol + B1 * y_sol
             C2 = A2 * x_sol + B2 * y_sol
 
-            a1_s = f"{A1}x" if A1 not in (1, -1) else ("x" if A1 == 1 else "-x")
-            b1_s = f"+ {B1}y" if B1 > 0 else f"- {abs(B1)}y"
-            a2_s = f"{A2}x" if A2 not in (1, -1) else ("x" if A2 == 1 else "-x")
-            b2_s = f"+ {B2}y" if B2 > 0 else f"- {abs(B2)}y"
-
-            eq1 = f"{a1_s} {b1_s} = {C1}".replace("+ -", "- ")
-            eq2 = f"{a2_s} {b2_s} = {C2}".replace("+ -", "- ")
+            eq1 = f"{_format_linear_side(A1, B1)} = {C1}"
+            eq2 = f"{_format_linear_side(A2, B2)} = {C2}"
             system_typst = f"cases({eq1}, {eq2})"
             ans_typst = f"({x_sol}, {y_sol})"
 
@@ -185,8 +216,7 @@ class SystemsSubstitutionGenerator(BaseGenerator):
             A = rng.choice([2, 3, 4])
             B = rng.choice([1, -1, 2, -2])
             C = A * x_sol + B * y_sol
-            b_sign = f"+ {B}y" if B > 0 else f"- {abs(B)}y"
-            eq2 = f"{A}x {b_sign} = {C}".replace("+ -", "- ")
+            eq2 = f"{_format_linear_side(A, B)} = {C}"
 
             sub_expr = f"{m_s}x {b_s}".strip()
             steps = [
@@ -202,14 +232,14 @@ class SystemsSubstitutionGenerator(BaseGenerator):
             if isolate_x:
                 k = rng.choice([-3, -2, 2, 3])
                 C1 = x_sol + k * y_sol
-                k_sign = f"+ {k}y" if k > 0 else f"- {abs(k)}y"
+                k_sign = _format_term(k, "y")
                 eq1 = f"x {k_sign} = {C1}"
 
                 A2 = rng.choice([2, 3, 4])
                 B2 = rng.choice([-2, -1, 1, 2])
                 C2 = A2 * x_sol + B2 * y_sol
-                b2_sign = f"+ {B2}y" if B2 > 0 else f"- {abs(B2)}y"
-                eq2 = f"{A2}x {b2_sign} = {C2}".replace("+ -", "- ")
+                b2_sign = _format_term(B2, "y")
+                eq2 = f"{_format_linear_side(A2, B2)} = {C2}"
 
                 iso_s = f"{C1} {'- ' if k > 0 else '+ '}{abs(k)}y"
                 steps = [
@@ -229,8 +259,8 @@ class SystemsSubstitutionGenerator(BaseGenerator):
                 A2 = rng.choice([2, 3, 5])
                 B2 = rng.choice([-3, -2, 2])
                 C2 = A2 * x_sol + B2 * y_sol
-                b2_sign = f"+ {B2}y" if B2 > 0 else f"- {abs(B2)}y"
-                eq2 = f"{A2}x {b2_sign} = {C2}".replace("+ -", "- ")
+                b2_sign = _format_term(B2, "y")
+                eq2 = f"{_format_linear_side(A2, B2)} = {C2}"
 
                 iso_s = f"{C1} - {k}x"
                 steps = [
@@ -306,8 +336,8 @@ class SystemsEliminationGenerator(BaseGenerator):
 
             c1 = a1 * x_sol + b1 * y_sol
             c2 = a2 * x_sol + b2 * y_sol
-            eq1 = f"{a1}x + {b1}y = {c1}"
-            eq2 = f"{a2}x - {abs(b2)}y = {c2}"
+            eq1 = f"{_format_linear_side(a1, b1)} = {c1}"
+            eq2 = f"{_format_linear_side(a2, b2)} = {c2}"
             system_typst = f"cases({eq1}, {eq2})"
 
             sum_a = a1 + a2
@@ -330,10 +360,8 @@ class SystemsEliminationGenerator(BaseGenerator):
 
             c1 = a1 * x_sol + b1 * y_sol
             c2 = a2 * x_sol + b2 * y_sol
-            b1_s = f"+ {b1}y" if b1 > 0 else f"- {abs(b1)}y"
-            b2_s = f"+ {b2}y" if b2 > 0 else f"- {abs(b2)}y"
-            eq1 = f"{a1}x {b1_s} = {c1}"
-            eq2 = f"{a2}x {b2_s} = {c2}"
+            eq1 = f"{_format_linear_side(a1, b1)} = {c1}"
+            eq2 = f"{_format_linear_side(a2, b2)} = {c2}"
             system_typst = f"cases({eq1}, {eq2})"
 
             steps = [
@@ -351,11 +379,8 @@ class SystemsEliminationGenerator(BaseGenerator):
                 b2 += 1
             c1 = a1 * x_sol + b1 * y_sol
             c2 = a2 * x_sol + b2 * y_sol
-
-            b1_s = f"+ {b1}y" if b1 > 0 else f"- {abs(b1)}y"
-            b2_s = f"+ {b2}y" if b2 > 0 else f"- {abs(b2)}y"
-            eq1 = f"{a1}x {b1_s} = {c1}"
-            eq2 = f"{a2}x {b2_s} = {c2}"
+            eq1 = f"{_format_linear_side(a1, b1)} = {c1}"
+            eq2 = f"{_format_linear_side(a2, b2)} = {c2}"
             system_typst = f"cases({eq1}, {eq2})"
 
             steps = [

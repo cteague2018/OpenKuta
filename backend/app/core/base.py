@@ -68,6 +68,9 @@ class BaseProblem(BaseModel):
                 s = re.sub(r'\^\\?circle\b', '°', s)
                 s = re.sub(r'(\d|\)|theta|\b[a-zA-Z])\s*(?:deg|degrees)\b', r'\1°', s, flags=re.IGNORECASE)
                 s = s.replace('&deg;', '°').replace('&#176;', '°')
+                # Clean unsimplified unit coefficients: '+ 1y' -> '+ y', '- 1y' -> '- y', ' 1y' -> ' y'
+                s = re.sub(r'([+\-=(,]\s*)1([a-zA-Z])\b', r'\1\2', s)
+                s = re.sub(r'(^|\s)1([a-zA-Z])\b', r'\1\2', s)
                 return s
 
             for key in ["equation_typst", "answer_typst", "prompt_text", "diagram_svg", "answer_svg"]:
@@ -140,11 +143,66 @@ class BaseProblem(BaseModel):
 
             # Protect strings in quotes so words like 'angle' inside text labels aren't transformed into math symbols
             quoted_strings: list[str] = []
+
             def _extract_quoted(match: re.Match) -> str:
                 quoted_strings.append(match.group(1))
                 return f"___LATEX_TEXT_{len(quoted_strings) - 1}___"
 
             res = re.sub(r'"([^"]*)"', _extract_quoted, res)
+
+            # Convert Typst cases(...) into LaTeX \begin{cases} ... \end{cases}
+            pos = 0
+            while True:
+                idx = res.find("cases(", pos)
+                if idx == -1:
+                    break
+                start = idx + len("cases(")
+                depth = 1
+                end = -1
+                for i in range(start, len(res)):
+                    if res[i] == '(':
+                        depth += 1
+                    elif res[i] == ')':
+                        depth -= 1
+                        if depth == 0:
+                            end = i
+                            break
+                if end == -1:
+                    pos = idx + 6
+                    continue
+
+                inner = res[start:end]
+                items: list[str] = []
+                curr: list[str] = []
+                d = 0
+                for ch in inner:
+                    if ch == '(':
+                        d += 1
+                        curr.append(ch)
+                    elif ch == ')':
+                        d -= 1
+                        curr.append(ch)
+                    elif ch == ',' and d == 0:
+                        items.append("".join(curr).strip())
+                        curr = []
+                    else:
+                        curr.append(ch)
+                if curr:
+                    items.append("".join(curr).strip())
+
+                latex_cases = r"\begin{cases} " + r" \\ ".join(items) + r" \end{cases}"
+                res = res[:idx] + latex_cases + res[end + 1:]
+                pos = idx + len(latex_cases)
+
+            # Clean unsimplified unit coefficients in LaTeX string
+            res = re.sub(r'([+\-=(,]\s*)1([a-zA-Z])\b', r'\1\2', res)
+            res = re.sub(r'(^|\s)1([a-zA-Z])\b', r'\1\2', res)
+
+            # Convert Typst arrows to standard LaTeX
+            res = re.sub(r'==>|\barrow\.r\.double\b', r'\\implies ', res)
+            res = re.sub(r'->|\barrow\.r\b', r'\\to ', res)
+            res = re.sub(r'<==>|\barrow\.l\.r\.double\b', r'\\iff ', res)
+            res = re.sub(r'<==|\barrow\.l\.double\b', r'\\impliedby ', res)
 
             # Normalize unicode angle symbols
             res = re.sub(r'm∠([A-Za-z0-9_]+)', r'm\\angle \1', res)
