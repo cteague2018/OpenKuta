@@ -578,6 +578,7 @@ class QuadraticsCompletingSquareGenerator(BaseGenerator):
     ) -> BaseProblem:
         k = rng.choice([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
         b = 2 * k
+        a = 1  # leading coefficient; the SPICY tier scales the equation by 2 or 3
         if difficulty == ProblemDifficulty.MILD:
             d_val = rng.choice([1, 2, 3, 4, 5, 6])
             d_sq = d_val * d_val

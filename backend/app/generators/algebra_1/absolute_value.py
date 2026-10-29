@@ -48,6 +48,12 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
                 f"{var} = {-roots[0]}, {-roots[1]}",
                 f"{var} = {roots[0] + 2}, {roots[1] - 2}",
             ]
+            steps = [
+                f"Given equation: $ {eq_str} $",
+                f"Case 1 (positive): $ {step_pos} $",
+                f"Case 2 (negative): $ {step_neg} $",
+                f"Solution set: $ {ans_str} $"
+            ]
 
         elif difficulty == ProblemDifficulty.MEDIUM:
             # |a x + b| = c
@@ -67,8 +73,14 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
             step_neg = f"{a}{var} + {b} = -{c} ==> {a}{var} = {-c - b} ==> {var} = {r_neg}"
             distractors = [
                 f"{var} = {r_pos}",
-                f"{var} = {-r1 if isinstance(r1, int) else 2}",
+                f"{var} = {-r1}",
                 f"{var} = {c}, {-c}",
+            ]
+            steps = [
+                f"Given equation: $ {eq_str} $",
+                f"Case 1 (positive): $ {step_pos} $",
+                f"Case 2 (negative): $ {step_neg} $",
+                f"Solution set: $ {ans_str} $"
             ]
 
         else:  # SPICY
@@ -86,27 +98,16 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
 
             eq_str = f"{d}|{a}{var} + {b}| - {k} = {target}"
             ans_str = f"{var} = {r_pos}, {r_neg}"
-            step_pos = f"Isolate absolute value: |{a}{var} + {b}| = ({target} + {k}) / {d} = {inner_val}"
-            step_neg = f"Case 1: {a}{var} + {b} = {inner_val} ==> {var} = {r_pos}; Case 2: {a}{var} + {b} = -{inner_val} ==> {var} = {r_neg}"
             distractors = [
                 f"{var} = {r_pos}",
                 f"{var} = {inner_val}, {-inner_val}",
                 f"{var} = {target // d}",
             ]
-
-        if difficulty == ProblemDifficulty.SPICY:
             steps = [
                 f"Given equation: $ {eq_str} $",
                 f"Isolate absolute value expression: $ |{a}{var} + {b}| = ({target} + {k}) / {d} = {inner_val} $",
                 f"Set up Case 1 (positive): $ {a}{var} + {b} = {inner_val} arrow.r.double {a}{var} = {inner_val - b} arrow.r.double {var} = {r_pos} $",
                 f"Set up Case 2 (negative): $ {a}{var} + {b} = -{inner_val} arrow.r.double {a}{var} = {-inner_val - b} arrow.r.double {var} = {r_neg} $",
-                f"Solution set: $ {ans_str} $"
-            ]
-        else:
-            steps = [
-                f"Given equation: $ {eq_str} $",
-                f"Case 1 (positive): $ {step_pos} $",
-                f"Case 2 (negative): $ {step_neg} $",
                 f"Solution set: $ {ans_str} $"
             ]
 
@@ -116,7 +117,7 @@ class AbsoluteValueEquationsGenerator(BaseGenerator):
             equation_typst=f"$ {eq_str} $",
             answer_typst=f"$ {ans_str} $",
             steps_typst=steps,
-            distractors=[f"$ {d} $" for d in distractors],
+            distractors=[f"$ {choice} $" for choice in distractors],
             difficulty=difficulty,
             standards=self.standards,
             metadata={"equation": eq_str}

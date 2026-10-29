@@ -39,8 +39,14 @@ def sympy_to_typst(expr: sp.Expr | int | float | str) -> str:
     return str(s)
 
 
-def format_polynomial_typst(poly_expr: sp.Expr, var: sp.Symbol = sp.Symbol('x')) -> str:
-    """Format polynomial nicely with proper spacing and signs for Typst math."""
+def format_polynomial_typst(
+    poly_expr: sp.Expr | int | float | str, var: sp.Symbol = sp.Symbol('x')
+) -> str:
+    """Format polynomial nicely with proper spacing and signs for Typst math.
+
+    ``poly_expr`` is sympified by :class:`sympy.Poly`, so plain numbers (e.g. a
+    degenerate ``int`` coefficient expression) are accepted as well as ``Expr``.
+    """
     poly = sp.Poly(poly_expr, var)
     coeffs = poly.all_coeffs()
     degree = poly.degree()
